@@ -1,0 +1,55 @@
+# Language file.
+# There is no need to translate this file manually. Automatic on-the-fly translation by AI will be used. But you can disable it in config.yml.
+
+# If the player has turned off immersive dialogs with the "/q dialogue format CHAT" command, they will see messages from villagers in the chat.
+villager-message-chat-format: "§8(message from villager) §6{villagerName}§8: §7{message}"
+
+# Messages that are visible after using commands.
+command-message:
+
+  tutorial-enabled: "Tutorial mode has been §2enabled§7."
+  tutorial-disabled: "Tutorial mode has been §4disabled§7."
+
+  dialogue-format-changed: "The format of villager dialogues has been changed to §6{dialogueFormat}§7."
+
+# Tutorial messages. Designed to make it easier for players to understand how the plugin works.
+player-tutorial:
+
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+  tutorial-message-sound: ENTITY_EXPERIENCE_ORB_PICKUP
+
+  prefix: "§2§l[Tutorial]§7"
+
+  first-connection-message:
+    - "This server has a plugin that adds §6neuroquesting™ §7to the game and COMPLETELY changes the interactions with villagers. They have §6gained personality types§7, §6learned to talk§7, §6craft items§7, and even §6offer quests §7to players! Look for a village! If you want to toggle tutorial messages, use §3/q tutorial."
+
+  interaction-message:
+    - "Choose button by §cscrolling the mouse wheel §7and then right-click on the villager again! To see the item the villager requires, select the §6Trade §7button. To learn more about the quests the villager has, select the §6Quests §7button."
+
+  questing-message:
+    - "To complete a quest, you just need to give the villager the item they ask for. Keep in mind that as a reward, the villager will only offer items they have in their inventory."
+
+  dialogue-message:
+    - "Villagers can talk! If you want to speed up the dialogue, hold the sneak button. If you want to close the dialogue — just hit the villager! No damage will be dealt."
+
+  sleep-interruption-message:
+    - "Villagers do not like being woken up in the middle of the night. No, really. Wait 'till morning."
+
+# Interaction menu buttons
+interaction-menu:
+
+  quests-button: "Quests"
+
+  trade-button: "Trade"
+
+  actions-button: "Actions"
+
+  talk-button: "Talk"
+
+  order-button: "Order"
+
+  gift-button: "Gift"
+
+  return-button: "Return"
+
+  close-button: "Close"

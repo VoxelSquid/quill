@@ -1,0 +1,102 @@
+# This file contains all the prompts that are sent to the AI. 
+# In the most important places I tried to describe my logic, so that if necessary, you can customize these things without unnecessary headaches.
+
+# Personal villager data (or just PVD) defines aspects such as their name and the phrases they use when interacting with them.
+personal-villager-data: "Your task is to generate information about a villager using the following JSON schema with the specified keys: villagerName — a Nordic name that starts with {randomLetter}, sleepInterruptionMessages — a list of 5 phrases that the villager says when someone tries to wake them up at night, the villager should refuse to wake up, damageMessages — a list of 5 phrases that the villager says when attacked by a player, joblessMessages — a list of 5 phrases when the player tries to find out what quests the villager has, but the villager is jobless (villager should ask the player to help him find a job first!). Be sure to consider the personality ({villagerPersonality}) and type ({villagerType}) of the villager (by type, I mean the biome in which they live). Use {language} language. {extraArguments}"
+
+# Task description for the AI, including vital villager information and key requirements for quest generation.
+basic-task-description: "Your task is to generate a quest for a villager using the following JSON schema with the specified keys: twoWordsDescription, questDescription and rewardText. Generate results using {language} language. All content must be written in the first person to enhance player immersion and believability. The following is the information about the villager: name is {villagerName}, profession is {villagerProfession}, villager profession mastery level is {villagerProfessionLevel}, biome type is {villagerType}, personality type is {villagerPersonality}. To complete the quest, the player will need to obtain an item {questItem} and bring it to the villager. The villager promises a reward ({rewardItem}) for the assistance, without specifying what it will be. When generating the quest, be sure to thoughtfully consider this information. This data should significantly influence the writing style and tone. Make sure to escape characters that could interfere with JSON parsing. In addition to the previous requirements, follow these guidelines during the generation: {questRequirements}. {extraArguments}"
+
+# Items produced by villagers with high profession levels are unique with some chance: they have increased base attributes, have a description and even a name.
+unique-item-description: "Your task is to generate an info for a unique item in {language} language. A villager {villagerName} of {villagerProfessionLevel}-level {villagerProfession} from the {villagerType} has crafted an {itemType} with enhanced attributes: {extraItemAttributes}. This is a unique item of {itemRarity} rarity. Generate a short description for such an item and unique creative name and place it in the JSON with two keys: 'itemDescription' and 'itemName'."
+
+# Profession quest.
+profession-quest:
+
+  quest-requirements: "Based on the quest item and the villager's profession, the villager should explain the task to the player by sharing the reason they need the quest item."
+
+# Disc quest.
+music-disc-quest:
+
+  quest-requirements: "The villager should explain the task to the player by sharing the reason they need the music disc."
+
+# Food quest. When villagers are hungry and have no food, they will ask the player to bring them some snacks.
+food-quest:
+
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  allowed-types: [BREAD, APPLE, COOKED_COD, COOKED_SALMON, BAKED_POTATO]
+
+  quest-requirements: "The villager, weakened by hunger, approaches the player with a request to bring him food. He explains that because of hunger, he cannot perform his duties. After completing the task, the villager sincerely thanks the player for their help."
+
+# Booze quest. Villagers have to relax somehow too, right?..
+booze-quest:
+
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/potion/PotionType.html
+  allowed-potion-types: [POISON, LONG_POISON, STRONG_POISON, FIRE_RESISTANCE, HARMING, HEALING, INVISIBILITY, LEAPING, LONG_FIRE_RESISTANCE, LONG_NIGHT_VISION, LONG_SLOWNESS, LONG_REGENERATION, LONG_SWIFTNESS, LONG_STRENGTH, LONG_INVISIBILITY, LONG_WEAKNESS, NIGHT_VISION, REGENERATION, LONG_REGENERATION, STRONG_REGENERATION]
+
+  # Too little amount will not attract players, too much will devalue other quests.
+  reward-points: 3000
+
+  quest-requirements: "In this quest, the villager must ask the player for a potion (which the villager treats like a drink). The rewardText in this quest is shown to the player only after the animation of the villager drinking the potion. The villager must describe the effect of the potion, which is {potionType}, telling how it feels and, depending on them condition, thank the player or criticize (or even insult) him!"
+
+
+# Pillager elimination quest. Villagers, logically, are not very friendly to pillagers.
+ominous-banner-quest:
+
+  # It would seem that banners aren't rare, but to complete the quest, the player will risk his life, right?
+  reward-points: 4000
+
+  quest-requirements: "The quest item in this quest is a ominous pillager banner, which can only be obtained by killing the pillager captain, or by finding this banner in their base. Of course, it should be clear from the description of the quest that villagers don't think very highly of pillagers."
+
+# Unique armorer quest. Armorers can use smithing templates without destroying them.
+smithing-template-quest:
+
+  quest-requirements: "This is a special quest of the armorer, related to collecting smithing trims for armor, which are used for armor decoration purposes. The villager should hint that in the future, the player will be able to ask them if the player would like to use smithing trims on their armor."
+
+# Unique librarian quest. In the future, players will be able to enchant their items from librarians based on their enchantment collection.
+enchanted-book-quest:
+
+  # Even though some enchantments are rarer (or more valuable) than others, the librarian is equally interested in them, so the price is the same for each enchantment.
+  # Also, the enchantment level is always maxed out, so the price should be fair.
+  reward-points: 6000
+
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+  allowed-enchantments: [AQUA_AFFINITY, BANE_OF_ARTHROPODS, BINDING_CURSE, BLAST_PROTECTION, BREACH, CHANNELING, DENSITY, DEPTH_STRIDER, EFFICIENCY, FEATHER_FALLING, FIRE_ASPECT, FIRE_PROTECTION, FLAME, FORTUNE, FROST_WALKER, IMPALING, INFINITY, KNOCKBACK, LOOTING, LOYALTY, LUCK_OF_THE_SEA, LURE, MENDING, MULTISHOT, PIERCING, POWER, PROJECTILE_PROTECTION, PROTECTION, PUNCH, QUICK_CHARGE, RESPIRATION, RIPTIDE, SHARPNESS, SILK_TOUCH, SMITE, SOUL_SPEED, SWEEPING_EDGE, SWIFT_SNEAK, THORNS, UNBREAKING, VANISHING_CURSE, WIND_BURST]
+
+  quest-requirements: "This is a special quest of the librarian. The villager must somehow let the player know that they are researching item enchantment and are now looking for a {enchantmentType} enchantment book. After completing the quest, the villager should hint that the player can contact him in the future if they want to enchant their tools or armor."
+
+# Unique cartographer and librarian quest, related to finding rare items that require adventure.
+treasure-hunt-quest:
+
+  # Rare items. Some quite not hard to get, but still requires to travel somewhere.
+  # It makes sense that the cartographer explains the method of obtaining the item, right? Otherwise AI will generate nonsense.
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  # MATERIAL~MIN_AMOUNT-MAXIMUM_AMOUNT~EXTRA_DESCRIPTION
+  allowed-items:
+    - "AXOLOTL_BUCKET~1-1~Axolotls can be found in lush caves somewhere underground."
+    - "GLOW_BERRIES~8-24~Glow berries can be found in lush caves somewhere underground."
+    - "TRIDENT~1-1~The cartographer doesn't know where the tridents might be found, but logically, tridents are related to ocean creatures."
+    - "AMETHYST_CLUSTER~8-24~Amethysts can be found somewhere underground."
+    - "CHORUS_FRUIT~8-16~Chorus fruit can be found in another dimension called «The End»."
+    - "ENCHANTED_GOLDEN_APPLE~1-1~The enchanted golden apple is the pinnacle of the art of enchantment and can rarely be found throughout the world."
+    - "GOAT_HORN~1-1~Goats live in the mountains and their horns are quite valuable."
+    - "GLOW_INK_SAC~8-24~Glowing ink can be derived from glowing squid, which can be found somewhere underground."
+    - "DIAMOND_HORSE_ARMOR~1-1~Diamond horse armor can be found in treasure chests around the world."
+    - "TOTEM_OF_UNDYING~1-1~The totem of undying can be obtained from evokers, dangerous spellcasters."
+    - "SHULKER_SHELL~4-12~Shulker shells can be found in another dimension called «The End»."
+    - "RECOVERY_COMPASS~1-1~Stories say that this unusual compass allows you to hear echoes echoing out of the deepest and darkest caves."
+    - "WITHER_ROSE~1-1~Stories tell us that these cursed roses can be obtained by fighting powerful beasts from another dimension."
+    - "WARPED_FUNGUS~8-12~The fungus that can be found in the depths of the Nether are imbued with a strange warped magic."
+    - "ECHO_SHARD~16-32~Stories say that echoes in the deepest caves, take shape."
+    - "DRAGON_BREATH~8-12~Dragon's Breath can be collected in bottles when fighting the powerful Ender Dragon."
+    - "DRAGON_HEAD~1-1~The Ender Dragon head is a proof of strength, it can only be obtained by the strongest of the strongest by killing the Ender Dragon."
+    - "NETHER_STAR~1-1~The Nether Start is a proof of strength, it can only be obtained by the strongest of the strongest by killing the Wither."
+    - "HEART_OF_THE_SEA~1-1~The Heart of the Sea is a rare ocean treasure."
+    - "NAUTILUS_SHELL~8-16~Nautilus shells can be found while fishing or obtained from sea creatures."
+    - "GLOWSTONE_DUST~8-32~Glowstone dust can be found in the depths of the Nether."
+    - "PRISMARINE_SHARD~8-32~Prismarine shards are rare stones that are endowed with the power of the ocean and can be obtained in battles with dangerous ocean creatures."
+    - "MAGMA_CREAM~8-16~Magma cream can be obtained in battles with creatures from Nether."
+    - "DIAMOND~6-16~Diamonds can be rarely mined deep underground, or as treasure in treasure chests around the world."
+    - "BREEZE_ROD~8-16~Somewhere underground are rare treasure chambers called «Trial Chambers». They are guarded by entities that can control the wind!"
+
+  quest-requirements: "The treasure hunting is about traveling. Every self-respecting researcher should have a collection of rare items, which the player will have to participate in. In addition, the villager should hint to the player where to find the desired item based on the extra description: {treasureDescription}."

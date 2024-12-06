@@ -1,0 +1,422 @@
+# QuestIntelligence (or just quill) by NoLogic (aka VoxelSquid). EARLY ALPHA.
+# Report any bugs and suggest your amazing ideas here: https://discord.gg/jTSCfBGAUu
+# Modrinth page: https://modrinth.com/plugin/questintelligence
+# Patreon: https://www.patreon.com/c/NoLogicWasHere
+# Please consider supporting! You can help this project to grow tremendously. <3
+
+# Core settings of the plugin.
+core-settings:
+
+  # Some countries may have problems connecting to AI. Proxy helps.
+  # HTTP, SOCKS
+  proxy:
+    type: HTTP
+    host: PROXY_HOST
+    port: 1337
+    username: "PROXY_USERNAME"
+    password: "PROXY_PASSWORD"
+
+  # Get your API key FOR FREE: https://aistudio.google.com/app/apikey
+  # Currently, only Gemini IS supported.
+  api-key: "GEMINI_API_KEY"
+
+  message-prefix: "§2§l[quill]§7"
+
+  # Add your worlds here.
+  enabled-worlds:
+    - "world"
+
+  # Language for quest description, villager names and phrases. (supported languages depends on AI)
+  language: "ENGLISH"
+
+  # The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.
+  automatic-configuration-translation: true
+
+  # Maximum duration of quest existence in ticks.
+  # Default is 48000, which is two game days.
+  quest-time-limit: 48000
+
+  # Default is #FFFFFF.
+  menu-button-text-color: "#FFFFFF"
+
+  # The period between actions in ticks. Villagers eat food, produce items related to their profession and generate quests.
+  # 1 second is 20 ticks.
+  tick-period:
+
+    # Default is 4800
+    food: 4800
+
+    # Default is 2400
+    work: 2400
+
+    # Default is 600
+    quest: 600
+
+  # The standard format of villagers' dialogs for every player on the server.
+  # IMMERSIVE: the message from the villager will be received in a cOoL dIaLoGuE wInDoW.
+  # CHAT: the message from the villager will be received via chat, classic.
+  # BOTH: well... there's no need to explain, I hope?..
+  default-dialogue-format: IMMERSIVE
+
+villager-item-producing:
+
+  # Additional cost for unique items based on their rarity
+  extra-rarity-price:
+    COMMON: 2500
+    UNCOMMON: 4500
+    RARE: 7500
+    EPIC: 11500
+    LEGENDARY: 15500
+    MYTHIC: 20000
+    DIVINE: 32000
+
+  # Basic chance of creating a unique item during production. Multiplied by villager level. (level 5 villager profession = 40% chance)
+  unique-item-chance: 8
+
+  # If true, random smithing template will be applied to each unique item that is armor.
+  # If false, the armorer will only use the smithing templates they has in their inventory. (armorers have a quest for collecting them)
+  forced-armor-trims: false
+
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  # A list of items whose quality will depend on the level of the crafter's skill.
+  mastery-affected-items:
+    - LEATHER_HELMET
+    - IRON_HELMET
+    - DIAMOND_HELMET
+    - NETHERITE_HELMET
+    - LEATHER_CHESTPLATE
+    - IRON_CHESTPLATE
+    - DIAMOND_CHESTPLATE
+    - NETHERITE_CHESTPLATE
+    - LEATHER_LEGGINGS
+    - IRON_LEGGINGS
+    - DIAMOND_LEGGINGS
+    - NETHERITE_LEGGINGS
+    - LEATHER_BOOTS
+    - IRON_BOOTS
+    - DIAMOND_BOOTS
+    - NETHERITE_BOOTS
+    - IRON_SWORD
+    - DIAMOND_SWORD
+    - NETHERITE_SWORD
+    - IRON_PICKAXE
+    - DIAMOND_PICKAXE
+    - NETHERITE_PICKAXE
+    - IRON_AXE
+    - DIAMOND_AXE
+    - NETHERITE_AXE
+
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
+  allowed-attributes:
+
+    swords:
+      - GENERIC_ATTACK_DAMAGE
+      - GENERIC_ATTACK_SPEED
+
+    pickaxes:
+      - PLAYER_BLOCK_BREAK_SPEED
+      - PLAYER_BLOCK_INTERACTION_RANGE
+
+    axes:
+      - PLAYER_BLOCK_BREAK_SPEED
+      - GENERIC_ATTACK_DAMAGE
+      - GENERIC_ATTACK_SPEED
+
+    helmets:
+      - GENERIC_ARMOR
+      - GENERIC_ARMOR_TOUGHNESS
+      - GENERIC_MAX_HEALTH
+
+    chestplates:
+      - GENERIC_ARMOR
+      - GENERIC_ARMOR_TOUGHNESS
+      - GENERIC_MAX_HEALTH
+      - GENERIC_SCALE
+
+    leggings:
+      - GENERIC_ARMOR
+      - GENERIC_ARMOR_TOUGHNESS
+      - GENERIC_MAX_HEALTH
+
+    boots:
+      - GENERIC_ARMOR
+      - GENERIC_ARMOR_TOUGHNESS
+      - GENERIC_MAX_HEALTH
+
+  # Villagers in different professions will request different items that are specific to their needs. The same applies to the items produced.
+  # The prefix "@" at the beginning indicates that all items containing the specified value are implied. For example, @DYE means that all dyes are used.
+  # material~minAmount-maxAmount
+  profession:
+
+    LEATHERWORKER:
+
+      # Items from item-priority will not be selected as quest rewards. These items will be requested by villagers as quest items when generating a quest related to collecting professions items.
+      item-priority:
+        - LEATHER~16-48
+        - ROTTEN_FLESH~8-16
+        - RABBIT_HIDE~8-24
+        - "@DYE~16-32"
+
+      # Items from item-produce are also used when generating trade deals. Villagers will try to trade these items for emeralds.
+      item-produce:
+        - LEATHER
+        - LEATHER_BOOTS
+        - LEATHER_CHESTPLATE
+        - LEATHER_HELMET
+        - LEATHER_LEGGINGS
+
+    MASON:
+
+      item-priority:
+        - STONE~32-64
+        - DIORITE~32-64
+        - ANDESITE~32-64
+        - DEEPSLATE~32-64
+        - CLAY_BALL~42-64
+        - "@DYE~32-64"
+        - "@BRICKS~36-64"
+        - COAL_BLOCK~4-8
+        - AMETHYST_SHARD~16-32
+        - QUARTZ~16-32
+        - LAPIS_LAZULI~16-32
+        - DIAMOND_BLOCK~2-4
+        - IRON_PICKAXE~1
+
+      item-produce:
+        - STONE_BRICKS
+        - DEEPSLATE_BRICKS
+        - CLAY
+        - DIAMOND
+        - COAL
+        - "@TERRACOTTA"
+
+    FLETCHER:
+
+      item-priority:
+        - STICK~16-32
+        - FLINT~16-32
+        - STRING~16-32
+        - TRIPWIRE~8-16
+
+      item-produce:
+        - ARROW
+        - BOW
+        - CROSSBOW
+
+    ARMORER:
+
+      item-priority:
+        - STONE~12-26
+        - BLACKSTONE~12-26
+        - AMETHYST_SHARD~12-24
+        - COPPER_BLOCK~4-8
+        - COAL~12-24
+        - IRON_INGOT~32-64
+        - DIAMOND~6-12
+        - OAK_PLANKS~12-24
+
+      item-produce:
+        - TORCH
+        - COPPER_INGOT
+        - IRON_INGOT
+        - DIAMOND
+        - IRON_HELMET
+        - IRON_CHESTPLATE
+        - IRON_LEGGINGS
+        - IRON_BOOTS
+        - DIAMOND_HELMET
+        - DIAMOND_CHESTPLATE
+        - DIAMOND_LEGGINGS
+        - DIAMOND_BOOTS
+
+    WEAPONSMITH:
+
+      item-priority:
+        - STONE~12-26
+        - BLACKSTONE~12-26
+        - COAL~12-24
+        - IRON_INGOT~32-64
+        - DIAMOND~6-12
+        - STICK~12-36
+        - OAK_PLANKS~12-24
+
+      item-produce:
+        - IRON_INGOT
+        - TORCH
+        - IRON_SWORD
+        - IRON_AXE
+        - DIAMOND
+        - DIAMOND_SWORD
+        - DIAMOND_AXE
+        - SHIELD
+
+    TOOLSMITH:
+
+      item-priority:
+        - STONE~12-26
+        - BLACKSTONE~12-26
+        - COAL~12-24
+        - IRON_INGOT~32-64
+        - DIAMOND~6-12
+        - STICK~12-36
+        - OAK_PLANKS~12-24
+
+      item-produce:
+        - TORCH
+        - IRON_INGOT
+        - IRON_SHOVEL
+        - IRON_PICKAXE
+        - IRON_HOE
+        - DIAMOND
+        - DIAMOND_SHOVEL
+        - DIAMOND_PICKAXE
+        - DIAMOND_HOE
+
+    LIBRARIAN:
+
+      item-priority:
+        - LEATHER~8-32
+        - FEATHER~8-16
+        - PAPER~24-64
+        - INK_SAC~16-24
+        - GLOW_INK_SAC~4-12
+        - "@DYE~16-32"
+
+      item-produce:
+        - BOOK
+
+    SHEPHERD:
+
+      item-priority:
+        - SHEARS~1
+        - "@DYE~16-32"
+        - STRING~32-48
+
+      item-produce:
+        - "@WOOL"
+        - "@BANNER"
+
+    CLERIC:
+
+      item-priority:
+        - WHITE_CANDLE~8-16
+        - GLASS~12-24
+        - BLAZE_ROD~12-24
+        - BREEZE_ROD~8-16
+        - NETHER_WART~12-24
+        - GHAST_TEAR~2-8
+        - REDSTONE_BLOCK~8-24
+        - GLOWSTONE_DUST~32-64
+        - GOLD_INGOT~16-32
+        - SLIME_BALL~12-24
+        - GUNPOWDER~24-48
+        - SUGAR~12-24
+        - RABBIT_FOOT~2-4
+        - GLISTERING_MELON_SLICE~12-16
+        - PUFFERFISH~6-12
+        - GOLDEN_CARROT~8-16
+        - SPIDER_EYE~12-24
+
+      item-produce:
+        # - "!RANDOM_POTION" todo
+        - MAGMA_CREAM
+        - FERMENTED_SPIDER_EYE
+
+      #special-recipes:
+      #  - "ROTTEN_FLESH -> LEATHER"
+
+    FISHERMAN:
+
+      item-priority:
+        - STICK~12-24
+        - STRING~12-24
+        - WHEAT_SEEDS~12-26
+        - LEATHER_BOOTS~1
+        - SALMON~12-24
+        - COD~12-24
+        - AXOLOTL_BUCKET~1
+        - TROPICAL_FISH_BUCKET~1
+        - TADPOLE_BUCKET~1
+
+      item-produce:
+        # - "!RANDOM_FISH" todo
+        - COOKED_SALMON
+        - COOKED_COD
+        - FISHING_ROD # TODO: It can be enchanted. :)
+
+    BUTCHER:
+
+      item-priority:
+        - CLOCK~1
+        - CHICKEN~8-16
+        - BEEF~8-16
+        - PORKCHOP~8-16
+        - FLINT~8-16
+        - IRON_AXE~1
+        - COAL_BLOCK~2-8
+        - LANTERN~2-12
+
+      item-produce:
+        - COOKED_CHICKEN
+        - COOKED_BEEF
+        - COOKED_PORKCHOP
+        - STICK
+        - COAL
+        - TORCH
+
+    CARTOGRAPHER:
+
+      item-priority:
+        - PAPER~24-48
+        - COMPASS~1
+        - "@SHERD~4-8"
+        - "@DYE~12-24"
+
+      item-produce:
+        - REDSTONE_BLOCK
+        # - !MAP TODO: Карты для изучения карты.
+
+    NITWIT:
+
+      item-priority:
+        - WHEAT_SEEDS~12-26
+
+      item-produce:
+        - BREAD
+
+    FARMER:
+
+      item-priority:
+        - WHEAT_SEEDS~12-26
+        - IRON_HOE~1
+        - LANTERN~2-12
+        - CLOCK~1
+        - SHEARS~1
+        - BONE_MEAL~18-32
+        - COCOA_BEANS~12-28
+        - POTATO~24-32
+        - CARROT~12-24
+        - EGG~8-16
+        - MILK_BUCKET~1
+        - MELON_SEEDS~12-24
+        - PUMPKIN_SEEDS~12-24
+        - BEETROOT_SEEDS~24-32
+        - SUGAR_CANE~24-36
+        - BAMBOO~16-32
+        - TORCHFLOWER~2-8
+        - GLOW_BERRIES~8-16
+        - RED_MUSHROOM~5-10
+        - BROWN_MUSHROOM~5-10
+        - SEA_PICKLE~12-24
+        - CHORUS_FRUIT~12-24
+        - DIAMOND_HOE~1
+
+      item-produce:
+        - BOWL
+        - BREAD
+        - CAKE
+        - COOKIE
+        - PUMPKIN_PIE
+        - PAPER
+        - BEETROOT_SOUP
+        - BAKED_POTATO
