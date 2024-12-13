@@ -2,10 +2,12 @@ package me.voxelsquid.quill.ai
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
+import me.voxelsquid.quill.event.SettlementNameGenerateEvent
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
 import me.voxelsquid.quill.event.VillagerDataGenerateEvent
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ProfessionManager
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemAttributes
@@ -14,6 +16,7 @@ import me.voxelsquid.quill.villager.ProfessionManager.Companion.isUniqueItem
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.VillagerManager.Companion.character
 import me.voxelsquid.quill.villager.VillagerManager.Companion.masteryLevelName
+import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
 import net.kyori.adventure.text.TextComponent
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -28,6 +31,7 @@ import java.io.IOException
 import java.io.StringReader
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.time.Duration
 import kotlin.random.Random
 
 
@@ -49,7 +53,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                 .build()
         }
     }
-    
+
+    private val duration = Duration.ofSeconds(20)
     private val client = OkHttpClient.Builder().apply {
         if (plugin.config.getString("core-settings.proxy.host") != "PROXY_HOST") {
             plugin.logger.info("Proxy usage in config.yml detected. When sending requests, a proxy will be used.")
@@ -58,7 +63,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     }.build()
 
     private val key = plugin.config.getString("core-settings.api-key")
-    private val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent?key=$key"
+    private val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$key"
 
     init {
         val languageFile = File(plugin.dataFolder, "language.yml")
@@ -73,6 +78,33 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             plugin.language = YamlConfiguration.loadConfiguration(languageFile)
             GenerationRequest(client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
         }
+    }
+
+    data class SettlementInformation(val townName: String)
+    fun generateSettlementName(settlement: Settlement) {
+
+        val placeholders = mapOf(
+            "settlementBiome"       to settlement.center.world.getBiome(settlement.center).name,
+            "language"              to "${plugin.config.getString("core-settings.language")}",
+            "randomLetter"          to this.getRandomLetter(),
+            "randomLetterLowerCase" to this.getRandomLetter().lowercase()
+        )
+
+        val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("settlement-name")!!) { acc, entry ->
+            acc.replace("{${entry.key}}", entry.value)
+        }
+
+        GenerationRequest(client, url, plugin).generate(prompt) { cleanedJsonResponse ->
+            plugin.server.scheduler.runTask(plugin) { _ ->
+                plugin.server.pluginManager.callEvent(
+                    SettlementNameGenerateEvent(
+                        settlement,
+                        plugin.gson.fromJson(cleanedJsonResponse, SettlementInformation::class.java)
+                    )
+                )
+            }
+        }
+
     }
 
     fun generatePersonalVillagerData(villager: Villager) {
@@ -103,7 +135,9 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     data class UniqueItemDescription(val itemDescription: String, val itemName: String)
     fun generateUniqueItemDescription(villager: Villager, item: ItemStack) {
 
-        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "Anonymous"
+        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "Unknown"
+        val settlementName = villager.settlement?.name ?: "Unknown"
+        val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
             "villagerName" to villagerName,
@@ -113,7 +147,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "language" to plugin.config.getString("core-settings.language")!!,
             "itemType" to item.type.toString(),
             "extraItemAttributes" to item.getUniqueItemAttributes(),
-            "itemRarity" to if (item.isUniqueItem()) item.getUniqueItemRarity().toString().lowercase() else ProfessionManager.UniqueItemRarity.COMMON.toString().lowercase()
+            "itemRarity" to if (item.isUniqueItem()) item.getUniqueItemRarity().toString().lowercase() else ProfessionManager.UniqueItemRarity.COMMON.toString().lowercase(),
+            "settlementName" to settlementName,
+            "settlementLevel" to settlementLevel,
+            "randomLetterLowerCase" to this.getRandomLetter().lowercase()
         )
 
         val promptTemplate = plugin.configurationClip.promptsConfig.getString("unique-item-description")
@@ -147,6 +184,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "Anonymous"
+        val settlementName = villager.settlement?.name ?: "no settlement"
+        val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
             "villagerName" to villagerName,
@@ -158,6 +197,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "rewardItem" to "${quest.rewardItem.type}",
             "language" to plugin.config.getString("core-settings.language")!!,
             "treasureDescription" to questManager.getTreasureItemDescription(quest.questItem),
+            "settlementName" to settlementName,
+            "settlementLevel" to settlementLevel,
             "extraArguments" to "[$extraArguments]"
         )
 
@@ -323,8 +364,9 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             questJson.replace("```json\n", "")
                 .replace("```", "")
                 .replace("\\n", "\n")
-                .replace("  ", " ")
+                .replace(Regex("\\s{2,}"), " ") // Избавляемся от богомерзких двойных пробелов
                 .replace("*", "")
+                .replace(Regex("\\.{3}(\\S)"), "... ") // Исправляем отсутствие пробела после троеточия.
 
         private fun findJson(response: String): String? {
             val regex = """\{[^{}]*}""".toRegex()

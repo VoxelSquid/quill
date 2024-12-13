@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.SettlementManager
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
@@ -30,6 +31,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
     lateinit var configurationClip: ConfigurationClip
     lateinit var commandManager:    PaperCommandManager
     lateinit var villagerManager:   VillagerManager
+    lateinit var settlementManager: SettlementManager
     lateinit var questGenerator:    GeminiProvider
 
     var language: YamlConfiguration? = null
@@ -49,6 +51,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
         this.setupCommands()
         questGenerator  = GeminiProvider(this)
         villagerManager = VillagerManager(this)
+        settlementManager = SettlementManager(this)
         this.server.pluginManager.registerEvents(this, this)
     }
 
@@ -165,7 +168,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    val debug = false
+    val debug = true
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }

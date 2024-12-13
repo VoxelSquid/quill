@@ -8,6 +8,8 @@ import me.voxelsquid.quill.event.VillagerDataGenerateEvent
 import me.voxelsquid.quill.nms.VersionProvider.Companion.consume
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.Settlement
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.villager.interaction.DialogueManager
@@ -143,6 +145,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         private val villagerVoiceSoundKey:   NamespacedKey = NamespacedKey(plugin, "voiceSound")
         private val villagerVoicePitchKey:   NamespacedKey = NamespacedKey(plugin, "voicePitch")
         private val villagerHungerKey:       NamespacedKey = NamespacedKey(plugin, "hunger")
+        private val villagerSettlementKey:   NamespacedKey = NamespacedKey(plugin, "settlement")
         val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "inventory")
 
         /** Every time someone opens a trade deal with a villager, a new trade list is created. And the old one is overwritten. */
@@ -280,6 +283,19 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                     3 -> "JOURNEYMAN"
                     4 -> "EXPERT"
                     else -> "MASTER"
+                }
+            }
+
+        var Villager.settlement : Settlement?
+            get() {
+                persistentDataContainer.get(villagerSettlementKey, PersistentDataType.STRING)?.let { settlementName ->
+                    return settlements.find { it.name == settlementName }
+                }
+                return null
+            }
+            set(settlement) {
+                settlement?.let {
+                    persistentDataContainer.set(villagerSettlementKey, PersistentDataType.STRING, it.name)
                 }
             }
 
