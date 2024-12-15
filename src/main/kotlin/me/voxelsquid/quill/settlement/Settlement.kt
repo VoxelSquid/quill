@@ -1,9 +1,11 @@
 package me.voxelsquid.quill.settlement
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.persistence.PersistentDataType
@@ -12,16 +14,21 @@ import java.util.*
 
 // Сериализация сетлментов происходит при загрузке чанков, когда вилладжер загружается из папки мира
 // У вилладжера в PDC хранится информация о поселении, к которому он принадлежит. Это значение инициализириуется, если рядом есть 10 жителей.
-class Settlement(val world: World, var name: String, val center: Location, var currentMayor: UUID?, val creationDate: Date, val villagers: MutableList<Villager> = mutableListOf()) {
+class Settlement(val data: SettlementData, val villagers: MutableList<Villager> = mutableListOf()) {
 
-    private var borderBoundingBox = BoundingBox.of(center, 32.0, 32.0, 32.0)
+    data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, var currentMayor: UUID?, val creationTime: Long)
+
+    val creationDate = Date(data.creationTime)
+    val world        = QuestIntelligence.pluginInstance.server.getWorld(data.worldUUID)!!
+
+    private var borderBoundingBox = BoundingBox.of(data.center, 64.0, 32.0, 64.0)
     private val cuboidVisualizer  = CachedSettlementCuboid(world, borderBoundingBox)
     private val tileEntities      = mutableMapOf<Material, Int>()
 
     private fun countTileEntities() {
 
         // Надо будет подумать над тем, какие блоки мы будем требовать для.. эм.. зачем и какие. Да.
-        var beds = 0
+        var beds  = 0
         var bells = 0
 
         for (x in borderBoundingBox.minX.toInt()..borderBoundingBox.maxX.toInt()) {
@@ -56,13 +63,6 @@ class Settlement(val world: World, var name: String, val center: Location, var c
             villagers.size > 50 -> SettlementSize.METROPOLIS
             else -> SettlementSize.UNDERDEVELOPED
         }
-    }
-
-    // Механизм сериализации, мы сохраняем сериализованный в JSON сетлемент в самом мире.
-    // Стоит учесть, что поселений может быть много и у нас должен быть некий список.
-    // Получается, речь идёт о массиве JSON-элементов.
-    fun save() {
-        world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, "")
     }
 
     enum class SettlementSize {

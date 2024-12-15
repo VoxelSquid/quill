@@ -1,10 +1,14 @@
 package me.voxelsquid.quill.settlement
 
+import me.voxelsquid.quill.QuestIntelligence
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.bukkit.util.BoundingBox
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class CachedSettlementCuboid(private val world: World, private val boundingBox: BoundingBox) {
 
@@ -62,12 +66,28 @@ class CachedSettlementCuboid(private val world: World, private val boundingBox: 
         }
     }
 
+    private val plugin = QuestIntelligence.pluginInstance
     fun showBoundingBox(player: Player) {
-        val world: World = player.world
 
-        // Генерируем партикли из кэша
-        particleLocations.forEach { loc ->
-            world.spawnParticle(Particle.FLAME, loc, 1, 0.0, 0.0, 0.0, 0.0)
+        val world: World = player.world
+        val particlesPerTick = particleLocations.size / 20
+
+        for (tick in 0 until 20) {
+            particleThreadPool.schedule({
+                val start = tick * particlesPerTick
+                val end = start + particlesPerTick
+
+                for (i in start until end) {
+                    val loc = particleLocations[i]
+                    plugin.server.scheduler.runTask(plugin) { _ ->
+                        world.spawnParticle(Particle.FLAME, loc, 1, 0.0, 0.0, 0.0, 0.0)
+                    }
+                }
+            }, tick * 50L, TimeUnit.MILLISECONDS)
         }
+    }
+
+    companion object {
+        val particleThreadPool: ScheduledExecutorService = Executors.newScheduledThreadPool(2)
     }
 }

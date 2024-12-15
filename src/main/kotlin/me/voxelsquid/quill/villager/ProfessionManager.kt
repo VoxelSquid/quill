@@ -45,6 +45,17 @@ class ProfessionManager: Listener {
         if (villagers.isEmpty())
             return
 
+        // Мы не хотим отправлять много запросов нейронке за раз, поэтому создаём уникальные предметы постепенно.
+        plugin.server.scheduler.runTaskTimer(plugin, { _ ->
+            uniqueItemProduceQueue.keys.randomOrNull()?.let { villager ->
+                uniqueItemProduceQueue[villager]?.let { uniqueItem ->
+                    plugin.debug("Villager of profession ${villager.profession} tries to produce an unique item of type ${uniqueItem.type}!")
+                    plugin.questGenerator.generateUniqueItemDescription(villager, uniqueItem)
+                    uniqueItemProduceQueue.remove(villager)
+                }
+            }
+        }, 0, 100)
+
         plugin.server.scheduler.runTaskAsynchronously(plugin) { _ ->
 
             for (villager in villagers) {
@@ -130,6 +141,8 @@ class ProfessionManager: Listener {
         }
     }
 
+    private val uniqueItemProduceQueue = mutableMapOf<Villager, ItemStack>()
+
     @EventHandler
     private fun onVillagerProduceItem(event: VillagerProduceItemEvent) {
         if (event.producedItem.type == Material.BOOK && event.villager.profession == Villager.Profession.LIBRARIAN
@@ -141,9 +154,8 @@ class ProfessionManager: Listener {
 
             // Unique item generation
             if (Random.nextInt(100) in 0..professionLevel * plugin.config.getInt("villager-item-producing.unique-item-chance")) {
-                plugin.debug("Villager of profession ${villager.profession} tries to produce an unique item of type ${item.type}!")
                 val uniqueItem = this.createUniqueItem(villager, item)
-                plugin.questGenerator.generateUniqueItemDescription(villager, uniqueItem)
+                uniqueItemProduceQueue[villager] = uniqueItem
                 return
             }
 

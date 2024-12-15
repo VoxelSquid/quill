@@ -6,16 +6,17 @@ import com.google.gson.GsonBuilder
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.CachedSettlementCuboid.Companion.particleThreadPool
+import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
+import me.voxelsquid.quill.util.LocationAdapter
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
 import me.voxelsquid.quill.villager.interaction.InteractionMenu
 import me.voxelsquid.quill.villager.interaction.MenuManager
-import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
-import org.bukkit.Sound
-import org.bukkit.World
+import org.bukkit.*
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -58,6 +59,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
     override fun onDisable() {
         DialogueManager.dialogues.values.forEach(DialogueManager.DialogueWindow::destroy)
         MenuManager.openedMenuList.forEach(InteractionMenu::destroy)
+        particleThreadPool.shutdown()
     }
 
     val enabledWorlds: List<World> by lazy {
@@ -80,8 +82,8 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     val gson: Gson = GsonBuilder()
         .setPrettyPrinting()
-        .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestSerializer())
-        .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestDeserializer())
+        .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestAdapter())
+        .registerTypeAdapter(Location::class.java, LocationAdapter())
         .create()
 
     @EventHandler

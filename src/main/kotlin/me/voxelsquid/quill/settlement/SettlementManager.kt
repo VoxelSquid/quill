@@ -1,5 +1,7 @@
 package me.voxelsquid.quill.settlement
 
+import com.google.gson.JsonArray
+import com.google.gson.reflect.TypeToken
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
 import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
@@ -13,6 +15,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.WorldLoadEvent
+import org.bukkit.event.world.WorldUnloadEvent
+import org.bukkit.persistence.PersistentDataType
 import java.util.*
 
 /*
@@ -29,7 +33,7 @@ TODO Рабочий прототип
 */
 class SettlementManager(val plugin: QuestIntelligence): Listener {
 
-    private val settlementDetectionDistance = 32.0
+    private val settlementDetectionDistance = 128.0
     private val minimumOfVillagersToSettlementCreation = 5
     private val defaultSettlementName = "Default Settlement Name"
 
@@ -84,9 +88,9 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         }, 0, 200)
     }
 
-    // Созданное поселение автоматически добавляется в лист
     private fun createSettlement(world: World, center: Location, villagers: List<Villager>) : Settlement {
-        return Settlement(world, defaultSettlementName, center, null, Date(), villagers.toMutableList()).also { settlement ->
+        val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis())
+        return Settlement(data, villagers.toMutableList()).also { settlement ->
             plugin.questGenerator.generateSettlementName(settlement)
             settlements.add(settlement)
         }
@@ -94,10 +98,10 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     @EventHandler
     private fun onSettlementNameGenerate(event: SettlementNameGenerateEvent) {
-        event.settlement.name = event.data.townName
+        event.settlement.data.settlementName = event.data.townName
         event.settlement.world.players.forEach { player -> player.sendMessage("§8[Quill Debug] §7Settlement §6${event.data.townName} §7has been created!") }
         event.settlement.villagers.forEach { villager -> villager.settlement = event.settlement }
-        event.settlement.save()
+        event.settlement.world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, plugin.gson.toJson(settlements.map { it.data }))
     }
 
     @EventHandler
@@ -109,7 +113,13 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     @EventHandler
     private fun onWorldLoad(event: WorldLoadEvent) {
-        // загружаем все поселения в память тут
+        event.world.persistentDataContainer.get(settlementsWorldKey, PersistentDataType.STRING)?.let { serializedSettlements ->
+            plugin.gson.fromJson(serializedSettlements, object : TypeToken<List<Settlement.SettlementData>>() {}).let { list ->
+                list.forEach { settlementData ->
+                    settlements.add(Settlement(settlementData))
+                }
+            }
+        }
     }
 
     @EventHandler

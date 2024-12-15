@@ -35,7 +35,8 @@ data class VillagerQuest (val type: QuestType, val questItem: ItemStack, var rew
         }
     }
 
-    class VillagerQuestSerializer : JsonSerializer<VillagerQuest> {
+    class VillagerQuestAdapter : JsonSerializer<VillagerQuest>, JsonDeserializer<VillagerQuest> {
+
         override fun serialize(
             src: VillagerQuest,
             typeOfSrc: Type,
@@ -54,9 +55,7 @@ data class VillagerQuest (val type: QuestType, val questItem: ItemStack, var rew
 
             return jsonObject
         }
-    }
 
-    class VillagerQuestDeserializer : JsonDeserializer<VillagerQuest> {
         override fun deserialize(
             json: JsonElement,
             typeOfT: Type,

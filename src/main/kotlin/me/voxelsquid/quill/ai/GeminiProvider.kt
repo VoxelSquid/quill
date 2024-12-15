@@ -1,5 +1,7 @@
 package me.voxelsquid.quill.ai
 
+import com.google.gson.JsonSyntaxException
+import com.google.gson.stream.MalformedJsonException
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
@@ -84,7 +86,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     fun generateSettlementName(settlement: Settlement) {
 
         val placeholders = mapOf(
-            "settlementBiome"       to settlement.center.world.getBiome(settlement.center).name,
+            "settlementBiome"       to settlement.data.center.world.getBiome(settlement.data.center).name,
             "language"              to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"          to this.getRandomLetter(),
             "randomLetterLowerCase" to this.getRandomLetter().lowercase()
@@ -122,12 +124,17 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
         GenerationRequest(client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
-                plugin.server.pluginManager.callEvent(
-                    VillagerDataGenerateEvent(
-                        villager,
-                        plugin.gson.fromJson(cleanedJsonResponse, VillagerManager.PersonalVillagerData::class.java)
+                try {
+                    plugin.server.pluginManager.callEvent(
+                        VillagerDataGenerateEvent(
+                            villager,
+                            plugin.gson.fromJson(cleanedJsonResponse, VillagerManager.PersonalVillagerData::class.java)
+                        )
                     )
-                )
+                } catch (exception: JsonSyntaxException) {
+                    plugin.logger.warning("JsonSyntaxException during generating PDV)! Please, report this to the developer!")
+                    plugin.logger.warning(cleanedJsonResponse)
+                }
             }
         }
     }
@@ -135,8 +142,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     data class UniqueItemDescription(val itemDescription: String, val itemName: String)
     fun generateUniqueItemDescription(villager: Villager, item: ItemStack) {
 
-        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "Unknown"
-        val settlementName = villager.settlement?.name ?: "Unknown"
+        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "unknown"
+        val settlementName = villager.settlement?.data?.settlementName ?: "no settlement"
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
@@ -183,8 +190,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             return
         }
 
-        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "Anonymous"
-        val settlementName = villager.settlement?.name ?: "no settlement"
+        val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "unknown"
+        val settlementName = villager.settlement?.data?.settlementName ?: "no settlement"
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
@@ -366,7 +373,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                 .replace("\\n", "\n")
                 .replace(Regex("\\s{2,}"), " ") // Избавляемся от богомерзких двойных пробелов
                 .replace("*", "")
-                .replace(Regex("\\.{3}(\\S)"), "... ") // Исправляем отсутствие пробела после троеточия.
+                .replace(Regex("\\.{3}(?=\\S)"), "..." + " ") // Исправляем отсутствие пробела после троеточия
 
         private fun findJson(response: String): String? {
             val regex = """\{[^{}]*}""".toRegex()

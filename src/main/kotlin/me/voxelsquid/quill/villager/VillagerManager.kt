@@ -123,14 +123,16 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         }
     }
 
-    data class PersonalVillagerData(val villagerName: String,
+    data class PersonalVillagerData(val villagerName: String?,
                                     val sleepInterruptionMessages: MutableList<String>,
                                     val damageMessages: MutableList<String>,
                                     val joblessMessages: MutableList<String>)
 
     private fun savePersonalVillagerData(villager: Villager, data: PersonalVillagerData) {
-        villager.customName(Component.text(data.villagerName))
-        villager.persistentDataContainer.set(villagerPersonalDataKey, PersistentDataType.STRING, plugin.gson.toJson(data))
+        data.villagerName?.let { name ->
+            villager.customName(Component.text(name))
+            villager.persistentDataContainer.set(villagerPersonalDataKey, PersistentDataType.STRING, plugin.gson.toJson(data))
+        }
     }
 
     companion object {
@@ -289,13 +291,13 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         var Villager.settlement : Settlement?
             get() {
                 persistentDataContainer.get(villagerSettlementKey, PersistentDataType.STRING)?.let { settlementName ->
-                    return settlements.find { it.name == settlementName }
+                    return settlements.find { it.data.settlementName == settlementName }
                 }
                 return null
             }
             set(settlement) {
                 settlement?.let {
-                    persistentDataContainer.set(villagerSettlementKey, PersistentDataType.STRING, it.name)
+                    persistentDataContainer.set(villagerSettlementKey, PersistentDataType.STRING, it.data.settlementName)
                 }
             }
 
