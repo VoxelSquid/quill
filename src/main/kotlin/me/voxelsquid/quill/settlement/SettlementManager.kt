@@ -1,6 +1,5 @@
 package me.voxelsquid.quill.settlement
 
-import com.google.gson.JsonArray
 import com.google.gson.reflect.TypeToken
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
@@ -15,9 +14,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.WorldLoadEvent
-import org.bukkit.event.world.WorldUnloadEvent
 import org.bukkit.persistence.PersistentDataType
-import java.util.*
 
 /*
 TODO Кодинг
@@ -106,9 +103,17 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     @EventHandler
     private fun onPlayerInteract(event: PlayerInteractEvent) {
-        if (event.clickedBlock?.type == Material.BELL) {
-            // При клике по колоколу в деревне открывается некий гуй, который я ещё не придумал
+        event.clickedBlock?.let { block ->
+            if (block.type == Material.BELL) {
+                settlements.forEach { settlement ->
+                    if (settlement.territory.contains(block.location.toVector())) {
+                        settlement.openControlPanel(event.player)
+                        return
+                    }
+                }
+            }
         }
+
     }
 
     @EventHandler
@@ -125,9 +130,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     @EventHandler
     private fun onChunkLoad(event: ChunkLoadEvent) {
         event.chunk.entities.filterIsInstance<Villager>().forEach { villager ->
-            villager.settlement?.let { settlementName ->
-                // Когда чанк загружается, мы проходимся по всем жителями и добавляем их в соотвествующие сеттлементы (если житель вообще где-то "прописан")
-            }
+            villager.settlement?.villagers?.add(villager)
         }
     }
 

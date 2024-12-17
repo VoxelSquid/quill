@@ -53,3 +53,44 @@ interaction-menu:
   return-button: "Return"
 
   close-button: "Close"
+
+# Settlement menu buttons and other stuff
+settlement-menu:
+
+  villagers-button: "§6Villagers"
+  villagers-button-lore:
+    - "§fКоличество жителей: §a{villagerAmount}"
+    - "§7Нажмите, чтобы открыть меню со списком жителей."
+
+  visibility-button: "§6Visibility"
+  visibility-button-lore:
+    - "§fСостояние видимости: {visibilityState}"
+    - "§7Нажмите, чтобы переключить видимость поселения."
+  visibility-state:
+    visible: "§avisible"
+    hidden: "§chidden"
+
+  policies-button: "§6Policies"
+  policies-button-lore:
+    - "§7Нажмите, чтобы открыть меню управления политиками поселения."
+
+  actions-button: "§6Actions"
+  actions-button-lore:
+    - "§7Нажмите, чтобы открыть меню действий."
+
+  food-button: "§6Food"
+  food-button-lore:
+    - "§fОбщее количество еды: §e{totalFoodAmount}"
+    - "§fКоличество голодающих жителей: §a{starvingVillagersAmount}"
+
+  craft-button: "§6Craft"
+  craft-button-lore:
+    - "§7Нажмите, чтобы открыть меню с информацией о ремесленниках."
+
+  beds-button: "§6Beds"
+  beds-button-lore:
+    - "§fКоличество кроватей: §e{bedAmount}"
+    - "§fВозможность прибытия новичка: {arrivalPossibility}"
+  arrival-possibility:
+    possible: "§a§lPOSSIBLE"
+    impossible: "§c§lIMPOSSIBLE"

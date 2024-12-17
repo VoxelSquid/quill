@@ -7,9 +7,7 @@ import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.CachedSettlementCuboid.Companion.particleThreadPool
-import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager
-import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.LocationAdapter
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager
@@ -25,7 +23,9 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
+import org.ipvp.canvas.MenuFunctionListener
 import java.io.File
+
 
 class QuestIntelligence : JavaPlugin(), Listener {
 
@@ -54,6 +54,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
         villagerManager = VillagerManager(this)
         settlementManager = SettlementManager(this)
         this.server.pluginManager.registerEvents(this, this)
+        this.server.pluginManager.registerEvents(MenuFunctionListener(), this)
     }
 
     override fun onDisable() {

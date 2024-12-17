@@ -345,6 +345,11 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                 return quillInventory.filterNotNull().filter { itemStack -> itemsToProduce.contains(itemStack.type.toString()) }.toList()
             }
 
+        val Villager.foodAmount: Int
+            get() {
+                return quillInventory.filterNotNull().count { it.type.isEdible }
+            }
+
         val Villager.voiceSound: Sound
             get() {
                 val value = this.persistentDataContainer.get(villagerVoiceSoundKey, PersistentDataType.STRING)

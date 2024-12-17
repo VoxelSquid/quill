@@ -38,6 +38,14 @@ class ItemStackCalculator {
             }
         }
 
+        fun ItemStack.setMeta(itemName: String, lore: List<String>): ItemStack {
+            itemMeta = itemMeta?.apply {
+                setDisplayName(itemName)
+                this.lore = lore
+            }
+            return this
+        }
+
     }
 
 }

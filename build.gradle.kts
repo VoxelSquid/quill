@@ -28,6 +28,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.1.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
+    implementation("com.github.IPVP-MC:canvas:2365c13da0")
 }
 
 allprojects {
@@ -36,6 +37,7 @@ allprojects {
         maven("https://repo.aikar.co/content/groups/aikar/")
         maven("https://hub.spigotmc.org/nexus/content/groups/public/")
         maven("https://papermc.io/repo/repository/maven-public/")
+        maven("https://jitpack.io")
     }
 }
 
