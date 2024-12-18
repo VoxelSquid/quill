@@ -277,7 +277,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
             }
         }
 
-        val Villager.masteryLevelName : String
+        val Villager.professionLevelName : String
             get() {
                 return when (this.villagerLevel) {
                     1 -> "NOVICE"

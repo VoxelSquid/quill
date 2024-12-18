@@ -22,7 +22,7 @@ class CustomHead {
         return profile
     }
 
-    fun base64(texture: String) : ItemStack {
+    fun texture(texture: String) : ItemStack {
         val profile = getProfile("https://textures.minecraft.net/texture/$texture")
         val head = ItemStack(Material.PLAYER_HEAD)
         val meta = head.itemMeta as SkullMeta

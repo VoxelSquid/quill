@@ -57,10 +57,19 @@ interaction-menu:
 # Settlement menu buttons and other stuff
 settlement-menu:
 
+  villagers-menu-title: "§0Villagers"
   villagers-button: "§6Villagers"
   villagers-button-lore:
     - "§fКоличество жителей: §a{villagerAmount}"
     - "§7Нажмите, чтобы открыть меню со списком жителей."
+  villager-info:
+    - "§fТип личности: §d{personality}"
+    - "§fПрофессия: §3{profession}"
+    - "§fУровень: §3{professionLevel}"
+    - "§fЗдоровье: §c{health}"
+    - "§fСытость: §e{hunger}"
+    - "§fБогатство: §a{networth}$"
+    - "§fКвесты: §d{quests}"
 
   visibility-button: "§6Visibility"
   visibility-button-lore:

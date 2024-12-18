@@ -87,7 +87,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     private fun createSettlement(world: World, center: Location, villagers: List<Villager>) : Settlement {
         val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis())
-        return Settlement(data, villagers.toMutableList()).also { settlement ->
+        return Settlement(data, villagers.toMutableSet()).also { settlement ->
             plugin.questGenerator.generateSettlementName(settlement)
             settlements.add(settlement)
         }
@@ -107,7 +107,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
             if (block.type == Material.BELL) {
                 settlements.forEach { settlement ->
                     if (settlement.territory.contains(block.location.toVector())) {
-                        settlement.openControlPanel(event.player)
+                        settlement.openControlPanelMenu(event.player)
                         return
                     }
                 }

@@ -1,7 +1,6 @@
 package me.voxelsquid.quill.ai
 
 import com.google.gson.JsonSyntaxException
-import com.google.gson.stream.MalformedJsonException
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
@@ -17,7 +16,7 @@ import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemRar
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.isUniqueItem
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.VillagerManager.Companion.character
-import me.voxelsquid.quill.villager.VillagerManager.Companion.masteryLevelName
+import me.voxelsquid.quill.villager.VillagerManager.Companion.professionLevelName
 import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
 import net.kyori.adventure.text.TextComponent
 import okhttp3.*
@@ -150,7 +149,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "villagerName" to villagerName,
             "villagerType" to "${villager.villagerType}",
             "villagerProfession" to "${villager.profession}",
-            "villagerProfessionLevel" to villager.masteryLevelName,
+            "villagerProfessionLevel" to villager.professionLevelName,
             "language" to plugin.config.getString("core-settings.language")!!,
             "itemType" to item.type.toString(),
             "extraItemAttributes" to item.getUniqueItemAttributes(),
@@ -199,7 +198,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "villagerType" to "${villager.villagerType}",
             "villagerProfession" to "${villager.profession}",
             "villagerPersonality" to "${villager.character}",
-            "villagerProfessionLevel" to villager.masteryLevelName,
+            "villagerProfessionLevel" to villager.professionLevelName,
             "questItem" to quest.questItem.type.name.replace('_', ' ').lowercase(),
             "rewardItem" to "${quest.rewardItem.type}",
             "language" to plugin.config.getString("core-settings.language")!!,

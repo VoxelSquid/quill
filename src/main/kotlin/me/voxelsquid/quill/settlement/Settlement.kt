@@ -1,21 +1,35 @@
+@file:Suppress("DEPRECATION")
+
 package me.voxelsquid.quill.settlement
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.setMeta
+import me.voxelsquid.quill.villager.VillagerManager.Companion.character
 import me.voxelsquid.quill.villager.VillagerManager.Companion.foodAmount
+import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
+import me.voxelsquid.quill.villager.VillagerManager.Companion.professionLevelName
+import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
+import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.BoundingBox
+import org.ipvp.canvas.Menu
+import org.ipvp.canvas.mask.BinaryMask
+import org.ipvp.canvas.mask.Mask
+import org.ipvp.canvas.paginate.PaginatedMenuBuilder
 import org.ipvp.canvas.slot.ClickOptions
 import org.ipvp.canvas.type.ChestMenu
 import java.util.*
 
+
 // Сериализация сетлментов происходит при загрузке чанков, когда вилладжер загружается из папки мира
 // У вилладжера в PDC хранится информация о поселении, к которому он принадлежит. Это значение инициализириуется, если рядом есть 10 жителей.
-class Settlement(val data: SettlementData, val villagers: MutableList<Villager> = mutableListOf()) {
+class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> = mutableSetOf()) {
 
     data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, var currentMayor: UUID?, val creationTime: Long, var visibilityState: Boolean = true)
 
@@ -47,7 +61,7 @@ class Settlement(val data: SettlementData, val villagers: MutableList<Villager> 
         tileEntities[Material.RED_BED] = beds / 2
     }
 
-    fun openControlPanel(player: Player) {
+    fun openControlPanelMenu(player: Player) {
 
         val language = plugin.language ?: return
 
@@ -80,9 +94,12 @@ class Settlement(val data: SettlementData, val villagers: MutableList<Villager> 
         // Shows info about mood, health and other stuff.
         settlementMenu.getSlot(0).apply {
             val texture = if (isChristmas()) "f0ebd377fe84e00b824882a6c6e96c95d2356ff94a1f1d9a4dda2e1e4fef1ff6" else "25fafa2be55bd15aea6e2925f5d24f8068e0f4a2616f3b92b380d94912f0ec5f"
-            val item = CustomHead().base64(texture).setMeta(language.getString("settlement-menu.villagers-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.villagers-button-lore")))
+            val item = CustomHead().texture(texture).setMeta(language.getString("settlement-menu.villagers-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.villagers-button-lore")))
             item.amount = villagers.size
             this.item = item
+            this.setClickHandler { player, _ ->
+                openVillagerListMenu(player)
+            }
         }
 
         // Ender eye, clickable (requires reputation to interact). Villagers will come into the village when some conditions are met.
@@ -116,6 +133,57 @@ class Settlement(val data: SettlementData, val villagers: MutableList<Villager> 
         }
 
         settlementMenu.open(player)
+    }
+
+    private val villagerHead = CustomHead().texture("b879e3661b50f20317fea11a4e775c80c0559c1242e655f81680e08a4ede3432")
+    private fun openVillagerListMenu(player: Player) {
+
+        val language = plugin.language ?: return
+
+        fun createVillagerHead(villager: Villager) : ItemStack {
+
+            val villagerName = villager.customName ?: "Villager"
+            val placeholders = mapOf(
+                "profession"      to villager.profession.name,
+                "professionLevel" to villager.professionLevelName,
+                "personality"     to villager.character.toString(),
+                "hunger"          to "${villager.hunger}/20",
+                "health"          to "${villager.health}/${villager.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value}",
+                "networth"        to villager.quillInventory.filterNotNull().toList().calculatePrice().toString(),
+                "quests"    to if (villager.quests.isEmpty()) "0" else "${villager.quests.size + 1}"
+            )
+
+            val lore = language.getStringList("settlement-menu.villager-info").map { line ->
+                placeholders.entries.fold(line) { acc, entry ->
+                    acc.replace("{${entry.key}}", entry.value)
+                }
+            }
+
+            return villagerHead.clone().setMeta("§6$villagerName", lore)
+        }
+
+        // Создаём предметы (головы жителей с инфой о них), помещаем их в лист
+        val villagers = mutableListOf<ItemStack>()
+        this.villagers.forEach { villager ->
+            villagers.add(createVillagerHead(villager))
+        }
+
+        // Создаём страничное меню
+        val rows = if (villagers.size > 8) 2 else 1
+        val pageTemplate = ChestMenu.builder(rows).title(language.getString("settlement-menu.villagers-menu-title")!!).redraw(true)
+        val itemSlots: Mask = BinaryMask.builder(pageTemplate.dimensions).pattern("111111111").build()
+        val pages: List<Menu> = PaginatedMenuBuilder.builder(pageTemplate)
+            .slots(itemSlots)
+            .nextButton(ItemStack(Material.ARROW))
+            .nextButtonEmpty(ItemStack(Material.AIR))
+            .nextButtonSlot(17)
+            .previousButton(ItemStack(Material.ARROW))
+            .previousButtonEmpty(ItemStack(Material.AIR))
+            .previousButtonSlot(9)
+            .addItems(villagers)
+            .build()
+
+        pages.first().open(player)
     }
 
     private fun isChristmas(): Boolean {
