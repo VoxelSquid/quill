@@ -29,8 +29,8 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
             CharacterType.getEnumValuesAsStrings()
         }
 
-        plugin.commandManager.commandCompletions.registerCompletion("settlements") {
-            settlements.map { it.data.settlementName }
+        plugin.commandManager.commandCompletions.registerCompletion("settlements") { context ->
+            settlements[context.player.world]?.map { it.data.settlementName }
         }
 
     }
@@ -41,7 +41,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     }
 
     @Subcommand("reload")
-    @CommandPermission("quill.op")
+    @CommandPermission("quill.reload")
     fun onReload(sender: CommandSender) {
         plugin.reloadConfigurations()
         plugin.questGenerator = GeminiProvider(plugin)
@@ -60,7 +60,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     }
 
     @Subcommand("dialogue format")
-    @CommandPermission("quill.player")
+    @CommandPermission("quill.dialogue.format")
     @Description("Specialized debug command for easy testing of villagers.")
     fun onDialogueFormat(player: Player, format: DialogueManager.DialogueFormat) {
         if (DialogueManager.DialogueFormat.entries.find { type -> type == format } != null) {
@@ -74,7 +74,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     }
 
     @Subcommand("villager create")
-    @CommandPermission("quill.debug")
+    @CommandPermission("quill.villager.create")
     @CommandCompletion("@villagerPersonalities @villagerTypes")
     @Description("Specialized debug command for easy testing of villagers.")
     fun onVillager(player: Player, personality: CharacterType, type: String) {
@@ -96,30 +96,25 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
 
     }
 
+    @Subcommand("settlement list")
+    @CommandPermission("quill.settlement.list")
+    fun onSettlementList(player: Player) {
+        player.sendMessage("§6[8] §7Settlements:")
+        settlements[player.world]?.forEach { settlement ->
+            player.sendMessage(" §7- §6${settlement.data.settlementName}")
+        }
+    }
+
     @Subcommand("settlement teleport")
-    @CommandPermission("quill.debug")
+    @CommandPermission("quill.settlement.teleport")
     @CommandCompletion("@settlements")
     fun onSettlementTeleport(player: Player, settlementName: String) {
-
-        val settlement = settlements.find { it.data.settlementName == settlementName }
+        val settlement = settlements[player.world]?.find { it.data.settlementName == settlementName }
         if (settlement == null) {
             player.sendMessage("§4Settlement $settlementName doesn't exist.")
             return
         }
-
         player.teleport(settlement.data.center)
-
-    }
-
-    @Subcommand("settlement list")
-    @CommandPermission("quill.debug")
-    fun onSettlementList(player: Player) {
-
-        player.sendMessage("§6[8] §7Settlements:")
-        settlements.forEach { settlement ->
-            player.sendMessage(" §7- §6${settlement.data.settlementName}")
-        }
-
     }
 
 }

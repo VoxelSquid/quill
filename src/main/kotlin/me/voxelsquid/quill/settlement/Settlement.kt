@@ -3,6 +3,7 @@
 package me.voxelsquid.quill.settlement
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.setMeta
 import me.voxelsquid.quill.villager.VillagerManager.Companion.character
@@ -11,6 +12,7 @@ import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
 import me.voxelsquid.quill.villager.VillagerManager.Companion.professionLevelName
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute
@@ -26,16 +28,15 @@ import org.ipvp.canvas.slot.ClickOptions
 import org.ipvp.canvas.type.ChestMenu
 import java.util.*
 
-
 // Сериализация сетлментов происходит при загрузке чанков, когда вилладжер загружается из папки мира
 // У вилладжера в PDC хранится информация о поселении, к которому он принадлежит. Это значение инициализириуется, если рядом есть 10 жителей.
 class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> = mutableSetOf()) {
 
-    data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, var currentMayor: UUID?, val creationTime: Long, var visibilityState: Boolean = true)
+    data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, var currentMayor: UUID?, val creationTime: Long, var visibilityState: Boolean)
 
     val creationDate = Date(data.creationTime)
     val world        = QuestIntelligence.pluginInstance.server.getWorld(data.worldUUID)!!
-    var territory    = BoundingBox.of(data.center, 64.0, 32.0, 64.0)
+    var territory    = BoundingBox.of(data.center, 64.0, 64.0, 64.0)
 
     var arrivalPossibility = true
 
@@ -71,12 +72,12 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
         fun dispatchPlaceholders(lore: List<String>) : List<String> {
 
             val placeholders = mapOf(
-                "villagerAmount" to villagers.size.toString(),
-                "visibilityState" to if (data.visibilityState) language.getString("settlement-menu.visibility-state.visible")!! else language.getString("settlement-menu.visibility-state.hidden")!!,
-                "totalFoodAmount" to villagers.sumOf { it.foodAmount }.toString(),
+                "villagerAmount"          to villagers.size.toString(),
+                "visibilityState"         to if (data.visibilityState) language.getString("settlement-menu.visibility-state.visible")!! else language.getString("settlement-menu.visibility-state.hidden")!!,
+                "totalFoodAmount"         to villagers.sumOf { it.foodAmount }.toString(),
                 "starvingVillagersAmount" to villagers.count { it.foodAmount == 0 }.toString(),
-                "bedAmount" to bedAmount().toString(),
-                "arrivalPossibility" to if (arrivalPossibility) language.getString("settlement-menu.arrival-possibility.possible")!! else language.getString("settlement-menu.arrival-possibility.impossible")!!
+                "bedAmount"               to bedAmount().toString(),
+                "arrivalPossibility"      to if (arrivalPossibility) language.getString("settlement-menu.arrival-possibility.possible")!! else language.getString("settlement-menu.arrival-possibility.impossible")!!
             )
 
             return lore.map { line ->
@@ -97,17 +98,26 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
             val item = CustomHead().texture(texture).setMeta(language.getString("settlement-menu.villagers-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.villagers-button-lore")))
             item.amount = villagers.size
             this.item = item
-            this.setClickHandler { player, _ ->
-                openVillagerListMenu(player)
-            }
+
+            if (item.amount != 0) {
+                this.setClickHandler { player, _ ->
+                    openVillagerListMenu(player)
+                }
+            } else item.amount = 1
         }
 
         // Ender eye, clickable (requires reputation to interact). Villagers will come into the village when some conditions are met.
         settlementMenu.getSlot(8).apply {
-            this.item = ItemStack(Material.ENDER_EYE).setMeta(language.getString("settlement-menu.visibility-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.visibility-button-lore")))
+            fun createButtonItem() = ItemStack(if (data.visibilityState) Material.ENDER_EYE else Material.ENDER_PEARL).setMeta(language.getString("settlement-menu.visibility-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.visibility-button-lore")))
+            this.item = createButtonItem()
+            this.setClickHandler { player, slot ->
+                // TODO player status (and rep) check
+                data.visibilityState = !data.visibilityState
+                this.item = createButtonItem()
+            }
         }
 
-        // Book, not clickable. Contains status of the village.
+        // Book, clickable. Contains policies and history data. One of the most important buttons.
         settlementMenu.getSlot(9).apply {
             this.item = ItemStack(Material.BOOK).setMeta(language.getString("settlement-menu.policies-button")!!, dispatchPlaceholders(language.getStringList("settlement-menu.policies-button-lore")))
         }
@@ -150,7 +160,7 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
                 "hunger"          to "${villager.hunger}/20",
                 "health"          to "${villager.health}/${villager.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value}",
                 "networth"        to villager.quillInventory.filterNotNull().toList().calculatePrice().toString(),
-                "quests"    to if (villager.quests.isEmpty()) "0" else "${villager.quests.size + 1}"
+                "quests"          to "${villager.quests.size}"
             )
 
             val lore = language.getStringList("settlement-menu.villager-info").map { line ->
@@ -174,31 +184,16 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
         val itemSlots: Mask = BinaryMask.builder(pageTemplate.dimensions).pattern("111111111").build()
         val pages: List<Menu> = PaginatedMenuBuilder.builder(pageTemplate)
             .slots(itemSlots)
-            .nextButton(ItemStack(Material.ARROW))
-            .nextButtonEmpty(ItemStack(Material.AIR))
-            .nextButtonSlot(17)
             .previousButton(ItemStack(Material.ARROW))
             .previousButtonEmpty(ItemStack(Material.AIR))
             .previousButtonSlot(9)
+            .nextButton(ItemStack(Material.ARROW))
+            .nextButtonEmpty(ItemStack(Material.AIR))
+            .nextButtonSlot(17)
             .addItems(villagers)
             .build()
 
         pages.first().open(player)
-    }
-
-    private fun isChristmas(): Boolean {
-        val calendar = Calendar.getInstance()
-        val currentYear = calendar.get(Calendar.YEAR)
-
-        val startOfRange = Calendar.getInstance().apply {
-            set(currentYear, Calendar.DECEMBER, 16, 0, 0, 0)
-        }
-
-        val endOfRange = Calendar.getInstance().apply {
-            set(currentYear + 1, Calendar.JANUARY, 5, 23, 59, 59)
-        }
-
-        return calendar.after(startOfRange) && calendar.before(endOfRange)
     }
 
     fun visualizeSettlementTerritory(player : Player) {

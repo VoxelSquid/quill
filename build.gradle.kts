@@ -1,12 +1,12 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.1.3-OPEN-ALPHA"
+version = "0.1.4-OPEN-ALPHA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
     main = "me.voxelsquid.quill.QuestIntelligence"
-    load = BukkitPluginYaml.PluginLoadOrder.STARTUP
+    load = BukkitPluginYaml.PluginLoadOrder.POSTWORLD
     authors.add("NoLogicWasHere")
     apiVersion = "1.20"
 }

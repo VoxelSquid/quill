@@ -2,6 +2,7 @@ package me.voxelsquid.quill.ai
 
 import com.google.gson.JsonSyntaxException
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
@@ -177,9 +178,13 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     fun generateQuestData(questManager: QuestManager, villager: Villager, quest: VillagerQuest.Builder) {
 
-        val extraArguments = when (villager.character) {
+        var extraArguments = when (villager.character) {
             CharacterType.ANGRY, CharacterType.DRUNKARD -> "'20% of words are swearing'"
             else -> ""
+        }
+
+        if (isChristmas()) {
+            extraArguments += "'It's Christmas!'"
         }
 
         val questRequirements = plugin.configurationClip.promptsConfig.getString(

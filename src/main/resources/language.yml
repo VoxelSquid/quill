@@ -60,46 +60,50 @@ settlement-menu:
   villagers-menu-title: "§0Villagers"
   villagers-button: "§6Villagers"
   villagers-button-lore:
-    - "§fКоличество жителей: §a{villagerAmount}"
-    - "§7Нажмите, чтобы открыть меню со списком жителей."
+    - "§fNumber of villagers: §a{villagerAmount}"
+    - "§7Click to open the menu with the list of villagers."
   villager-info:
-    - "§fТип личности: §d{personality}"
-    - "§fПрофессия: §3{profession}"
-    - "§fУровень: §3{professionLevel}"
-    - "§fЗдоровье: §c{health}"
-    - "§fСытость: §e{hunger}"
-    - "§fБогатство: §a{networth}$"
-    - "§fКвесты: §d{quests}"
+    - "§fPersonality type: §d{personality}"
+    - "§fProfession: §3{profession}"
+    - "§fLevel: §3{professionLevel}"
+    - "§fHealth: §c{health}"
+    - "§fHunger: §e{hunger}"
+    - "§fWealth: §a{networth}$"
+    - "§fQuests: §d{quests}"
 
   visibility-button: "§6Visibility"
   visibility-button-lore:
-    - "§fСостояние видимости: {visibilityState}"
-    - "§7Нажмите, чтобы переключить видимость поселения."
+    - "§fVisibility state: {visibilityState}"
+    - "§7Click to toggle the visibility of the settlement."
+    - "§7Currently, visibility does not affect anything... Stay tuned for updates!"
   visibility-state:
     visible: "§avisible"
     hidden: "§chidden"
 
   policies-button: "§6Policies"
   policies-button-lore:
-    - "§7Нажмите, чтобы открыть меню управления политиками поселения."
+    - "§7Click to open the settlement policy management menu."
+    - "§7Currently, does nothing... Stay tuned for updates!"
 
   actions-button: "§6Actions"
   actions-button-lore:
-    - "§7Нажмите, чтобы открыть меню действий."
+    - "§7Click to open the actions menu."
+    - "§7Currently, does nothing... Stay tuned for updates!"
 
   food-button: "§6Food"
   food-button-lore:
-    - "§fОбщее количество еды: §e{totalFoodAmount}"
-    - "§fКоличество голодающих жителей: §a{starvingVillagersAmount}"
+    - "§fTotal amount of food: §e{totalFoodAmount}"
+    - "§fNumber of starving villagers: §a{starvingVillagersAmount}"
 
   craft-button: "§6Craft"
   craft-button-lore:
-    - "§7Нажмите, чтобы открыть меню с информацией о ремесленниках."
+    - "§7Click to open the menu with information about crafters."
+    - "§7Currently, does nothing... Stay tuned for updates!"
 
   beds-button: "§6Beds"
   beds-button-lore:
-    - "§fКоличество кроватей: §e{bedAmount}"
-    - "§fВозможность прибытия новичка: {arrivalPossibility}"
+    - "§fNumber of beds: §e{bedAmount}"
+    - "§fPossibility of a newcomer arriving: {arrivalPossibility}"
   arrival-possibility:
     possible: "§a§lPOSSIBLE"
     impossible: "§c§lIMPOSSIBLE"

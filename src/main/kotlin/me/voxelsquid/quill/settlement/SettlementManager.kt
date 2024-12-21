@@ -14,6 +14,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.WorldLoadEvent
+import org.bukkit.event.world.WorldUnloadEvent
 import org.bukkit.persistence.PersistentDataType
 
 /*
@@ -39,13 +40,24 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         this.startSettlementDetectionTask()
 
         // Отображаем границы поселения каждые 20 тиков.
-        plugin.server.scheduler.runTaskTimer(plugin, { _ ->
-            settlements.forEach { settlement ->
-                settlement.world.players.forEach { player ->
-                    settlement.visualizeSettlementTerritory(player)
+        val visualize = false
+        if (visualize) {
+            plugin.server.scheduler.runTaskTimer(plugin, { _ ->
+                settlements.values.forEach { settlements ->
+                    settlements.forEach { settlement ->
+                        settlement.world.players.forEach { player ->
+                            settlement.visualizeSettlementTerritory(player)
+                        }
+                    }
                 }
-            }
-        }, 0, 20)
+            }, 0, 20)
+        }
+
+        plugin.enabledWorlds.forEach { world ->
+            settlements[world] = mutableListOf()
+        }
+
+        this.loadSettlements()
     }
 
     // Таск, в котором происходит поиск жителей, которые подохдят для создания сетлментов.
@@ -57,7 +69,6 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
                 // Проходимся по всем жителям в мире, которые нигде не "прописаны".
                 world.entities.filterIsInstance<Villager>().filter { it.settlement == null }.let { villagers ->
 
-                    // Основная логика происходит асинхронно в целях оптимизации.
                     plugin.server.scheduler.runTask(plugin) { _ ->
                         for (villager in villagers.shuffled()) {
 
@@ -72,7 +83,6 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
                             // Создание поселения моментально, но название будет сгенерировано чуть позже. Возможно, что работа с локациями не может происходить вне тика сервера.
                             if (villagersAround.size >= minimumOfVillagersToSettlementCreation) {
-                                plugin.logger.info("Trying to create a new settlement!")
                                 this.createSettlement(villager.world, villager.location, villagersAround)
                                 break
                             }
@@ -85,43 +95,43 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         }, 0, 200)
     }
 
-    private fun createSettlement(world: World, center: Location, villagers: List<Villager>) : Settlement {
-        val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis())
-        return Settlement(data, villagers.toMutableSet()).also { settlement ->
+    private fun createSettlement(world: World, center: Location, villagers: List<Villager>){
+        val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis(), true)
+        Settlement(data, villagers.toMutableSet()).also { settlement ->
             plugin.questGenerator.generateSettlementName(settlement)
-            settlements.add(settlement)
+            settlements[world]?.add(settlement)
         }
     }
 
     @EventHandler
     private fun onSettlementNameGenerate(event: SettlementNameGenerateEvent) {
         event.settlement.data.settlementName = event.data.townName
-        event.settlement.world.players.forEach { player -> player.sendMessage("§8[Quill Debug] §7Settlement §6${event.data.townName} §7has been created!") }
         event.settlement.villagers.forEach { villager -> villager.settlement = event.settlement }
-        event.settlement.world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, plugin.gson.toJson(settlements.map { it.data }))
+        event.settlement.world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, plugin.gson.toJson(settlements[event.settlement.world]?.map { it.data }))
+    }
+
+    private fun loadSettlements() {
+        plugin.enabledWorlds.forEach { world ->
+            world.persistentDataContainer.get(settlementsWorldKey, PersistentDataType.STRING)?.let { serializedSettlements ->
+                plugin.gson.fromJson(serializedSettlements, object : TypeToken<List<Settlement.SettlementData>>() {}).let { list ->
+                    list.forEach { settlementData ->
+                        plugin.debug("Settlement loaded: ${settlementData.settlementName}.")
+                        settlements[world]?.add(Settlement(settlementData))
+                    }
+                }
+            }
+        }
     }
 
     @EventHandler
     private fun onPlayerInteract(event: PlayerInteractEvent) {
         event.clickedBlock?.let { block ->
             if (block.type == Material.BELL) {
-                settlements.forEach { settlement ->
+                settlements[event.player.world]?.forEach { settlement ->
                     if (settlement.territory.contains(block.location.toVector())) {
                         settlement.openControlPanelMenu(event.player)
                         return
                     }
-                }
-            }
-        }
-
-    }
-
-    @EventHandler
-    private fun onWorldLoad(event: WorldLoadEvent) {
-        event.world.persistentDataContainer.get(settlementsWorldKey, PersistentDataType.STRING)?.let { serializedSettlements ->
-            plugin.gson.fromJson(serializedSettlements, object : TypeToken<List<Settlement.SettlementData>>() {}).let { list ->
-                list.forEach { settlementData ->
-                    settlements.add(Settlement(settlementData))
                 }
             }
         }
@@ -135,7 +145,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     }
 
     companion object {
-        val settlements: MutableList<Settlement> = mutableListOf()
+        val settlements: MutableMap<World, MutableList<Settlement>> = mutableMapOf()
         val settlementsWorldKey: NamespacedKey = NamespacedKey(QuestIntelligence.pluginInstance, "settlements")
     }
 

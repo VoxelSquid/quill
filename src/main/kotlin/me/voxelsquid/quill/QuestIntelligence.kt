@@ -8,6 +8,8 @@ import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.CachedSettlementCuboid.Companion.particleThreadPool
 import me.voxelsquid.quill.settlement.SettlementManager
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
 import me.voxelsquid.quill.util.LocationAdapter
 import me.voxelsquid.quill.villager.VillagerManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager
@@ -25,6 +27,8 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import org.ipvp.canvas.MenuFunctionListener
 import java.io.File
+import java.util.*
+import kotlin.collections.HashMap
 
 
 class QuestIntelligence : JavaPlugin(), Listener {
@@ -49,9 +53,15 @@ class QuestIntelligence : JavaPlugin(), Listener {
             Bukkit.getServer().pluginManager.disablePlugin(this)
         }
 
+        enabledWorlds = mutableListOf<World>().apply {
+            config.getStringList("core-settings.enabled-worlds").forEach {
+                world -> add(Bukkit.getWorld(world)!!)
+            }
+        }
+
         this.setupCommands()
-        questGenerator  = GeminiProvider(this)
-        villagerManager = VillagerManager(this)
+        questGenerator    = GeminiProvider(this)
+        villagerManager   = VillagerManager(this)
         settlementManager = SettlementManager(this)
         this.server.pluginManager.registerEvents(this, this)
         this.server.pluginManager.registerEvents(MenuFunctionListener(), this)
@@ -61,13 +71,14 @@ class QuestIntelligence : JavaPlugin(), Listener {
         DialogueManager.dialogues.values.forEach(DialogueManager.DialogueWindow::destroy)
         MenuManager.openedMenuList.forEach(InteractionMenu::destroy)
         particleThreadPool.shutdown()
+        this.saveSettlements()
     }
 
-    val enabledWorlds: List<World> by lazy {
-        mutableListOf<World>().apply {
-            config.getStringList("core-settings.enabled-worlds").forEach {
-                    world -> add(Bukkit.getWorld(world)!!)
-            }
+    var enabledWorlds: List<World> = mutableListOf()
+
+    private fun saveSettlements() {
+        enabledWorlds.forEach { world ->
+            world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, gson.toJson(settlements[world]?.map { it.data }))
         }
     }
 
@@ -115,6 +126,21 @@ class QuestIntelligence : JavaPlugin(), Listener {
                     return DialogueFormat.valueOf(type)
                 }
             }
+
+        fun isChristmas(): Boolean {
+            val calendar = Calendar.getInstance()
+            val currentYear = calendar.get(Calendar.YEAR)
+
+            val startOfRange = Calendar.getInstance().apply {
+                set(currentYear, Calendar.DECEMBER, 16, 0, 0, 0)
+            }
+
+            val endOfRange = Calendar.getInstance().apply {
+                set(currentYear + 1, Calendar.JANUARY, 5, 23, 59, 59)
+            }
+
+            return calendar.after(startOfRange) && calendar.before(endOfRange)
+        }
 
         fun Player.sendTutorialMessage(tutorialMessage: TutorialMessage) {
 
@@ -171,7 +197,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    val debug = true
+    private val debug = false
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }

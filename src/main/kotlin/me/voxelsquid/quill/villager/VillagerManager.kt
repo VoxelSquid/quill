@@ -291,7 +291,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         var Villager.settlement : Settlement?
             get() {
                 persistentDataContainer.get(villagerSettlementKey, PersistentDataType.STRING)?.let { settlementName ->
-                    return settlements.find { it.data.settlementName == settlementName }
+                    return settlements[this.world]?.find { it.data.settlementName == settlementName }
                 }
                 return null
             }
