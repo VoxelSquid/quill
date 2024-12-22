@@ -43,6 +43,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     override fun onEnable() {
         pluginInstance = this
+        languageFile = File(pluginInstance.dataFolder, "language.yml")
         super.saveResource("config.yml", false)
         super.saveResource("language.yml", false)
         this.reloadConfigurations()
@@ -115,6 +116,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
         val playerStatsKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "statistics") }
         val immersiveDialoguesKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
         lateinit var pluginInstance: QuestIntelligence
+        lateinit var languageFile: File
 
         val Player.dialogueFormat: DialogueFormat
             get() {

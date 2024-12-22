@@ -3,6 +3,7 @@ package me.voxelsquid.quill.ai
 import com.google.gson.JsonSyntaxException
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
+import me.voxelsquid.quill.QuestIntelligence.Companion.languageFile
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
@@ -56,7 +57,6 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
     }
 
-    private val duration = Duration.ofSeconds(20)
     private val client = OkHttpClient.Builder().apply {
         if (plugin.config.getString("core-settings.proxy.host") != "PROXY_HOST") {
             plugin.logger.info("Proxy usage in config.yml detected. When sending requests, a proxy will be used.")
@@ -67,26 +67,26 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     private val key = plugin.config.getString("core-settings.api-key")
     private val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$key"
 
-    init {
-        val languageFile = File(plugin.dataFolder, "language.yml")
+    private fun requestTranslation() = GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${languageFile.readText()}\n```")
 
+    init {
         if (!languageFile.exists())
             plugin.saveResource("language.yml", false)
-
         if (plugin.config.getBoolean("core-settings.automatic-configuration-translation")) {
-            GenerationRequest(client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${languageFile.readText()}\n```")
+            this.requestTranslation()
         } else {
             plugin.logger.info("Automatic configuration translation is disabled. :(")
             plugin.language = YamlConfiguration.loadConfiguration(languageFile)
-            GenerationRequest(client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
+            GenerationRequest(this, client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
         }
     }
+
 
     data class SettlementInformation(val townName: String)
     fun generateSettlementName(settlement: Settlement) {
 
         val placeholders = mapOf(
-            "settlementBiome"       to settlement.data.center.world.getBiome(settlement.data.center).name,
+            "settlementBiome"       to settlement.data.center.world.getBiome(settlement.data.center).key.value(),
             "language"              to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"          to this.getRandomLetter(),
             "randomLetterLowerCase" to this.getRandomLetter().lowercase()
@@ -96,7 +96,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             acc.replace("{${entry.key}}", entry.value)
         }
 
-        GenerationRequest(client, url, plugin).generate(prompt) { cleanedJsonResponse ->
+        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
                 plugin.server.pluginManager.callEvent(
                     SettlementNameGenerateEvent(
@@ -122,7 +122,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             acc.replace("{${entry.key}}", entry.value)
         }
 
-        GenerationRequest(client, url, plugin).generate(prompt) { cleanedJsonResponse ->
+        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
                 try {
                     plugin.server.pluginManager.callEvent(
@@ -165,7 +165,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
         val prompt = promptTemplate.replaceMap(placeholders)
 
-        GenerationRequest(client, url, plugin).generate(prompt) { cleanedJson ->
+        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJson ->
             try {
                 val data = plugin.gson.fromJson(cleanedJson, UniqueItemDescription::class.java)
                 plugin.debug(cleanedJson)
@@ -226,7 +226,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
         val prompt = promptTemplate.replaceMap(mapOf("questRequirements" to questRequirements)).replaceMap(placeholders)
 
-        GenerationRequest(client, url, plugin).generate(prompt) { cleanedQuestJson ->
+        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedQuestJson ->
             try {
                 val questInfo = plugin.gson.fromJson(cleanedQuestJson, VillagerQuest.QuestInfo::class.java)
                 quest.setQuestInfo(questInfo)
@@ -252,6 +252,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     }
 
     private class GenerationRequest(
+        private val geminiProvider: GeminiProvider,
         private val client: OkHttpClient,
         private val url: String,
         private val plugin: QuestIntelligence,
@@ -264,7 +265,14 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    handleError(e)
+                    plugin.language = YamlConfiguration.loadConfiguration(languageFile)
+                    plugin.logger.warning("It seems that there was some error while translating the language file.")
+                    plugin.logger.warning("QuestIntelligence will use the default translation but will try to translate the language file again in 15 seconds.")
+                    plugin.logger.warning("If that doesn't work, there's probably an AI problem. Report it to the developer.")
+                    plugin.logger.warning("You can also turn off generative translation in config.yml, look for 'automatic-configuration-translation'.")
+                    plugin.server.scheduler.runTaskLater(plugin, { _ ->
+                        geminiProvider.requestTranslation()
+                    }, 20 * 15)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -368,6 +376,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         private fun handleError(e: Throwable) {
+            plugin.logger.info("ERROR DURING REQUEST WAITING!!! AAAAAAAAAAAAAA!")
             e.printStackTrace()
         }
 

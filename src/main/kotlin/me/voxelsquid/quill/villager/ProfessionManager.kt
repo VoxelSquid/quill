@@ -1,9 +1,14 @@
+@file:Suppress("DEPRECATION")
+
 package me.voxelsquid.quill.villager
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
 import me.voxelsquid.quill.event.VillagerProduceItemEvent
+import me.voxelsquid.quill.nms.UniversalAttribute
+import me.voxelsquid.quill.nms.VersionProvider.Companion.addAttributeModifier
 import me.voxelsquid.quill.nms.VersionProvider.Companion.trims
+import me.voxelsquid.quill.nms.VersionProvider.Companion.universalAttribute
 import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
 import me.voxelsquid.quill.villager.VillagerManager.Companion.takeItemFromQuillInventory
@@ -13,20 +18,18 @@ import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
-import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Pose
 import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.inventory.*
+import org.bukkit.inventory.RecipeChoice.ExactChoice
 import org.bukkit.inventory.RecipeChoice.MaterialChoice
 import org.bukkit.inventory.meta.ArmorMeta
 import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.inventory.meta.trim.TrimMaterial
 import org.bukkit.inventory.meta.trim.TrimPattern
 import org.bukkit.persistence.PersistentDataType
-import java.util.*
 import kotlin.random.Random
 
 class ProfessionManager: Listener {
@@ -231,10 +234,10 @@ class ProfessionManager: Listener {
         }
 
         val meta = itemStack.itemMeta
-        val attributes: List<Attribute> = attributeNames.map { Attribute.valueOf(it.uppercase()) }
+        val attributes: List<UniversalAttribute> = attributeNames.map { UniversalAttribute.valueOf(it) }
 
         // Чистим дефолтные атрибуты чтобы не было конфликтов
-        attributes.forEach { meta.removeAttributeModifier(it) }
+        attributes.forEach { meta.removeAttributeModifier(universalAttribute(it)) }
 
         // Так как при использовании кастомных атрибутов дефолтные сбрасываются, придётся подсчитывать самостоятельно
         var attackSpeed = -4 + when(itemStack.type) {
@@ -294,16 +297,16 @@ class ProfessionManager: Listener {
         val addedAttributes = mutableListOf<String>()
         do {
             val attribute = attributes.random()
-            addedAttributes.add(attribute.toString().replace("GENERIC_", "").replace("PLAYER_", "").replace("_", " ").lowercase())
+            addedAttributes.add(attribute.toString().replace("_", " ").lowercase())
             when (attribute) {
-                Attribute.GENERIC_ATTACK_SPEED -> attackSpeed += 0.3
-                Attribute.GENERIC_ATTACK_DAMAGE -> attackDamage += 1.5
-                Attribute.PLAYER_BLOCK_BREAK_SPEED -> blockBreakSpeed += 0.4
-                Attribute.PLAYER_BLOCK_INTERACTION_RANGE -> blockInteractionRange += 0.5
-                Attribute.GENERIC_MAX_HEALTH -> additionalHealth += 2.0
-                Attribute.GENERIC_ARMOR -> armorDefence += 1.0
-                Attribute.GENERIC_ARMOR_TOUGHNESS -> armorToughness += 1.0
-                Attribute.GENERIC_SCALE -> {
+                UniversalAttribute.ATTACK_SPEED -> attackSpeed += 0.3
+                UniversalAttribute.ATTACK_DAMAGE -> attackDamage += 1.5
+                UniversalAttribute.BLOCK_BREAK_SPEED -> blockBreakSpeed += 0.4
+                UniversalAttribute.BLOCK_INTERACTION_RANGE -> blockInteractionRange += 0.5
+                UniversalAttribute.MAX_HEALTH -> additionalHealth += 2.0
+                UniversalAttribute.PROTECTION -> armorDefence += 1.0
+                UniversalAttribute.ARMOR_TOUGHNESS -> armorToughness += 1.0
+                UniversalAttribute.SCALE -> {
                     scale += 0.1
                     blockInteractionRange += 0.5
                     entityInteractionRange += 0.5
@@ -317,32 +320,32 @@ class ProfessionManager: Listener {
         if (slot == EquipmentSlotGroup.MAINHAND) {
 
             if (attackSpeed > -4 && attackSpeed != 0.0) {
-                meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, AttributeModifier(UUID.randomUUID(), "$slot", attackSpeed, AttributeModifier.Operation.ADD_NUMBER, slot))
+                meta.addAttributeModifier(UniversalAttribute.ATTACK_SPEED, slot, attackSpeed)
             }
 
-            meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, AttributeModifier(UUID.randomUUID(), "$slot", attackDamage, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.ATTACK_DAMAGE, slot, attackDamage)
         }
 
         if (blockInteractionRange > 0.0)
-            meta.addAttributeModifier(Attribute.PLAYER_BLOCK_INTERACTION_RANGE, AttributeModifier(UUID.randomUUID(), "$slot", blockInteractionRange, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.BLOCK_INTERACTION_RANGE, slot, blockInteractionRange)
 
         if (entityInteractionRange > 0.0)
-            meta.addAttributeModifier(Attribute.PLAYER_ENTITY_INTERACTION_RANGE, AttributeModifier(UUID.randomUUID(), "$slot", blockInteractionRange, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.ENTITY_INTERACTION_RANGE, slot, blockInteractionRange)
 
         if (blockBreakSpeed > 1.0)
-            meta.addAttributeModifier(Attribute.PLAYER_BLOCK_BREAK_SPEED, AttributeModifier(UUID.randomUUID(), "$slot", blockBreakSpeed, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.BLOCK_BREAK_SPEED, slot, blockBreakSpeed)
 
         if (additionalHealth > 0.0)
-            meta.addAttributeModifier(Attribute.GENERIC_MAX_HEALTH, AttributeModifier(UUID.randomUUID(), "$slot", additionalHealth, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.MAX_HEALTH, slot, additionalHealth)
 
         if (armorDefence > 0.0)
-            meta.addAttributeModifier(Attribute.GENERIC_ARMOR, AttributeModifier(UUID.randomUUID(), "$slot", armorDefence, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.PROTECTION, slot, armorDefence)
 
         if (armorToughness > 0.0)
-            meta.addAttributeModifier(Attribute.GENERIC_ARMOR_TOUGHNESS, AttributeModifier(UUID.randomUUID(), "$slot", armorToughness, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.ARMOR_TOUGHNESS, slot, armorToughness)
 
         if (scale > 0.0)
-            meta.addAttributeModifier(Attribute.GENERIC_SCALE, AttributeModifier(UUID.randomUUID(), "$slot", scale, AttributeModifier.Operation.ADD_NUMBER, slot))
+            meta.addAttributeModifier(UniversalAttribute.SCALE, slot, scale)
 
         meta.persistentDataContainer.set(attributeKey, PersistentDataType.STRING, addedAttributes.toString())
 

@@ -1,7 +1,7 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.1.4-OPEN-ALPHA"
+version = "0.1.5-OPEN-ALPHA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
@@ -20,11 +20,12 @@ plugins {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.20.6-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     implementation(rootProject.project("base"))
     implementation(rootProject.project("1_20_R4"))
     implementation(rootProject.project("1_21_R1"))
     implementation(rootProject.project("1_21_R2"))
+    implementation(rootProject.project("1_21_R3"))
     implementation("com.squareup.okhttp3:okhttp:4.1.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")

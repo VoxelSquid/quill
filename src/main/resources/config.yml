@@ -85,9 +85,9 @@ villager-item-producing:
   # Basic chance of creating a unique item during production. Multiplied by villager level. (level 5 villager profession = 40% chance)
   unique-item-chance: 8
 
-  # If true, random smithing template will be applied to each unique item that is armor.
+  # If true, random smithing template will be applied to each unique item that is PROTECTION.
   # If false, the armorer will only use the smithing templates they has in their inventory. (armorers have a quest for collecting them)
-  forced-armor-trims: false
+  forced-PROTECTION-trims: false
 
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   # A list of items whose quality will depend on the level of the crafter's skill.
@@ -122,38 +122,38 @@ villager-item-producing:
   allowed-attributes:
 
     swords:
-      - GENERIC_ATTACK_DAMAGE
-      - GENERIC_ATTACK_SPEED
+      - ATTACK_DAMAGE
+      - ATTACK_SPEED
 
     pickaxes:
-      - PLAYER_BLOCK_BREAK_SPEED
-      - PLAYER_BLOCK_INTERACTION_RANGE
+      - BLOCK_BREAK_SPEED
+      - BLOCK_INTERACTION_RANGE
 
     axes:
-      - PLAYER_BLOCK_BREAK_SPEED
-      - GENERIC_ATTACK_DAMAGE
-      - GENERIC_ATTACK_SPEED
+      - BLOCK_BREAK_SPEED
+      - ATTACK_DAMAGE
+      - ATTACK_SPEED
 
     helmets:
-      - GENERIC_ARMOR
-      - GENERIC_ARMOR_TOUGHNESS
-      - GENERIC_MAX_HEALTH
+      - PROTECTION
+      - ARMOR_TOUGHNESS
+      - MAX_HEALTH
 
     chestplates:
-      - GENERIC_ARMOR
-      - GENERIC_ARMOR_TOUGHNESS
-      - GENERIC_MAX_HEALTH
-      - GENERIC_SCALE
+      - PROTECTION
+      - ARMOR_TOUGHNESS
+      - MAX_HEALTH
+      - SCALE
 
     leggings:
-      - GENERIC_ARMOR
-      - GENERIC_ARMOR_TOUGHNESS
-      - GENERIC_MAX_HEALTH
+      - PROTECTION
+      - ARMOR_TOUGHNESS
+      - MAX_HEALTH
 
     boots:
-      - GENERIC_ARMOR
-      - GENERIC_ARMOR_TOUGHNESS
-      - GENERIC_MAX_HEALTH
+      - PROTECTION
+      - ARMOR_TOUGHNESS
+      - MAX_HEALTH
 
   # Villagers in different professions will request different items that are specific to their needs. The same applies to the items produced.
   # The prefix "@" at the beginning indicates that all items containing the specified value are implied. For example, @DYE means that all dyes are used.

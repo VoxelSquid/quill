@@ -3,4 +3,4 @@ plugins {
 }
 
 rootProject.name = "quill"
-include("base", "1_21_R1", "1_21_R2", "1_20_R4")
+include("base", "1_21_R1", "1_21_R2", "1_21_R3", "1_20_R4")

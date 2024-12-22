@@ -1,4 +1,4 @@
-package me.voxelsquid.quill.nms.v1_21_R2
+package me.voxelsquid.quill.nms.v1_21_R3
 
 import me.voxelsquid.quill.nms.AbstractVersionBridge
 import me.voxelsquid.quill.nms.UniversalAttribute
@@ -20,7 +20,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.trim.TrimPattern
 import org.bukkit.plugin.java.JavaPlugin
 
-// 1.21.3
+// 1.21.4
 class VersionBridge(private val plugin: JavaPlugin) : AbstractVersionBridge() {
 
     override val attributes: Map<UniversalAttribute, Attribute>

@@ -12,6 +12,7 @@ import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
+import me.voxelsquid.quill.villager.VillagerManager.Companion.updateQuests
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.MenuManager
 import net.kyori.adventure.text.Component
@@ -152,6 +153,9 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
 
         /** Every time someone opens a trade deal with a villager, a new trade list is created. And the old one is overwritten. */
         fun Villager.openTradeMenu(player : Player) {
+
+            // Первым делом обновляем квесты!
+            this.updateQuests()
 
             val quests = quests
             val itemsToTrade = producedItems
@@ -466,7 +470,8 @@ enum class CharacterType {
     DRAMATIC,
     LUCKY,
     UNLUCKY,
-    THIEF;
+    THIEF,
+    POTHEAD;
 
     companion object {
         fun getEnumValuesAsStrings(): List<String> {

@@ -4,6 +4,8 @@ package me.voxelsquid.quill.settlement
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
+import me.voxelsquid.quill.nms.UniversalAttribute
+import me.voxelsquid.quill.nms.VersionProvider.Companion.universalAttribute
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.setMeta
 import me.voxelsquid.quill.villager.VillagerManager.Companion.character
@@ -12,10 +14,8 @@ import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
 import me.voxelsquid.quill.villager.VillagerManager.Companion.professionLevelName
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
-import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
-import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
@@ -154,11 +154,11 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
 
             val villagerName = villager.customName ?: "Villager"
             val placeholders = mapOf(
-                "profession"      to villager.profession.name,
+                "profession"      to villager.profession.key.value(),
                 "professionLevel" to villager.professionLevelName,
                 "personality"     to villager.character.toString(),
                 "hunger"          to "${villager.hunger}/20",
-                "health"          to "${villager.health}/${villager.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.value}",
+                "health"          to "${villager.health}/${villager.getAttribute(universalAttribute(UniversalAttribute.MAX_HEALTH)!!)?.value}",
                 "networth"        to villager.quillInventory.filterNotNull().toList().calculatePrice().toString(),
                 "quests"          to "${villager.quests.size}"
             )
