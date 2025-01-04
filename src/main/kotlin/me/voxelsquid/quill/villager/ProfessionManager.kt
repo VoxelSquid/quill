@@ -201,9 +201,6 @@ class ProfessionManager: Listener {
 
         // Добавляем итем
         villager.addItemToQuillInventory(item)
-        villager.world.players.forEach { player ->
-            player.inventory.addItem(item.clone())
-        }
     }
 
     private fun createUniqueItem(villager: Villager, itemStack: ItemStack): ItemStack {
