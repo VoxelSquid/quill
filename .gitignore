@@ -1,5 +1,5 @@
 # User-specific stuff
-../Questelligence/.idea/
+../quill/.idea/
 .github/
 .kotlin/
 
@@ -121,4 +121,5 @@ buildNumber.properties
 run/
 build
 .gradle
+.idea
 /*.jar
