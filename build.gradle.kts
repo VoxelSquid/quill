@@ -1,7 +1,7 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.1.5-OPEN-ALPHA"
+version = "0.1.6-OPEN-ALPHA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
@@ -13,7 +13,7 @@ bukkitPluginYaml {
 
 plugins {
     kotlin("jvm") version "2.0.20"
-    id("io.papermc.paperweight.userdev") version "1.7.3"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.8"
     id("xyz.jpenilla.run-paper") version "2.3.1" // Adds runServer and runMojangMappedServer tasks for testing
     id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.2.0" // Generates plugin.yml based on the Gradle config
     id("com.gradleup.shadow") version "8.3.3"
@@ -22,14 +22,13 @@ plugins {
 dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     implementation(rootProject.project("base"))
-    implementation(rootProject.project("1_20_R4"))
     implementation(rootProject.project("1_21_R1"))
     implementation(rootProject.project("1_21_R2"))
     implementation(rootProject.project("1_21_R3"))
+    implementation(rootProject.project("1_20_R4"))
     implementation("com.squareup.okhttp3:okhttp:4.1.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
-    implementation("com.github.IPVP-MC:canvas:2365c13da0")
 }
 
 allprojects {

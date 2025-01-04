@@ -2,7 +2,7 @@ group = "me.voxelsquid"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    id("io.papermc.paperweight.userdev") version "1.7.3"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.8"
 }
 
 dependencies {
