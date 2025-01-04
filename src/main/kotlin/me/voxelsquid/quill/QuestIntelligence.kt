@@ -43,7 +43,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     override fun onEnable() {
         pluginInstance = this
-        languageFile = File(pluginInstance.dataFolder, "language.yml")
+        languageFile   = File(pluginInstance.dataFolder, "language.yml")
         super.saveResource("config.yml", false)
         super.saveResource("language.yml", false)
         this.reloadConfigurations()
