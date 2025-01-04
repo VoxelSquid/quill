@@ -50,7 +50,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         if (config.getString("core-settings.api-key") == "GEMINI_API_KEY") {
             logger.severe("The plugin must be configured before it can be used. You need to replace the value of ‘core-settings.api-key’ with a real Gemini API key (it is free of charge). See config.yml for details on how to get this key.")
-            logger.severe("QuestIntelligence will be disabled.")
+            logger.severe("QuestIntelligence will be disabled...")
             Bukkit.getServer().pluginManager.disablePlugin(this)
         }
 
