@@ -8,8 +8,10 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.villager.CharacterType
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.VillagerManager.Companion.character
 import me.voxelsquid.quill.villager.interaction.DialogueManager
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
@@ -115,6 +117,19 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
             return
         }
         player.teleport(settlement.data.center)
+    }
+
+    @Subcommand("fame set")
+    @CommandPermission("quill.fame.set")
+    fun onFameSet(sender: CommandSender, name: String, amount: Int) {
+        Bukkit.getPlayer(name)?.let { player: Player ->
+            player.fame = amount.toDouble()
+            val successMessage = plugin.language?.getString("command-message.player-fame-changed")?.replace("{playerName}", name)?.replace("{newFame}", amount.toString()) ?: return
+            sender.sendMessage(successMessage)
+        } ?: run {
+            val errorMessage = plugin.language?.getString("error-message.player-not-found")?.replace("{playerName}", name) ?: return
+            sender.sendMessage(errorMessage)
+        }
     }
 
 }
