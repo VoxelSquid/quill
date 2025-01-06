@@ -20,17 +20,13 @@ player-tutorial:
   tutorial-message-sound: ENTITY_EXPERIENCE_ORB_PICKUP
 
   first-connection-message:
-    - "§7Welcome! This server features §6neuroquesting™§7, revolutionizing NPC interactions."
-    - "§7Villagers now have §6personalities§7, can §6talk§7, §6craft§7, and offer §6quests§7!"
-    - "§7Find a village! Use §3/q tutorial §7to toggle these messages."
+    - "§7Welcome! This server features §6neuroquesting™§7, revolutionizing NPC interactions. Villagers now have §6personalities§7, can §6talk§7, §6craft§7, and offer §6quests§7! Find a village! Use §3/q tutorial §7to toggle these messages."
 
   interaction-message:
-    - "§7Interact: §cScroll Wheel §7+ Right-Click."
-    - "§7See needs: §6Trade§7. Learn about tasks: §6Quests§7."
+    - "§7Interact: §cScroll Wheel §7+ Right-Click. See needs: §6Trade§7. Learn about tasks: §6Quests§7."
 
   questing-message:
-    - "§7Complete quests by giving the required item."
-    - "§7Reward: Items from the villager's inventory."
+    - "§7Complete quests by giving the required item in trading window."
 
   dialogue-message:
     - "§7Villagers talk! §oSneak to speed up. Hit to close (no damage)."

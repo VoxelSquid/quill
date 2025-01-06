@@ -204,7 +204,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    private val debug = true
+    private val debug = false
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }
