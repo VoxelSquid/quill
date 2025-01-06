@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
@@ -27,6 +29,9 @@ class DialogueManager(private val plugin: QuestIntelligence) {
     fun startDialogue(pair: Pair<Player, Villager>, text: String, follow: Boolean = true, size: Float = 0.3F, interrupt: Boolean = false) {
 
         val (player, villager) = pair
+        val formattedText = plugin.baseColor + text.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
+            "${plugin.importantWord}${matchResult.groupValues[1]}${plugin.baseColor}"
+        }.replace("\\\"", "\"")
 
         when (player.dialogueFormat) {
 
@@ -36,11 +41,11 @@ class DialogueManager(private val plugin: QuestIntelligence) {
                     return
                 }
 
-                DialogueWindow(plugin, player, villager, size, text.replace("\\\"", "\"").split(" "), follow, interrupt).schedule()
+                DialogueWindow(plugin, player, villager, size, formattedText.split(" "), follow, interrupt).schedule()
             }
 
             DialogueFormat.CHAT -> {
-                this.sendDialogueInChat(player, villager, text)
+                this.sendDialogueInChat(player, villager, formattedText)
             }
 
             DialogueFormat.BOTH -> {
@@ -49,8 +54,8 @@ class DialogueManager(private val plugin: QuestIntelligence) {
                     return
                 }
 
-                DialogueWindow(plugin, player, villager, size, text.replace("\\\"", "\"").split(" "), follow, interrupt).schedule()
-                this.sendDialogueInChat(player, villager, text)
+                DialogueWindow(plugin, player, villager, size, formattedText.split(" "), follow, interrupt).schedule()
+                this.sendDialogueInChat(player, villager, formattedText)
             }
 
         }
@@ -148,7 +153,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
 
                         plugin.server.scheduler.runTask(plugin) { _ ->
 
-                            display.text(display.text().append(Component.text("$word ")))
+                            display.text += "$word "
                             player.playSound(villager.location, voice, 1F, pitch)
 
                             if (follow)
@@ -166,7 +171,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
                         Thread.sleep(pauseDuration)
 
                         if (clear) {
-                            display.text(Component.text(""))
+                            display.text = plugin.baseColor
                             wordAmount = 0
                         }
                     }

@@ -4,6 +4,7 @@
 # Patreon: https://www.patreon.com/c/NoLogicWasHere
 # Please consider supporting! You can help this project to grow tremendously. <3
 
+
 # Core settings of the plugin.
 core-settings:
 
@@ -21,6 +22,11 @@ core-settings:
   api-key: "GEMINI_API_KEY"
 
   message-prefix: "§2§l[quill]§7"
+
+  # Important words in villagers' messages are highlighted in colors. You can customize this.
+  text-formatting:
+    base-color: "§7"
+    important-word-color: "§6"
 
   # Add your worlds here.
   enabled-worlds:
@@ -57,6 +63,52 @@ core-settings:
   # CHAT: the message from the villager will be received via chat, classic.
   # BOTH: well... there's no need to explain, I hope?..
   default-dialogue-format: IMMERSIVE
+
+
+# Reputation affects how villagers will trade and interact with the player. There are two types of reputation — fame and respect.
+reputation-settings:
+
+  # Fame is a global type of reputation that affects trades and interactions with each villager on the server.
+  fame:
+
+    # Positive reputation gain.
+    quest-completion: 0.5
+    illager-kill: 0.05 # Witches, pillagers, evokers, ravagers, vindicators, illusionists (?...)
+    wither-kill: 2.5
+    ender-dragon-kill: 5.0
+    raid-finish: 2.5
+
+    # Negative reputation gain.
+    villager-kill: -5.0
+    iron-golem-kill: -5.0
+
+    # Reputation for killing players depends on what their fame score is. If it's high, the killer's fame score will go down, and vice versa.
+    player-kill: "uWu"
+
+  # Respect is a local reputation type and affects relationships with villagers who are close to the player.
+  respect:
+
+    # The search radius for villagers around the player who will have their respect value changed.
+    nearby-villagers-search-distance: 128
+
+    # Positive reputation gain.
+    quest-completion: 0.5
+    zombie-kill: 0.01 # Zombie kills doesn't affects fame, but affects respect of the local villagers.
+    illager-kill: 0.05 # Witches, pillagers, evokers, ravagers, vindicators, illusionists (?...)
+    raid-finish: 5.0
+
+    # Negative reputation gain.
+    villager-kill: -10.0
+    iron-golem-kill: -10.0
+
+  # Trade price multiplier formula = 1.0 - (fame * fame) - (respect * respectMultiplier)
+  formula:
+    defaultMultiplier: 1.0
+    minimumMultiplier: 0.5
+    maximumMultiplier: 2.0
+    fameMultiplier: 0.005
+    respectMultiplier: 0.01
+
 
 # Settlements are a more advanced implementation of villages that allow players to interact with the village as an entity.
 # Players will be able to control village policies (e.g. determine price coefficients for outsiders, force villagers to work faster, etc.),

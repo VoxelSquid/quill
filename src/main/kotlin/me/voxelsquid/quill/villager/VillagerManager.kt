@@ -12,7 +12,8 @@ import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
-import me.voxelsquid.quill.villager.VillagerManager.Companion.updateQuests
+import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.MenuManager
 import net.kyori.adventure.text.Component
@@ -40,6 +41,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
 
     private val interactionManager: MenuManager
     private val professionManager:  ProfessionManager
+    private val reputationManager:  ReputationManager
 
     init {
 
@@ -47,6 +49,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         plugin.server.pluginManager.registerEvents(this, plugin)
         interactionManager = MenuManager(plugin)
         professionManager  = ProfessionManager()
+        reputationManager  = ReputationManager()
 
         val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
         val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
@@ -127,7 +130,8 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
     data class PersonalVillagerData(val villagerName: String?,
                                     val sleepInterruptionMessages: MutableList<String>,
                                     val damageMessages: MutableList<String>,
-                                    val joblessMessages: MutableList<String>)
+                                    val joblessMessages: MutableList<String>,
+                                    val badReputationTradeDenial: MutableList<String>)
 
     private fun savePersonalVillagerData(villager: Villager, data: PersonalVillagerData) {
         data.villagerName?.let { name ->
@@ -151,7 +155,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         private val villagerSettlementKey:   NamespacedKey = NamespacedKey(plugin, "settlement")
         val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "inventory")
 
-        /** Every time someone opens a trade deal with a villager, a new trade list is created. And the old one is overwritten. */
+        /** Trade lists are unique and personal for each player, prices are affected by villager respect and player honor. */
         fun Villager.openTradeMenu(player : Player) {
 
             // Первым делом обновляем квесты!
@@ -161,7 +165,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
             val itemsToTrade = producedItems
             val questTrades = mutableListOf<MerchantRecipe>()
 
-            this.recipes = mutableListOf<MerchantRecipe>() // cleaning
+            this.recipes = mutableListOf() // cleaning
 
             // Adding quest trades first
             if (quests.isNotEmpty()) {
@@ -180,7 +184,10 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                     return@forEach
                 }
 
-                val price = item.calculatePrice() // Определяем цену предмета
+                var price = item.calculatePrice() // Определяем цену предмета
+                val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 2.0)
+                price = (price.toDouble() * multiplier).toInt()
+
                 val emeraldBlockPrice = plugin.configurationClip.pricesConfig.getInt("EMERALD_BLOCK")
                 val emeraldPrice = plugin.configurationClip.pricesConfig.getInt("EMERALD")
                 val emeraldBlockAmount = price / emeraldBlockPrice

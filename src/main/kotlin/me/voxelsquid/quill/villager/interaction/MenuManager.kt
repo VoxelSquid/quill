@@ -4,6 +4,10 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendTutorialMessage
 import me.voxelsquid.quill.QuestIntelligence.TutorialMessage
+import me.voxelsquid.quill.villager.ReputationManager
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
+import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import me.voxelsquid.quill.villager.VillagerManager.Companion.openTradeMenu
 import me.voxelsquid.quill.villager.VillagerManager.Companion.personalData
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
@@ -88,6 +92,15 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
                 return
             }
 
+            // Обработка крайне негативной репутации
+            if (villager.getRespect(player) <= -20 || player.fame <= -50) {
+                villager.personalData?.let {
+                    villager.talk(player, it.badReputationTradeDenial.random(), followDuringDialogue = false)
+                    player.sendTutorialMessage(TutorialMessage.BAD_REPUTATION)
+                }
+                return
+            }
+
             player.sendTutorialMessage(TutorialMessage.VILLAGER_INTERACTION)
             player.inventory.heldItemSlot = 4
             this.showDefaultMenu(player, villager)
@@ -160,7 +173,14 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
         val builder = Builder(villager, player)
         villager.quests.forEach { quest ->
             builder.button(Component.text(quest.questInfo.twoWordsDescription).color(buttonTextColor)) {
-                villager.talk(player, quest.questInfo.questDescription)
+
+                // Fame defines how villagers will talk with a player about quest details
+                villager.talk(player, when(player.fameLevel) {
+                    ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.questDescriptionForInfamousPlayer
+                    ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.questDescriptionForNeutralPlayer
+                    ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.questDescriptionForFamousPlayer
+                })
+
                 if (player.dialogueFormat != DialogueManager.DialogueFormat.CHAT) {
                     player.sendTutorialMessage(TutorialMessage.DIALOGUE)
                 }

@@ -10,6 +10,9 @@ import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.getMaterialPrice
+import me.voxelsquid.quill.villager.ReputationManager
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
+import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
 import me.voxelsquid.quill.villager.VillagerManager.Companion.eat
 import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
@@ -229,7 +232,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         villager.persistentDataContainer.set(villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inventory).toString())
 
         // TODO: Добавляем игроку в стату +1 выполненный квест
-        // TODO: У игрока должна увеличиваться репутация, которая влияет на.. эм.. на оценку.. награды?..
+        player.fame += 0.5
 
         // Выдаём экспу игроку и жителю
         player.giveExp(quest.rewardPrice / 20, true)
@@ -238,14 +241,22 @@ class QuestManager(private val plugin: QuestIntelligence) {
         // Закрываем инвентарь через один тик, чтобы избежать багов
         plugin.server.scheduler.runTaskLater(plugin, { _ ->
             player.closeInventory()
-            if (quest.type != QuestType.BOOZE) villager.talk(player, quest.questInfo.rewardText)
+            if (quest.type != QuestType.BOOZE) villager.talk(player, when (player.fameLevel) {
+                ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.rewardTextForInfamousPlayer
+                ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.rewardTextForNeutralPlayer
+                ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.rewardTextForFamousPlayer
+            })
             villager.removeQuest(quest)
             villager.updateQuests()
         }, 1L)
 
         when (quest.type) {
             QuestType.BOOZE -> this.finishBrewQuest(villager, questItem) {
-                villager.talk(player, quest.questInfo.rewardText)
+                villager.talk(player, when (player.fameLevel) {
+                    ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.rewardTextForInfamousPlayer
+                    ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.rewardTextForNeutralPlayer
+                    ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.rewardTextForFamousPlayer
+                })
             }
 
             QuestType.FOOD -> villager.eat()

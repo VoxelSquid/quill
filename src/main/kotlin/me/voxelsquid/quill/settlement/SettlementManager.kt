@@ -58,6 +58,13 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         }
 
         this.loadSettlements()
+
+        // Adding villagers to settlements in already loaded chunks
+        plugin.enabledWorlds.forEach { world ->
+            world.entities.filterIsInstance<Villager>().forEach { villager ->
+                villager.settlement?.villagers?.add(villager)
+            }
+        }
     }
 
     // Таск, в котором происходит поиск жителей, которые подохдят для создания сетлментов.

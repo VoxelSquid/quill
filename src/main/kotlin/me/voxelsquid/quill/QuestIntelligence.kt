@@ -40,10 +40,13 @@ class QuestIntelligence : JavaPlugin(), Listener {
     lateinit var questGenerator:    GeminiProvider
 
     var language: YamlConfiguration? = null
+    var baseColor = "§f"
+    var importantWord = "§c"
 
     override fun onEnable() {
         pluginInstance = this
-        languageFile   = File(pluginInstance.dataFolder, "language.yml")
+
+        languageFile = File(pluginInstance.dataFolder, "language.yml")
         super.saveResource("config.yml", false)
         super.saveResource("language.yml", false)
         this.reloadConfigurations()
@@ -91,6 +94,9 @@ class QuestIntelligence : JavaPlugin(), Listener {
     fun reloadConfigurations() {
         super.reloadConfig()
         this.configurationClip = ConfigurationClip(this)
+        this.language = YamlConfiguration.loadConfiguration(languageFile)
+        this.baseColor = config.getString("core-settings.text-formatting.base-color") ?: "§f"
+        this.importantWord = config.getString("core-settings.text-formatting.important-word-color") ?: "§2"
     }
 
     val gson: Gson = GsonBuilder()
@@ -167,8 +173,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
                     messagesSentList.add(tutorialMessage)
 
                     it.getStringList(tutorialMessage.key).forEach { message ->
-                        val prefix = it.getString("player-tutorial.prefix")!!
-                        this.sendMessage("$prefix $message")
+                        this.sendMessage(message)
                     }
                 }
             }
@@ -199,7 +204,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    private val debug = false
+    private val debug = true
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }
@@ -209,7 +214,8 @@ class QuestIntelligence : JavaPlugin(), Listener {
         VILLAGER_INTERACTION("player-tutorial.interaction-message"),
         DIALOGUE("player-tutorial.dialogue-message"),
         QUESTING("player-tutorial.questing-message"),
-        SLEEP_INTERRUPTION("player-tutorial.sleep-interruption-message");
+        SLEEP_INTERRUPTION("player-tutorial.sleep-interruption-message"),
+        BAD_REPUTATION("player-tutorial.bad-reputation");
     }
 
 }

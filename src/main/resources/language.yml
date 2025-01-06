@@ -2,15 +2,16 @@
 # There is no need to translate this file manually. Automatic on-the-fly translation by AI will be used. But you can disable it in config.yml.
 
 # If the player has turned off immersive dialogs with the "/q dialogue format CHAT" command, they will see messages from villagers in the chat.
-villager-message-chat-format: "§8(message from villager) §6{villagerName}§8: §7{message}"
+villager-message-chat-format: "§7(Villager) §6{villagerName}§7: §f{message}"
 
 # Messages that are visible after using commands.
 command-message:
 
-  tutorial-enabled: "Tutorial mode has been §2enabled§7."
-  tutorial-disabled: "Tutorial mode has been §4disabled§7."
+  tutorial-enabled: "Tutorial: §2Enabled"
+  tutorial-disabled: "Tutorial: §4Disabled"
 
-  dialogue-format-changed: "The format of villager dialogues has been changed to §6{dialogueFormat}§7."
+  dialogue-format-changed: "Dialogue format: §6{dialogueFormat}"
+  player-fame-changed: "§e{playerName}§7's fame changed to §3{newFame}."
 
 # Tutorial messages. Designed to make it easier for players to understand how the plugin works.
 player-tutorial:
@@ -18,54 +19,51 @@ player-tutorial:
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   tutorial-message-sound: ENTITY_EXPERIENCE_ORB_PICKUP
 
-  prefix: "§2§l[Tutorial]§7"
-
   first-connection-message:
-    - "This server has a plugin that adds §6neuroquesting™ §7to the game and COMPLETELY changes the interactions with villagers. They have §6gained personality types§7, §6learned to talk§7, §6craft items§7, and even §6offer quests §7to players! Look for a village! If you want to toggle tutorial messages, use §3/q tutorial."
+    - "§7Welcome! This server features §6neuroquesting™§7, revolutionizing NPC interactions."
+    - "§7Villagers now have §6personalities§7, can §6talk§7, §6craft§7, and offer §6quests§7!"
+    - "§7Find a village! Use §3/q tutorial §7to toggle these messages."
 
   interaction-message:
-    - "Choose button by §cscrolling the mouse wheel §7and then right-click on the villager again! To see the item the villager requires, select the §6Trade §7button. To learn more about the quests the villager has, select the §6Quests §7button."
+    - "§7Interact: §cScroll Wheel §7+ Right-Click."
+    - "§7See needs: §6Trade§7. Learn about tasks: §6Quests§7."
 
   questing-message:
-    - "To complete a quest, you just need to give the villager the item they ask for. Keep in mind that as a reward, the villager will only offer items they have in their inventory."
+    - "§7Complete quests by giving the required item."
+    - "§7Reward: Items from the villager's inventory."
 
   dialogue-message:
-    - "Villagers can talk! If you want to speed up the dialogue, hold the sneak button. If you want to close the dialogue — just hit the villager! No damage will be dealt."
+    - "§7Villagers talk! §oSneak to speed up. Hit to close (no damage)."
 
   sleep-interruption-message:
-    - "Villagers do not like being woken up in the middle of the night. No, really. Wait 'till morning."
+    - "§7Don't wake villagers at night. Seriously."
 
-# Interaction menu buttons
+  bad-reputation-message:
+    - "§7Low reputation? No trades. Do good, shun evil to improve it."
+
+# Interaction menu buttons.
 interaction-menu:
 
   quests-button: "Quests"
-
   trade-button: "Trade"
-
   actions-button: "Actions"
-
   talk-button: "Talk"
-
   order-button: "Order"
-
   gift-button: "Gift"
-
   return-button: "Return"
-
   close-button: "Close"
 
-# Settlement menu buttons and other stuff
+# Settlement menu buttons and other stuff.
 settlement-menu:
 
   villagers-menu-title: "§0Villagers"
   villagers-button: "§6Villagers"
   villagers-button-lore:
-    - "§fNumber of villagers: §a{villagerAmount}"
-    - "§7Click to open the menu with the list of villagers."
+    - "§fVillagers: §a{villagerAmount}"
+    - "§7Open villager list."
   villager-info:
-    - "§fPersonality type: §d{personality}"
-    - "§fProfession: §3{profession}"
-    - "§fLevel: §3{professionLevel}"
+    - "§fPersonality: §d{personality}"
+    - "§fProfession: §3{profession} (§3{professionLevel}§3)"
     - "§fHealth: §c{health}"
     - "§fHunger: §e{hunger}"
     - "§fWealth: §a{networth}$"
@@ -73,37 +71,38 @@ settlement-menu:
 
   visibility-button: "§6Visibility"
   visibility-button-lore:
-    - "§fVisibility state: {visibilityState}"
-    - "§7Click to toggle the visibility of the settlement."
-    - "§7Currently, visibility does not affect anything... Stay tuned for updates!"
+    - "§fVisibility: {visibilityState}"
+    - "§7Toggle settlement visibility (currently inactive)."
   visibility-state:
-    visible: "§avisible"
-    hidden: "§chidden"
+    visible: "§aVisible"
+    hidden: "§cHidden"
 
   policies-button: "§6Policies"
   policies-button-lore:
-    - "§7Click to open the settlement policy management menu."
-    - "§7Currently, does nothing... Stay tuned for updates!"
+    - "§7Manage settlement policies (currently inactive)."
 
   actions-button: "§6Actions"
   actions-button-lore:
-    - "§7Click to open the actions menu."
-    - "§7Currently, does nothing... Stay tuned for updates!"
+    - "§7Settlement actions menu (currently inactive)."
 
   food-button: "§6Food"
   food-button-lore:
-    - "§fTotal amount of food: §e{totalFoodAmount}"
-    - "§fNumber of starving villagers: §a{starvingVillagersAmount}"
+    - "§fFood: §e{totalFoodAmount}"
+    - "§fStarving villagers: §a{starvingVillagersAmount}"
 
   craft-button: "§6Craft"
   craft-button-lore:
-    - "§7Click to open the menu with information about crafters."
-    - "§7Currently, does nothing... Stay tuned for updates!"
+    - "§7Crafter information (currently inactive)."
 
   beds-button: "§6Beds"
   beds-button-lore:
-    - "§fNumber of beds: §e{bedAmount}"
-    - "§fPossibility of a newcomer arriving: {arrivalPossibility}"
+    - "§fBeds: §e{bedAmount}"
+    - "§fNewcomer arrival: {arrivalPossibility}"
   arrival-possibility:
-    possible: "§a§lPOSSIBLE"
-    impossible: "§c§lIMPOSSIBLE"
+    possible: "§aPossible"
+    impossible: "§cImpossible"
+
+# Error messages. THAT WAS AN ERROR.
+error-message:
+
+  player-not-found: "§cPlayer not found: §b{playerName}§c (online only)."

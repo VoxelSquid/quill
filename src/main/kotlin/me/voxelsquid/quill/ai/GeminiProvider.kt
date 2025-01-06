@@ -265,7 +265,6 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    plugin.language = YamlConfiguration.loadConfiguration(languageFile)
                     plugin.logger.warning("It seems that there was some error while translating the language file.")
                     plugin.logger.warning("QuestIntelligence will use the default translation but will try to translate the language file again in 15 seconds.")
                     plugin.logger.warning("If that doesn't work, there's probably an AI problem. Report it to the developer.")
@@ -381,11 +380,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         private fun cleanQuestJson(questJson: String): String =
-            questJson.replace("```json\n", "")
+                questJson.replace("```json\n", "")
                 .replace("```", "")
                 .replace("\\n", "\n")
                 .replace(Regex("\\s{2,}"), " ") // Избавляемся от богомерзких двойных пробелов
-                .replace("*", "")
                 .replace(Regex("\\.{3}(?=\\S)"), "..." + " ") // Исправляем отсутствие пробела после троеточия
 
         private fun findJson(response: String): String? {
