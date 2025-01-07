@@ -21,12 +21,21 @@ core-settings:
   # Currently, only Gemini IS supported.
   api-key: "GEMINI_API_KEY"
 
-  message-prefix: "§2§l[quill]§7"
+  message-prefix: "§7§l.q§8§l/ §6>> §7"
 
   # Important words in villagers' messages are highlighted in colors. You can customize this.
   text-formatting:
     base-color: "§7"
-    important-word-color: "§6"
+    important-color: "§6"
+    emotional-color: "§e"
+
+  dialogue-text-display:
+    default-size: 0.28
+    background-color:
+      alpha: 185
+      r: 0
+      g: 0
+      b: 0
 
   # Add your worlds here.
   enabled-worlds:
@@ -55,8 +64,8 @@ core-settings:
     # Default is 2400
     work: 2400
 
-    # Default is 600
-    quest: 600
+    # Default is 400
+    quest: 400
 
   # The standard format of villagers' dialogs for every player on the server.
   # IMMERSIVE: the message from the villager will be received in a cOoL dIaLoGuE wInDoW.
@@ -103,6 +112,7 @@ reputation-settings:
 
   # Trade price multiplier formula = 1.0 - (fame * fame) - (respect * respectMultiplier)
   formula:
+    villager-baby-kill-multiplier: 2.0
     defaultMultiplier: 1.0
     minimumMultiplier: 0.5
     maximumMultiplier: 2.0

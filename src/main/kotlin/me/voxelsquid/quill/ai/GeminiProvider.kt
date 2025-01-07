@@ -114,6 +114,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val placeholders = mapOf(
             "villagerType"        to "${villager.villagerType}",
             "villagerPersonality" to "${villager.character}",
+            "villagerGrowthStage" to if (villager.isAdult) "ADULT" else "KID)",
             "language"            to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"        to this.getRandomLetter()
         )

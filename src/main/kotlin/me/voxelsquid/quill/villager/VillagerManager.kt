@@ -58,7 +58,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         // Quest tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
             questManager.prepareQuest()
-        }, 0, questIntervalTicks)
+        }, 0, if (plugin.debug) 100 else questIntervalTicks)
 
         // Work tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
@@ -71,7 +71,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
             plugin.enabledWorlds.forEach { world -> villagers.addAll(world.entities.filterIsInstance<Villager>()) }
 
             plugin.server.scheduler.runTaskAsynchronously(plugin, { _ ->
-                villagers.forEach { villager ->
+                villagers.shuffled().forEachIndexed { index, villager ->
                     if (villager.pose != Pose.SLEEPING) {
 
                         if (villager.hunger > 0) villager.hunger -= 2.5
@@ -81,7 +81,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                             if (villager.hunger <= 17.5) {
                                 villager.eat()
                             }
-                        }, 5)
+                        }, 5 + (index * 2L).coerceAtMost(100))
 
                     }
                 }
@@ -131,7 +131,10 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                                     val sleepInterruptionMessages: MutableList<String>,
                                     val damageMessages: MutableList<String>,
                                     val joblessMessages: MutableList<String>,
-                                    val badReputationTradeDenial: MutableList<String>)
+                                    val noQuestsForNow: MutableList<String>,
+                                    val badReputationInteractionDenial: MutableList<String>,
+                                    val kidInteractionFamousPlayer: MutableList<String>,
+                                    val kidInteractionNeutralPlayer: MutableList<String>)
 
     private fun savePersonalVillagerData(villager: Villager, data: PersonalVillagerData) {
         data.villagerName?.let { name ->
@@ -185,7 +188,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                 }
 
                 var price = item.calculatePrice() // Определяем цену предмета
-                val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 2.0)
+                val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 3.0)
                 price = (price.toDouble() * multiplier).toInt()
 
                 val emeraldBlockPrice = plugin.configurationClip.pricesConfig.getInt("EMERALD_BLOCK")
@@ -282,7 +285,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
             }
         }
 
-        fun Villager.talk(player: Player, text: String?, displaySize: Float = 0.35F, followDuringDialogue: Boolean = true, interruptPreviousDialogue: Boolean = false) {
+        fun Villager.talk(player: Player, text: String?, displaySize: Float = plugin.config.getDouble("core-settings.dialogue-text-display.default-size").toFloat(), followDuringDialogue: Boolean = true, interruptPreviousDialogue: Boolean = false) {
             text?.let {
                 dialogueManager.startDialogue(player to this, it, size = displaySize, follow = followDuringDialogue, interrupt = interruptPreviousDialogue)
             }
@@ -478,7 +481,8 @@ enum class CharacterType {
     LUCKY,
     UNLUCKY,
     THIEF,
-    POTHEAD;
+    POTHEAD,
+    CHILDLIKE;
 
     companion object {
         fun getEnumValuesAsStrings(): List<String> {

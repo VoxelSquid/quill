@@ -39,9 +39,11 @@ class QuestIntelligence : JavaPlugin(), Listener {
     lateinit var settlementManager: SettlementManager
     lateinit var questGenerator:    GeminiProvider
 
+
     var language: YamlConfiguration? = null
     var baseColor = "§f"
-    var importantWord = "§c"
+    var importantWordColor = "§c"
+    var interestingStuffColor = "§c"
 
     override fun onEnable() {
         pluginInstance = this
@@ -95,8 +97,10 @@ class QuestIntelligence : JavaPlugin(), Listener {
         super.reloadConfig()
         this.configurationClip = ConfigurationClip(this)
         this.language = YamlConfiguration.loadConfiguration(languageFile)
-        this.baseColor = config.getString("core-settings.text-formatting.base-color") ?: "§f"
-        this.importantWord = config.getString("core-settings.text-formatting.important-word-color") ?: "§2"
+        this.baseColor = config.getString("core-settings.text-formatting.base-color") ?: "§7"
+        this.importantWordColor = config.getString("core-settings.text-formatting.important-color") ?: "§6"
+        this.interestingStuffColor = config.getString("core-settings.text-formatting.emotional-color") ?: "§2"
+        messagePrefix = pluginInstance.config.getString("core-settings.message-prefix") ?: ""
     }
 
     val gson: Gson = GsonBuilder()
@@ -117,7 +121,9 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     companion object {
 
+        var messagePrefix = ""
         private val tutorialMessages: HashMap<Player, MutableList<TutorialMessage>> = hashMapOf()
+
         val playerTutorialKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "tutorial") }
         val playerStatsKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "statistics") }
         val immersiveDialoguesKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
@@ -180,10 +186,8 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         }
 
-        fun Player.sendFormattedMessage(key: String) {
-            pluginInstance.language?.let {
-                this.sendMessage(pluginInstance.config.getString("core-settings.message-prefix")!! + " " + it.getString(key)!!)
-            }
+        fun Player.sendFormattedMessage(message: String) {
+            this.sendMessage(messagePrefix + message)
         }
 
     }
@@ -204,7 +208,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    private val debug = false
+    val debug = true
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }

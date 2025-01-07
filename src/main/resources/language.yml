@@ -2,16 +2,16 @@
 # There is no need to translate this file manually. Automatic on-the-fly translation by AI will be used. But you can disable it in config.yml.
 
 # If the player has turned off immersive dialogs with the "/q dialogue format CHAT" command, they will see messages from villagers in the chat.
-villager-message-chat-format: "§7(Villager) §6{villagerName}§7: §f{message}"
+villager-message-chat-format: "§8(villager) §6{villagerName}§7: §f{message}"
 
 # Messages that are visible after using commands.
 command-message:
 
-  tutorial-enabled: "Tutorial: §2Enabled"
-  tutorial-disabled: "Tutorial: §4Disabled"
+  tutorial-enabled: "Tutorial mode has been §2enabled"
+  tutorial-disabled: "Tutorial mode has been §4disabled"
 
-  dialogue-format-changed: "Dialogue format: §6{dialogueFormat}"
-  player-fame-changed: "§e{playerName}§7's fame changed to §3{newFame}."
+  dialogue-format-changed: "Dialogue format has been set to §6{dialogueFormat}"
+  player-fame-changed: "§e{playerName}§7's fame has been changed to §3{newFame}"
 
 # Tutorial messages. Designed to make it easier for players to understand how the plugin works.
 player-tutorial:
@@ -19,23 +19,12 @@ player-tutorial:
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   tutorial-message-sound: ENTITY_EXPERIENCE_ORB_PICKUP
 
-  first-connection-message:
-    - "§7Welcome! This server features §6neuroquesting™§7, revolutionizing NPC interactions. Villagers now have §6personalities§7, can §6talk§7, §6craft§7, and offer §6quests§7! Find a village! Use §3/q tutorial §7to toggle these messages."
-
-  interaction-message:
-    - "§7Interact: §cScroll Wheel §7+ Right-Click. See needs: §6Trade§7. Learn about tasks: §6Quests§7."
-
-  questing-message:
-    - "§7Complete quests by giving the required item in trading window."
-
-  dialogue-message:
-    - "§7Villagers talk! §oSneak to speed up. Hit to close (no damage)."
-
-  sleep-interruption-message:
-    - "§7Don't wake villagers at night. Seriously."
-
-  bad-reputation-message:
-    - "§7Low reputation? No trades. Do good, shun evil to improve it."
+  first-connection-message: "§7Welcome! This server features §6AI-questing™§7, revolutionizing NPC interactions. Villagers now have §6personalities§7, can §6talk§7, §6craft§7, and offer §6quests§7! Find a village! Use §3/q tutorial §7to toggle these messages."
+  interaction-message: "§7Interact: §cScroll Wheel §7+ §eRight-Click§7. See needs: §6Trade§7. Learn about tasks: §6Quests§7."
+  questing-message: "§7Complete quests by giving the required item in trading window."
+  dialogue-message: "§7Villagers talk! §oSneak to speed up. Hit to close (no damage)."
+  sleep-interruption-message: "§7Don't wake villagers at night. Seriously."
+  bad-reputation-message: "§7Low reputation? No trades. Do good, shun evil to improve it."
 
 # Interaction menu buttons.
 interaction-menu:

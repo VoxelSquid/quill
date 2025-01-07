@@ -93,10 +93,22 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
             }
 
             // Обработка крайне негативной репутации
-            if (villager.getRespect(player) <= -20 || player.fame <= -50) {
+            if (villager.getRespect(player) <= -40 || player.fame <= -40) {
                 villager.personalData?.let {
-                    villager.talk(player, it.badReputationTradeDenial.random(), followDuringDialogue = false)
+                    villager.talk(player, it.badReputationInteractionDenial.random(), followDuringDialogue = false)
                     player.sendTutorialMessage(TutorialMessage.BAD_REPUTATION)
+                }
+                return
+            }
+
+            // Обработка взаимодействия с ребёнком
+            if (!villager.isAdult) {
+                villager.personalData?.let { data ->
+                    if (villager.getRespect(player) <= -20 || player.fame <= -20) {
+                        villager.talk(player, data.badReputationInteractionDenial.random(), followDuringDialogue = false)
+                    } else if (villager.getRespect(player) >= 20 || player.fame >= 20) {
+                        villager.talk(player, data.kidInteractionFamousPlayer.random(), followDuringDialogue = false)
+                    } else villager.talk(player, data.kidInteractionNeutralPlayer.random(), followDuringDialogue = false)
                 }
                 return
             }
@@ -118,9 +130,18 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.quests-button")!!).color(buttonTextColor)) {
 
+            // Когда игрок спрашивает о квестах у безработного жителя
             if (villager.profession == Villager.Profession.NONE) {
                 villager.personalData?.let {
                     villager.talk(player, it.joblessMessages.random(), followDuringDialogue = true)
+                    return@button
+                }
+            }
+
+            // Когда игрок спрашивает о квестах у жителя с работой, но без квестов
+            if (villager.quests.isEmpty()) {
+                villager.personalData?.let {
+                    villager.talk(player, it.noQuestsForNow.random(), followDuringDialogue = true)
                     return@button
                 }
             }

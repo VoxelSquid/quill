@@ -54,10 +54,10 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     fun onTutorial(player: Player) {
         if (player.persistentDataContainer.getOrDefault(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, false)) {
             player.persistentDataContainer.set(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, false)
-            player.sendFormattedMessage("command-message.tutorial-disabled")
+            player.sendFormattedMessage(plugin.language?.getString("command-message.tutorial-disabled") ?: "ERR_MESSAGE_NOT_FOUND")
         } else {
             player.persistentDataContainer.set(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, true)
-            player.sendFormattedMessage("command-message.tutorial-enabled")
+            player.sendFormattedMessage(plugin.language?.getString("command-message.tutorial-enabled") ?: "ERR_MESSAGE_NOT_FOUND")
         }
     }
 
@@ -69,7 +69,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
             player.persistentDataContainer.set(immersiveDialoguesKey, PersistentDataType.STRING, format.toString())
             QuestIntelligence.pluginInstance.language?.let { language ->
                 language.getString("command-message.dialogue-format-changed")?.let { message ->
-                    player.sendMessage(message.replace("{dialogueFormat}", format.toString()))
+                    player.sendFormattedMessage(message.replace("{dialogueFormat}", format.toString()))
                 }
             }
         }
@@ -125,10 +125,10 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
         Bukkit.getPlayer(name)?.let { player: Player ->
             player.fame = amount.toDouble()
             val successMessage = plugin.language?.getString("command-message.player-fame-changed")?.replace("{playerName}", name)?.replace("{newFame}", amount.toString()) ?: return
-            sender.sendMessage(successMessage)
+            if (sender is Player) sender.sendFormattedMessage(successMessage) else plugin.logger.info(successMessage)
         } ?: run {
             val errorMessage = plugin.language?.getString("error-message.player-not-found")?.replace("{playerName}", name) ?: return
-            sender.sendMessage(errorMessage)
+            if (sender is Player) sender.sendFormattedMessage(errorMessage) else plugin.logger.info(errorMessage)
         }
     }
 

@@ -23,7 +23,6 @@ import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.inventory.*
-import org.bukkit.inventory.RecipeChoice.ExactChoice
 import org.bukkit.inventory.RecipeChoice.MaterialChoice
 import org.bukkit.inventory.meta.ArmorMeta
 import org.bukkit.inventory.meta.trim.ArmorTrim

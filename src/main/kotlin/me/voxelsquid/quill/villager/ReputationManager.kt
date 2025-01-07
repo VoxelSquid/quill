@@ -26,7 +26,7 @@ class ReputationManager : Listener {
 
             // Respect
             when (victim) {
-                is Villager  -> player.changeRespect(plugin.config.getDouble("reputation-settings.respect.villager-kill"))
+                is Villager  -> player.changeRespect(plugin.config.getDouble("reputation-settings.respect.villager-kill") * if (victim.isAdult) 1.0 else plugin.config.getDouble("reputation-settings.formula.villager-baby-kill-multiplier"))
                 is IronGolem -> player.changeRespect(plugin.config.getDouble("reputation-settings.respect.iron-golem-kill"))
                 is Player    -> {} // TODO: Калькуляция значений уникальна для каждого игрока. Нужен метод.
                 is Zombie    -> player.changeRespect(plugin.config.getDouble("reputation-settings.respect.zombie-kill"))
@@ -35,7 +35,7 @@ class ReputationManager : Listener {
 
             // Fame
             when (victim) {
-                is Villager    -> player.fame += plugin.config.getDouble("reputation-settings.fame.villager-kill")
+                is Villager    -> player.fame += plugin.config.getDouble("reputation-settings.fame.villager-kill") * if (victim.isAdult) 1.0 else plugin.config.getDouble("reputation-settings.formula.villager-baby-kill-multiplier")
                 is IronGolem   -> player.fame += plugin.config.getDouble("reputation-settings.fame.iron-golem-kill")
                 is Player      -> {} // TODO: Калькуляция значений уникальна для каждого игрока. Нужен метод.
                 is Illager     -> player.fame += plugin.config.getDouble("reputation-settings.fame.illager-kill")

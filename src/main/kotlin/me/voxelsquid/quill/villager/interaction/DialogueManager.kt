@@ -6,8 +6,8 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.villager.VillagerManager.Companion.voicePitch
 import me.voxelsquid.quill.villager.VillagerManager.Companion.voiceSound
-import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
+import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Sound
 import org.bukkit.craftbukkit.entity.CraftPlayer
@@ -26,11 +26,13 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         }, 0L, 1L)
     }
 
-    fun startDialogue(pair: Pair<Player, Villager>, text: String, follow: Boolean = true, size: Float = 0.3F, interrupt: Boolean = false) {
+    fun startDialogue(pair: Pair<Player, Villager>, text: String, follow: Boolean = true, size: Float = 0.35F, interrupt: Boolean = false) {
 
         val (player, villager) = pair
         val formattedText = plugin.baseColor + text.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
-            "${plugin.importantWord}${matchResult.groupValues[1]}${plugin.baseColor}"
+            "${plugin.importantWordColor}${matchResult.groupValues[1]}${plugin.baseColor}"
+        }.replace(Regex("\\*(.*?)\\*")) { matchResult ->
+            "${plugin.interestingStuffColor}${matchResult.groupValues[1]}${plugin.baseColor}"
         }.replace("\\\"", "\"")
 
         when (player.dialogueFormat) {
@@ -102,11 +104,17 @@ class DialogueManager(private val plugin: QuestIntelligence) {
     ) {
 
         private val display: TextDisplay
+        private val displayBackgroundColor = Color.fromARGB(
+            plugin.config.getInt("core-settings.dialogue-text-display.background-color.alpha"),
+            plugin.config.getInt("core-settings.dialogue-text-display.background-color.r"),
+            plugin.config.getInt("core-settings.dialogue-text-display.background-color.g"),
+            plugin.config.getInt("core-settings.dialogue-text-display.background-color.b")
+        )
 
         private val voice: Sound = villager.voiceSound
         private val pitch: Float = villager.voicePitch
 
-        private val height = 1.25
+        private val height = if (villager.isAdult) 1.25 else 0.75
         private val maxDistance = 5.5
 
         private val pauseDurationBetweenSentences = 3000L
@@ -131,11 +139,13 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         fun schedule() {
 
             display.billboard = Display.Billboard.CENTER
-            display.isSeeThrough = true
+            display.isSeeThrough = false
             display.isVisibleByDefault = false
             player.showEntity(plugin, display)
             display.transformation =
                 Transformation(Vector3f(0f, 0f, 0f), AxisAngle4f(), Vector3f(size, size, size), AxisAngle4f())
+
+            display.backgroundColor = displayBackgroundColor
 
             val task = object : BukkitRunnable() {
                 override fun run() {

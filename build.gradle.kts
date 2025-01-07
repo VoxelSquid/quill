@@ -1,7 +1,7 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.1.6-OPEN-ALPHA"
+version = "0.1.7-OPEN-ALPHA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
