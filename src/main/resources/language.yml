@@ -2,7 +2,16 @@
 # There is no need to translate this file manually. Automatic on-the-fly translation by AI will be used. But you can disable it in config.yml.
 
 # If the player has turned off immersive dialogs with the "/q dialogue format CHAT" command, they will see messages from villagers in the chat.
-villager-message-chat-format: "§8(villager) §6{villagerName}§7: §f{message}"
+villager-message-chat-format: "§8(villager) §6{villagerName}§7: §r{message}"
+
+# Same thing for illagers. Bad players with infamous reputation can interact with illagers and do.. other things.
+illager-message-chat-format: "§x§b§9§3§1§3§1(illager) §x§c§d§1§0§1§0{illagerName}§7: §r{message}"
+illager-party:
+  banner-is-on-head: "§7You are infamous enough and now wear the ominous banner on your head. §4Illagers will follow you."
+  illager-decides-to-join: "§7Illager §4{illagerName} §7decides to join your §4humble party§7."
+  illager-died: "§7Illager §4{illagerName} §7has died. §4But you don't really care, huh?"
+  party-disbanded: "§7The party's over. §4For now."
+
 
 # Messages that are visible after using commands.
 command-message:

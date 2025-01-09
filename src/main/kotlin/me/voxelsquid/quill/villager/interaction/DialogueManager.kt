@@ -6,7 +6,6 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.villager.VillagerManager.Companion.voicePitch
 import me.voxelsquid.quill.villager.VillagerManager.Companion.voiceSound
-import net.kyori.adventure.text.TextComponent
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Sound
@@ -26,7 +25,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         }, 0L, 1L)
     }
 
-    fun startDialogue(pair: Pair<Player, Villager>, text: String, follow: Boolean = true, size: Float = 0.35F, interrupt: Boolean = false) {
+    fun startDialogue(pair: Pair<Player, LivingEntity>, text: String, follow: Boolean = true, size: Float = 0.35F, interrupt: Boolean = false) {
 
         val (player, villager) = pair
         val formattedText = plugin.baseColor + text.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
@@ -64,7 +63,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
     }
 
     private val cooldownPlayers = mutableListOf<Player>()
-    private fun sendDialogueInChat(player: Player, villager: Villager, message: String) {
+    private fun sendDialogueInChat(player: Player, entity: LivingEntity, message: String) {
 
         // primitive yet clever cooldown system
         if (cooldownPlayers.contains(player)) {
@@ -76,31 +75,47 @@ class DialogueManager(private val plugin: QuestIntelligence) {
             }, 20)
         }
 
-        val formattedMessage: String = plugin.language?.getString("villager-message-chat-format")!!
-            .replace("{villagerName}", (villager.customName() as TextComponent).content())
-            .replace("{message}", message)
+        val formattedMessage: String = when (entity) {
+            is Villager -> plugin.language?.getString("villager-message-chat-format")!!.replace("{villagerName}", entity.customName ?: "").replace("{message}", message)
+            is Illager  -> plugin.language?.getString("illager-message-chat-format")!!.replace("{illagerName}", entity.customName ?: "").replace("{message}", message)
+            else        -> throw IllegalStateException("Stop it. Get some help.")
+        }
         player.sendMessage(formattedMessage)
 
         if (player.dialogueFormat != DialogueFormat.BOTH)
-            player.playSound(villager.location, villager.voiceSound, 1F, villager.voicePitch)
+            player.playSound(entity.location, when (entity) { is Villager -> entity.voiceSound; else -> determineVoiceSound(entity) }, 1F, when (entity) { is Villager -> entity.voicePitch; else -> 1.0F })
     }
+
+
 
     enum class DialogueFormat {
         IMMERSIVE, CHAT, BOTH
     }
 
     companion object {
-        val dialogues: MutableMap<Pair<Player, Villager>, DialogueWindow> = mutableMapOf()
+        val dialogues: MutableMap<Pair<Player, LivingEntity>, DialogueWindow> = mutableMapOf()
+
+        private fun determineVoiceSound(entity: LivingEntity) : Sound {
+            return when (entity) {
+                is Pillager   -> Sound.ENTITY_PILLAGER_AMBIENT
+                is Illusioner -> Sound.ENTITY_ILLUSIONER_AMBIENT
+                is Vindicator -> Sound.ENTITY_VINDICATOR_AMBIENT
+                is Evoker     -> Sound.ENTITY_EVOKER_AMBIENT
+                is Witch      -> Sound.ENTITY_WITCH_AMBIENT
+                else          -> Sound.ENTITY_PLAYER_BURP
+            }
+        }
+
     }
 
     class DialogueWindow(
         private val plugin: QuestIntelligence,
         private val player: Player,
-        val villager: Villager,
+        val entity: LivingEntity,
         private val size: Float,
         private val words: List<String>,
         private val follow: Boolean,
-        cancelPrevious: Boolean
+        cancelPrevious: Boolean,
     ) {
 
         private val display: TextDisplay
@@ -111,10 +126,10 @@ class DialogueManager(private val plugin: QuestIntelligence) {
             plugin.config.getInt("core-settings.dialogue-text-display.background-color.b")
         )
 
-        private val voice: Sound = villager.voiceSound
-        private val pitch: Float = villager.voicePitch
+        private val voice: Sound = when (entity) { is Villager -> entity.voiceSound; else -> determineVoiceSound(entity) }
+        private val pitch: Float = when (entity) { is Villager -> entity.voicePitch; else -> 1.0F }
 
-        private val height = if (villager.isAdult) 1.25 else 0.75
+        private val height = if (entity is Ageable && !entity.isAdult) 0.75 else 1.25
         private val maxDistance = 5.5
 
         private val pauseDurationBetweenSentences = 3000L
@@ -128,12 +143,12 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         private var isDestroyed = false
 
         init {
-            if (cancelPrevious) dialogues[player to villager]?.let {
+            if (cancelPrevious) dialogues[player to entity]?.let {
                 it.display.remove()
                 it.isCancelled = true
             }
-            display = villager.world.spawnEntity(villager.location, EntityType.TEXT_DISPLAY) as TextDisplay
-            dialogues[player to villager] = this
+            display = entity.world.spawnEntity(entity.location, EntityType.TEXT_DISPLAY) as TextDisplay
+            dialogues[player to entity] = this
         }
 
         fun schedule() {
@@ -154,6 +169,8 @@ class DialogueManager(private val plugin: QuestIntelligence) {
 
                     for (word in words) {
 
+
+
                         if (!plugin.isEnabled || word.isEmpty() || isCancelled || isDestroyed)
                             break
 
@@ -164,11 +181,9 @@ class DialogueManager(private val plugin: QuestIntelligence) {
                         plugin.server.scheduler.runTask(plugin) { _ ->
 
                             display.text += "$word "
-                            player.playSound(villager.location, voice, 1F, pitch)
+                            player.playSound(entity.location, voice, 1F, pitch)
 
-                            if (follow)
-                                (villager as CraftVillager).handle.tradingPlayer = (player as CraftPlayer).handle
-
+                            if (follow && entity is CraftVillager) entity.handle.tradingPlayer = (player as CraftPlayer).handle
                         }
 
                         val pauseDuration = when {
@@ -209,17 +224,18 @@ class DialogueManager(private val plugin: QuestIntelligence) {
 
         fun destroy() {
             display.remove()
-            (villager as CraftVillager).handle.tradingPlayer = null
-            dialogues.remove(player to villager, this@DialogueWindow)
+            (entity as? CraftVillager)?.handle?.tradingPlayer = null
+            dialogues.remove(player to entity, this@DialogueWindow)
             isDestroyed = true
         }
 
         private fun checkDistance(): Boolean = player.location.distance(display.location) > maxDistance
 
         private fun calculatePosition(): Location {
-            return player.eyeLocation.add(villager.location.add(0.0, if (villager.pose != Pose.SLEEPING) height else height - 0.4, 0.0)).multiply(0.5)
+            return player.eyeLocation.add(entity.location.add(0.0, if (entity.pose != Pose.SLEEPING) height else height - 0.4, 0.0)).multiply(0.5)
         }
 
     }
+
 
 }

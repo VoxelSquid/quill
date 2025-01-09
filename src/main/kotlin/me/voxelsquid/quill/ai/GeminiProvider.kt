@@ -4,13 +4,13 @@ import com.google.gson.JsonSyntaxException
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
 import me.voxelsquid.quill.QuestIntelligence.Companion.languageFile
-import me.voxelsquid.quill.event.QuestGenerateEvent
-import me.voxelsquid.quill.event.SettlementNameGenerateEvent
-import me.voxelsquid.quill.event.UniqueItemGenerateEvent
-import me.voxelsquid.quill.event.VillagerDataGenerateEvent
+import me.voxelsquid.quill.event.*
+import me.voxelsquid.quill.illager.IllagerManager.Companion.illagerCommonData
 import me.voxelsquid.quill.quest.QuestManager
+import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ProfessionManager
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemAttributes
@@ -29,12 +29,10 @@ import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.PotionMeta
-import java.io.File
 import java.io.IOException
 import java.io.StringReader
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.time.Duration
 import kotlin.random.Random
 
 
@@ -64,32 +62,45 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
     }.build()
 
+    private val previousNames = mutableListOf<String>()
+
     private val key = plugin.config.getString("core-settings.api-key")
     private val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$key"
 
-    private fun requestTranslation() = GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${languageFile.readText()}\n```")
+    private fun generateTranslation() = GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${languageFile.readText()}\n```")
 
     init {
         if (!languageFile.exists())
             plugin.saveResource("language.yml", false)
         if (plugin.config.getBoolean("core-settings.automatic-configuration-translation")) {
-            this.requestTranslation()
+            this.generateTranslation()
         } else {
             plugin.logger.info("Automatic configuration translation is disabled. :(")
             plugin.language = YamlConfiguration.loadConfiguration(languageFile)
             GenerationRequest(this, client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
         }
+
+        // Late generation requests
+        plugin.server.scheduler.runTaskTimerAsynchronously(plugin, { _ ->
+            if (illagerCommonData == null) {
+                this.generateCommonIllagerData()
+            }
+        }, 100, 400)
     }
 
 
     data class SettlementInformation(val townName: String)
     fun generateSettlementName(settlement: Settlement) {
 
+        val extraArguments = if (settlements.isNotEmpty()) "Avoid these names: $settlements." else ""
+
         val placeholders = mapOf(
             "settlementBiome"       to settlement.data.center.world.getBiome(settlement.data.center).key.value(),
             "language"              to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"          to this.getRandomLetter(),
-            "randomLetterLowerCase" to this.getRandomLetter().lowercase()
+            "randomLetterLowerCase" to this.getRandomLetter().lowercase(),
+            "extraArguments"        to extraArguments,
+            "namingStyle"           to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
         )
 
         val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("settlement-name")!!) { acc, entry ->
@@ -111,12 +122,16 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     fun generatePersonalVillagerData(villager: Villager) {
 
+        val extraArguments = "Avoid these names: $previousNames."
+
         val placeholders = mapOf(
             "villagerType"        to "${villager.villagerType}",
             "villagerPersonality" to "${villager.character}",
-            "villagerGrowthStage" to if (villager.isAdult) "ADULT" else "KID)",
+            "villagerGrowthStage" to if (villager.isAdult) "ADULT" else "KID",
             "language"            to "${plugin.config.getString("core-settings.language")}",
-            "randomLetter"        to this.getRandomLetter()
+            "randomLetter"        to this.getRandomLetter(),
+            "extraArguments"      to extraArguments,
+            "namingStyle"         to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
         )
 
         val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("personal-villager-data")!!) { acc, entry ->
@@ -126,14 +141,34 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
                 try {
-                    plugin.server.pluginManager.callEvent(
-                        VillagerDataGenerateEvent(
-                            villager,
-                            plugin.gson.fromJson(cleanedJsonResponse, VillagerManager.PersonalVillagerData::class.java)
-                        )
-                    )
+                    val pvd = plugin.gson.fromJson(cleanedJsonResponse, VillagerManager.PersonalVillagerData::class.java)
+                    this.previousNames.add(pvd.villagerName)
+                    plugin.server.pluginManager.callEvent(VillagerDataGenerateEvent(villager, pvd))
                 } catch (exception: JsonSyntaxException) {
-                    plugin.logger.warning("JsonSyntaxException during generating PDV)! Please, report this to the developer!")
+                    plugin.logger.warning("JsonSyntaxException during generating PDV! Please, report this to the developer!")
+                    plugin.logger.warning(cleanedJsonResponse)
+                }
+            }
+        }
+    }
+
+    private fun generateCommonIllagerData() {
+
+        val placeholders = mapOf(
+            "namingStyle" to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
+        )
+
+        val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("common-illager-data") + "Rules: '15% of words are swearing'") { acc, entry ->
+            acc.replace("{${entry.key}}", entry.value)
+        }
+
+        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
+            plugin.server.scheduler.runTask(plugin) { _ ->
+                try {
+                    val icd = plugin.gson.fromJson(cleanedJsonResponse, IllagerCommonData::class.java)
+                    plugin.server.pluginManager.callEvent(IllagerCommonDataGenerateEvent(icd))
+                } catch (exception: JsonSyntaxException) {
+                    plugin.logger.warning("JsonSyntaxException during generating CID! Please, report this to the developer!")
                     plugin.logger.warning(cleanedJsonResponse)
                 }
             }
@@ -148,17 +183,18 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
-            "villagerName" to villagerName,
-            "villagerType" to "${villager.villagerType}",
-            "villagerProfession" to "${villager.profession}",
+            "villagerName"            to villagerName,
+            "villagerType"            to "${villager.villagerType}",
+            "villagerProfession"      to "${villager.profession}",
             "villagerProfessionLevel" to villager.professionLevelName,
-            "language" to plugin.config.getString("core-settings.language")!!,
-            "itemType" to item.type.toString(),
-            "extraItemAttributes" to item.getUniqueItemAttributes(),
-            "itemRarity" to if (item.isUniqueItem()) item.getUniqueItemRarity().toString().lowercase() else ProfessionManager.UniqueItemRarity.COMMON.toString().lowercase(),
-            "settlementName" to settlementName,
-            "settlementLevel" to settlementLevel,
-            "randomLetterLowerCase" to this.getRandomLetter().lowercase()
+            "language"                to plugin.config.getString("core-settings.language")!!,
+            "itemType"                to item.type.toString(),
+            "extraItemAttributes"     to item.getUniqueItemAttributes(),
+            "itemRarity"              to if (item.isUniqueItem()) item.getUniqueItemRarity().toString().lowercase() else ProfessionManager.UniqueItemRarity.COMMON.toString().lowercase(),
+            "settlementName"          to settlementName,
+            "settlementLevel"         to settlementLevel,
+            "randomLetterLowerCase"   to this.getRandomLetter().lowercase(),
+            "namingStyle"             to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
         )
 
         val promptTemplate = plugin.configurationClip.promptsConfig.getString("unique-item-description")
@@ -200,18 +236,19 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
-            "villagerName" to villagerName,
-            "villagerType" to "${villager.villagerType}",
-            "villagerProfession" to "${villager.profession}",
-            "villagerPersonality" to "${villager.character}",
+            "villagerName"            to villagerName,
+            "villagerType"            to "${villager.villagerType}",
+            "villagerProfession"      to "${villager.profession}",
+            "villagerPersonality"     to "${villager.character}",
             "villagerProfessionLevel" to villager.professionLevelName,
-            "questItem" to quest.questItem.type.name.replace('_', ' ').lowercase(),
-            "rewardItem" to "${quest.rewardItem.type}",
-            "language" to plugin.config.getString("core-settings.language")!!,
-            "treasureDescription" to questManager.getTreasureItemDescription(quest.questItem),
-            "settlementName" to settlementName,
-            "settlementLevel" to settlementLevel,
-            "extraArguments" to "[$extraArguments]"
+            "questItem"               to if (quest.questType == QuestType.OMINOUS_BANNER) "ominous banner" else quest.questItem.type.name.replace('_', ' ').lowercase(),
+            "questItemAmount"         to quest.questItem.amount.toString(),
+            "rewardItem"              to "${quest.rewardItem.type}",
+            "language"                to plugin.config.getString("core-settings.language")!!,
+            "treasureDescription"     to questManager.getTreasureItemDescription(quest.questItem),
+            "settlementName"          to settlementName,
+            "settlementLevel"         to settlementLevel,
+            "extraArguments"          to "[$extraArguments]"
         )
 
         (quest.questItem.itemMeta as? PotionMeta)?.basePotionType?.let {
@@ -230,6 +267,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedQuestJson ->
             try {
                 val questInfo = plugin.gson.fromJson(cleanedQuestJson, VillagerQuest.QuestInfo::class.java)
+                questInfo.twoWordsDescription = questInfo.twoWordsDescription.replace("*", "")
                 quest.setQuestInfo(questInfo)
                 plugin.server.scheduler.runTask(plugin) { _ ->
                     plugin.server.pluginManager.callEvent(QuestGenerateEvent(villager, quest.build()))
@@ -271,7 +309,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                     plugin.logger.warning("If that doesn't work, there's probably an AI problem. Report it to the developer.")
                     plugin.logger.warning("You can also turn off generative translation in config.yml, look for 'automatic-configuration-translation'.")
                     plugin.server.scheduler.runTaskLater(plugin, { _ ->
-                        geminiProvider.requestTranslation()
+                        geminiProvider.generateTranslation()
                     }, 20 * 15)
                 }
 
@@ -386,6 +424,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                 .replace("\\n", "\n")
                 .replace(Regex("\\s{2,}"), " ") // Избавляемся от богомерзких двойных пробелов
                 .replace(Regex("\\.{3}(?=\\S)"), "..." + " ") // Исправляем отсутствие пробела после троеточия
+                .replace("…", "...") // Заменяем отвратительное троеточие на нормальное
 
         private fun findJson(response: String): String? {
             val regex = """\{[^{}]*}""".toRegex()

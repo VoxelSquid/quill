@@ -4,7 +4,6 @@
 # Patreon: https://www.patreon.com/c/NoLogicWasHere
 # Please consider supporting! You can help this project to grow tremendously. <3
 
-
 # Core settings of the plugin.
 core-settings:
 
@@ -25,7 +24,7 @@ core-settings:
 
   # Important words in villagers' messages are highlighted in colors. You can customize this.
   text-formatting:
-    base-color: "§7"
+    base-color: "§f"
     important-color: "§6"
     emotional-color: "§e"
 
@@ -43,6 +42,10 @@ core-settings:
 
   # Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)
   language: "ENGLISH"
+
+  # The naming style affects the style in which the AI will name items.
+  # Fantasy is the default, but you can write really anything here, from space dwarfs to names from the Warhammer or Star Wars universe. Or Star Trek, if you prefer. Live and prosper.
+  naming-style: "Fantasy"
 
   # The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.
   automatic-configuration-translation: true
@@ -454,6 +457,25 @@ villager-item-producing:
 
       item-priority:
         - WHEAT_SEEDS~12-26
+        - ALLIUM~8-16
+        - AZURE_BLUET~4-8
+        - DANDELION~2-16
+        - BOOK~6-12
+        - RED_TULIP~4-12
+        - PINK_TULIP~4-12
+        - WHITE_TULIP~4-12
+        - LILY_OF_THE_VALLEY~4-12
+        - ORANGE_TULIP~4-12
+        - DIAMOND~1-2
+        - GUNPOWDER~16-32
+        - MILK_BUCKET~1
+        - CLOCK~1
+        - CHARCOAL~12-24
+        - EMERALD~12-24
+        - SPYGLASS~1
+        - SNOWBALL~8-16
+        - WRITABLE_BOOK~1
+        - RABBIT_FOOT~1
 
       item-produce:
         - BREAD

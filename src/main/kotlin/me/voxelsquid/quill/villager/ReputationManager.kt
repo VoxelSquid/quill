@@ -1,6 +1,7 @@
 package me.voxelsquid.quill.villager
 
 import me.voxelsquid.quill.QuestIntelligence
+import org.bukkit.GameMode
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
@@ -14,6 +15,7 @@ class ReputationManager : Listener {
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
+        this.startReputationTick()
     }
 
     @EventHandler
@@ -60,6 +62,20 @@ class ReputationManager : Listener {
         this.getNearbyEntities(searchDistance, searchDistance, searchDistance).filterIsInstance<Villager>().forEach { villager ->
             villager.setRespect(this, villager.getRespect(this) + amount)
         }
+    }
+
+    private fun startReputationTick() {
+
+        plugin.server.scheduler.runTaskTimer(plugin, { _ ->
+
+            // Iron golem look for infamous players, attacking the closest
+            plugin.enabledWorlds.forEach { world ->
+                world.entities.filterIsInstance<IronGolem>().forEach { ironGolem ->
+                    ironGolem.target = ironGolem.getNearbyEntities(15.0, 15.0, 15.0).filterIsInstance<Player>().firstOrNull { it.gameMode == GameMode.SURVIVAL && it.fame <= -40 }
+                }
+            }
+
+        }, 0, 20)
     }
 
     companion object {

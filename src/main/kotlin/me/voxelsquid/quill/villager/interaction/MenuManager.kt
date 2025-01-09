@@ -57,7 +57,7 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
     private fun whenVillagerDies(event: EntityDeathEvent) {
         (event.entity as? Villager)?.let { villager ->
             openedMenuList.filter { it.villager == villager }.forEach(InteractionMenu::destroy)
-            dialogues.values.filter { it.villager == villager }.forEach(DialogueManager.DialogueWindow::destroy)
+            dialogues.values.filter { it.entity == villager }.forEach(DialogueManager.DialogueWindow::destroy)
         }
     }
 

@@ -6,6 +6,7 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.ai.GeminiProvider
+import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
@@ -130,6 +131,12 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
             val errorMessage = plugin.language?.getString("error-message.player-not-found")?.replace("{playerName}", name) ?: return
             if (sender is Player) sender.sendFormattedMessage(errorMessage) else plugin.logger.info(errorMessage)
         }
+    }
+
+    @Subcommand("debug banner")
+    @CommandPermission("quill.banner")
+    fun onBanner(player: Player) {
+        player.inventory.addItem(ominousBanner.clone())
     }
 
 }

@@ -5,6 +5,7 @@ import io.papermc.paper.event.player.PlayerTradeEvent
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.VillagerDataGenerateEvent
+import me.voxelsquid.quill.illager.IllagerManager
 import me.voxelsquid.quill.nms.VersionProvider.Companion.consume
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
@@ -22,6 +23,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Sound
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Pose
 import org.bukkit.entity.Villager
@@ -37,11 +39,13 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import kotlin.random.Random
 
+// TODO: Необходимо заново генерировать PVD, когда малой взрослеет (лол)
 class VillagerManager(instance: QuestIntelligence) : Listener {
 
     private val interactionManager: MenuManager
     private val professionManager:  ProfessionManager
     private val reputationManager:  ReputationManager
+    private val illagerManager:     IllagerManager
 
     init {
 
@@ -50,6 +54,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         interactionManager = MenuManager(plugin)
         professionManager  = ProfessionManager()
         reputationManager  = ReputationManager()
+        illagerManager     = IllagerManager()
 
         val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
         val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
@@ -63,7 +68,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         // Work tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
             professionManager.produceProfessionItem()
-        }, 0, workIntervalTicks)
+        }, 0, if (plugin.debug) 100 else workIntervalTicks)
 
         // Food tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
@@ -81,13 +86,13 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                             if (villager.hunger <= 17.5) {
                                 villager.eat()
                             }
-                        }, 5 + (index * 2L).coerceAtMost(100))
+                        }, 5 + (index * 2L).coerceAtMost(40) + Random.nextInt(200))
 
                     }
                 }
             })
 
-        }, 0, foodIntervalTicks)
+        }, 0, if (plugin.debug) 100 else foodIntervalTicks)
 
     }
 
@@ -127,7 +132,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         }
     }
 
-    data class PersonalVillagerData(val villagerName: String?,
+    data class PersonalVillagerData(val villagerName: String,
                                     val sleepInterruptionMessages: MutableList<String>,
                                     val damageMessages: MutableList<String>,
                                     val joblessMessages: MutableList<String>,
@@ -137,7 +142,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                                     val kidInteractionNeutralPlayer: MutableList<String>)
 
     private fun savePersonalVillagerData(villager: Villager, data: PersonalVillagerData) {
-        data.villagerName?.let { name ->
+        data.villagerName.let { name ->
             villager.customName(Component.text(name))
             villager.persistentDataContainer.set(villagerPersonalDataKey, PersistentDataType.STRING, plugin.gson.toJson(data))
         }
@@ -285,7 +290,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
             }
         }
 
-        fun Villager.talk(player: Player, text: String?, displaySize: Float = plugin.config.getDouble("core-settings.dialogue-text-display.default-size").toFloat(), followDuringDialogue: Boolean = true, interruptPreviousDialogue: Boolean = false) {
+        fun LivingEntity.talk(player: Player, text: String?, displaySize: Float = plugin.config.getDouble("core-settings.dialogue-text-display.default-size").toFloat(), followDuringDialogue: Boolean = true, interruptPreviousDialogue: Boolean = false) {
             text?.let {
                 dialogueManager.startDialogue(player to this, it, size = displaySize, follow = followDuringDialogue, interrupt = interruptPreviousDialogue)
             }

@@ -7,7 +7,7 @@ import java.lang.reflect.Type
 
 data class VillagerQuest (val type: QuestType, val questItem: ItemStack, var rewardItem: ItemStack, val questInfo: QuestInfo, var timeCreated: Long, val rewardPrice: Int) {
 
-    data class QuestInfo(val twoWordsDescription: String, val questDescriptionForFamousPlayer: String, val questDescriptionForNeutralPlayer: String, val questDescriptionForInfamousPlayer: String, val rewardTextForFamousPlayer: String, val rewardTextForNeutralPlayer: String, val rewardTextForInfamousPlayer: String)
+    data class QuestInfo(var twoWordsDescription: String, val questDescriptionForFamousPlayer: String, val questDescriptionForNeutralPlayer: String, val questDescriptionForInfamousPlayer: String, val rewardTextForFamousPlayer: String, val rewardTextForNeutralPlayer: String, val rewardTextForInfamousPlayer: String)
 
     class Builder {
 
