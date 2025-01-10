@@ -35,7 +35,6 @@ import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
 
-
 class QuestIntelligence : JavaPlugin(), Listener {
 
     lateinit var configurationClip: ConfigurationClip
