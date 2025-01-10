@@ -1,9 +1,7 @@
 package me.voxelsquid.quill.util
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.illager.IllagerManager
-import me.voxelsquid.quill.illager.IllagerManager.Companion
-import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
+import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -19,7 +17,7 @@ class BannerHelmetHandler : Listener {
     companion object {
         private const val HELMET_SLOT_INDEX = 5
         private val plugin = QuestIntelligence.pluginInstance
-        private val requiredItem: ItemStack = ominousBanner.clone()
+        private val requiredItem: ItemStack = getOminousBanner().clone()
     }
 
     @EventHandler
@@ -43,7 +41,7 @@ class BannerHelmetHandler : Listener {
         val itemInSlot = event.currentItem
 
         // Если в курсоре баннер (и игрок достаточно злобный), то только тогда пытаемся что-то сделать
-        if (player.fame <= -40 && cursorItem.isSimilar(ominousBanner)) {
+        if (player.fame <= -40 && cursorItem.isSimilar(getOminousBanner())) {
             when (event.click) {
                 ClickType.RIGHT -> itemInSlot?.let { handleRightClick(event, it, cursorItem) } ?: handleRightClick(event, ItemStack(
                     Material.AIR), cursorItem) // Обработка правого клика
@@ -61,7 +59,7 @@ class BannerHelmetHandler : Listener {
         }
 
         // В случае успешного надевания баннера на голову
-        if (itemInSlot?.type == Material.AIR && event.currentItem?.isSimilar(ominousBanner) == true) {
+        if (itemInSlot?.type == Material.AIR && event.currentItem?.isSimilar(getOminousBanner()) == true) {
             plugin.language?.let { language ->
                 language.getString("illager-party.banner-is-on-head")?.let { message ->
                     player.sendMessage(QuestIntelligence.messagePrefix + message)

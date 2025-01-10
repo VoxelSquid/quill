@@ -150,9 +150,9 @@ villager-item-producing:
   # Basic chance of creating a unique item during production. Multiplied by villager level. (level 5 villager profession = 40% chance)
   unique-item-chance: 8
 
-  # If true, random smithing template will be applied to each unique item that is PROTECTION.
+  # If true, random smithing template will be applied to each unique item that is armor.
   # If false, the armorer will only use the smithing templates they has in their inventory. (armorers have a quest for collecting them)
-  forced-PROTECTION-trims: false
+  forced-armor-trims: false
 
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   # A list of items whose quality will depend on the level of the crafter's skill.

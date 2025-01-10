@@ -16,13 +16,18 @@ import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
 import me.voxelsquid.quill.villager.interaction.InteractionMenu
 import me.voxelsquid.quill.villager.interaction.MenuManager
+import net.minecraft.core.registries.Registries
+import net.minecraft.world.entity.raid.Raid
 import org.bukkit.*
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.craftbukkit.CraftWorld
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import org.ipvp.canvas.MenuFunctionListener
@@ -129,6 +134,11 @@ class QuestIntelligence : JavaPlugin(), Listener {
         val immersiveDialoguesKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
         lateinit var pluginInstance: QuestIntelligence
         lateinit var languageFile: File
+
+        fun getOminousBanner() : ItemStack {
+            return CraftItemStack.asBukkitCopy(
+                Raid.getOminousBannerInstance((pluginInstance.server.worlds.random() as CraftWorld).handle.registryAccess().lookupOrThrow(Registries.BANNER_PATTERN)))
+        }
 
         val Player.dialogueFormat: DialogueFormat
             get() {

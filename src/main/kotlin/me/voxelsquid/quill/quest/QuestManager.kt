@@ -3,8 +3,7 @@ package me.voxelsquid.quill.quest
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.nms.VersionProvider.Companion.consume
-import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
+import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.InventorySerializer
@@ -14,6 +13,7 @@ import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
+import me.voxelsquid.quill.villager.VillagerManager.Companion.consume
 import me.voxelsquid.quill.villager.VillagerManager.Companion.eat
 import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
 import me.voxelsquid.quill.villager.VillagerManager.Companion.personalData
@@ -123,7 +123,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         plugin.debug("Quest type is $questType. Selecting the quest item!")
         val questItem = when (questType) {
             QuestType.MUSIC_DISC -> ItemStack(discs.random())
-            QuestType.OMINOUS_BANNER -> ominousBanner
+            QuestType.OMINOUS_BANNER -> getOminousBanner()
             QuestType.BOOZE -> this.randomPotion()
             QuestType.ENCHANTED_BOOK -> this.randomEnchantedBook(villager)
             QuestType.SMITHING_TEMPLATE -> this.randomSmithingTemplate(villager)
@@ -378,7 +378,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         }
 
         val sortedInventory = villagerItems.toMutableList().apply {
-            removeIf { it.type.isEdible || it.type == Material.ENCHANTED_BOOK || it.isSimilar(ominousBanner)} // villagers won't use food for trading (and enchanted books as well, im too lazy to implement that logic right now)
+            removeIf { it.type.isEdible || it.type == Material.ENCHANTED_BOOK || it.isSimilar(getOminousBanner())} // villagers won't use food for trading (and enchanted books as well, im too lazy to implement that logic right now)
             sortedBy { if (it.type == Material.EMERALD) 0 else 1 } // emeralds > other stuff
         }
 

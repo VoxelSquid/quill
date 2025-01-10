@@ -1,6 +1,5 @@
 # User-specific stuff
-.github/
-.kotlin/
+.idea/
 
 *.iml
 *.ipr
@@ -120,5 +119,5 @@ buildNumber.properties
 run/
 build
 .gradle
-.idea
+.kotlin
 /*.jar

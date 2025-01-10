@@ -1,10 +1,10 @@
 package me.voxelsquid.quill.illager
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.event.IllagerCommonData
 import me.voxelsquid.quill.event.IllagerCommonDataGenerateEvent
 import me.voxelsquid.quill.illager.IllagerManager.IllagerPartyGoal.Companion.parties
-import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
 import me.voxelsquid.quill.util.BannerHelmetHandler
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.VillagerManager.Companion.talk
@@ -124,7 +124,7 @@ class IllagerManager : Listener {
             (event.rightClicked as? Illager)?.let { illager ->
                 if (player.fame <= -40) {
                     if (illager.target == null) {
-                        if (player.inventory.helmet?.isSimilar(ominousBanner) == true) {
+                        if (player.inventory.helmet?.isSimilar(getOminousBanner()) == true) {
                             illager.talk(player, illagerCommonData?.partyLeaderInteraction?.random(), interruptPreviousDialogue = false)
                         } else illager.talk(player, illagerCommonData?.illagerInteractionPhrases?.random(), interruptPreviousDialogue = false)
                     }
@@ -157,7 +157,7 @@ class IllagerManager : Listener {
             // If party is null, look for infamous players with ominous banner as helmet
             illager.getNearbyEntities(7.5, 7.5, 7.5)
                 .filterIsInstance<Player>()
-                .firstOrNull { it.fame <= -40 && it.gameMode == GameMode.SURVIVAL && it.inventory.helmet?.isSimilar(ominousBanner) ?: false }
+                .firstOrNull { it.fame <= -40 && it.gameMode == GameMode.SURVIVAL && it.inventory.helmet?.isSimilar(getOminousBanner()) ?: false }
                 ?.let { leader ->
 
                     // Send message about new party member
@@ -187,7 +187,7 @@ class IllagerManager : Listener {
 
             party?.let { party ->
                 val leader = party.partyLeader
-                if (leader.fame <= -40 && leader.gameMode == GameMode.SURVIVAL && leader.inventory.helmet?.isSimilar(ominousBanner) == true) {
+                if (leader.fame <= -40 && leader.gameMode == GameMode.SURVIVAL && leader.inventory.helmet?.isSimilar(getOminousBanner()) == true) {
                     return true
                 } else {
                     if (parties.containsKey(leader)) {

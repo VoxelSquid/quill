@@ -3,10 +3,10 @@ package me.voxelsquid.quill.command
 import co.aikar.commands.BaseCommand
 import co.aikar.commands.annotation.*
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.ai.GeminiProvider
-import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
@@ -136,7 +136,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     @Subcommand("debug banner")
     @CommandPermission("quill.banner")
     fun onBanner(player: Player) {
-        player.inventory.addItem(ominousBanner.clone())
+        player.inventory.addItem(getOminousBanner().clone())
     }
 
 }

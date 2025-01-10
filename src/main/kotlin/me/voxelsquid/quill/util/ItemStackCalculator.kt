@@ -1,7 +1,7 @@
 package me.voxelsquid.quill.util
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.nms.VersionProvider.Companion.ominousBanner
+import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemRarity
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
@@ -13,12 +13,14 @@ class ItemStackCalculator {
         private val plugin = QuestIntelligence.pluginInstance
 
         fun Collection<ItemStack>.calculatePrice(): Int {
-            return this.filterNot{ it.type.isEdible || it.type == Material.ENCHANTED_BOOK || it.isSimilar(ominousBanner) }.sumOf { it.calculatePrice() }
+            return this.filterNot{ it.type.isEdible || it.type == Material.ENCHANTED_BOOK || it.isSimilar(
+                getOminousBanner()
+            ) }.sumOf { it.calculatePrice() }
         }
 
         fun ItemStack.calculatePrice(): Int {
 
-            if (this.isSimilar(ominousBanner))
+            if (this.isSimilar(getOminousBanner()))
                 return plugin.configurationClip.promptsConfig.getInt("ominous-banner-quest.reward-points")
 
             return (this.type.getMaterialPrice() * this.amount + this.getUniqueItemRarity().extraPrice)

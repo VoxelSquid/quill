@@ -5,10 +5,6 @@ package me.voxelsquid.quill.villager
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
 import me.voxelsquid.quill.event.VillagerProduceItemEvent
-import me.voxelsquid.quill.nms.UniversalAttribute
-import me.voxelsquid.quill.nms.VersionProvider.Companion.addAttributeModifier
-import me.voxelsquid.quill.nms.VersionProvider.Companion.trims
-import me.voxelsquid.quill.nms.VersionProvider.Companion.universalAttribute
 import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
 import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
 import me.voxelsquid.quill.villager.VillagerManager.Companion.takeItemFromQuillInventory
@@ -18,6 +14,9 @@ import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.Registry
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Pose
 import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
@@ -230,10 +229,12 @@ class ProfessionManager: Listener {
         }
 
         val meta = itemStack.itemMeta
-        val attributes: List<UniversalAttribute> = attributeNames.map { UniversalAttribute.valueOf(it) }
+        val attributes: List<Attribute> = Registry.ATTRIBUTE.toMutableList().filter { attributeNames.contains(it.key.value()) }
+
+        plugin.logger.info("Test attributes: $attributes")
 
         // Чистим дефолтные атрибуты чтобы не было конфликтов
-        attributes.forEach { meta.removeAttributeModifier(universalAttribute(it)) }
+        attributes.forEach { meta.removeAttributeModifier(it) }
 
         // Так как при использовании кастомных атрибутов дефолтные сбрасываются, придётся подсчитывать самостоятельно
         var attackSpeed = -4 + when(itemStack.type) {
@@ -293,16 +294,16 @@ class ProfessionManager: Listener {
         val addedAttributes = mutableListOf<String>()
         do {
             val attribute = attributes.random()
-            addedAttributes.add(attribute.toString().replace("_", " ").lowercase())
+            addedAttributes.add(attribute.toString().replace("GENERIC_", "").replace("PLAYER_", "").replace("_", " ").lowercase())
             when (attribute) {
-                UniversalAttribute.ATTACK_SPEED -> attackSpeed += 0.3
-                UniversalAttribute.ATTACK_DAMAGE -> attackDamage += 1.5
-                UniversalAttribute.BLOCK_BREAK_SPEED -> blockBreakSpeed += 0.4
-                UniversalAttribute.BLOCK_INTERACTION_RANGE -> blockInteractionRange += 0.5
-                UniversalAttribute.MAX_HEALTH -> additionalHealth += 2.0
-                UniversalAttribute.PROTECTION -> armorDefence += 1.0
-                UniversalAttribute.ARMOR_TOUGHNESS -> armorToughness += 1.0
-                UniversalAttribute.SCALE -> {
+                Attribute.ATTACK_SPEED -> attackSpeed += 0.3
+                Attribute.ATTACK_DAMAGE -> attackDamage += 1.5
+                Attribute.ATTACK_SPEED -> blockBreakSpeed += 0.4
+                Attribute.BLOCK_INTERACTION_RANGE -> blockInteractionRange += 0.5
+                Attribute.MAX_HEALTH -> additionalHealth += 2.0
+                Attribute.ARMOR -> armorDefence += 1.0
+                Attribute.ARMOR_TOUGHNESS -> armorToughness += 1.0
+                Attribute.SCALE -> {
                     scale += 0.1
                     blockInteractionRange += 0.5
                     entityInteractionRange += 0.5
@@ -316,32 +317,32 @@ class ProfessionManager: Listener {
         if (slot == EquipmentSlotGroup.MAINHAND) {
 
             if (attackSpeed > -4 && attackSpeed != 0.0) {
-                meta.addAttributeModifier(UniversalAttribute.ATTACK_SPEED, slot, attackSpeed)
+                meta.addAttributeModifier(Attribute.ATTACK_SPEED, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), attackSpeed, AttributeModifier.Operation.ADD_NUMBER, slot))
             }
 
-            meta.addAttributeModifier(UniversalAttribute.ATTACK_DAMAGE, slot, attackDamage)
+            meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), attackDamage, AttributeModifier.Operation.ADD_NUMBER, slot))
         }
 
         if (blockInteractionRange > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.BLOCK_INTERACTION_RANGE, slot, blockInteractionRange)
+            meta.addAttributeModifier(Attribute.BLOCK_INTERACTION_RANGE, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), blockInteractionRange, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (entityInteractionRange > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.ENTITY_INTERACTION_RANGE, slot, blockInteractionRange)
+            meta.addAttributeModifier(Attribute.ENTITY_INTERACTION_RANGE, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), blockInteractionRange, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (blockBreakSpeed > 1.0)
-            meta.addAttributeModifier(UniversalAttribute.BLOCK_BREAK_SPEED, slot, blockBreakSpeed)
+            meta.addAttributeModifier(Attribute.BLOCK_BREAK_SPEED, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), blockBreakSpeed, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (additionalHealth > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.MAX_HEALTH, slot, additionalHealth)
+            meta.addAttributeModifier(Attribute.MAX_HEALTH, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), additionalHealth, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (armorDefence > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.PROTECTION, slot, armorDefence)
+            meta.addAttributeModifier(Attribute.ARMOR, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), armorDefence, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (armorToughness > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.ARMOR_TOUGHNESS, slot, armorToughness)
+            meta.addAttributeModifier(Attribute.ARMOR_TOUGHNESS, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), armorToughness, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         if (scale > 0.0)
-            meta.addAttributeModifier(UniversalAttribute.SCALE, slot, scale)
+            meta.addAttributeModifier(Attribute.SCALE, AttributeModifier(NamespacedKey(plugin, "attribute_$slot"), scale, AttributeModifier.Operation.ADD_NUMBER, slot))
 
         meta.persistentDataContainer.set(attributeKey, PersistentDataType.STRING, addedAttributes.toString())
 
@@ -371,6 +372,27 @@ class ProfessionManager: Listener {
     private fun randomTrimMaterial() : TrimMaterial {
         return listOf(TrimMaterial.GOLD, TrimMaterial.IRON, TrimMaterial.COPPER, TrimMaterial.QUARTZ, TrimMaterial.AMETHYST, TrimMaterial.DIAMOND, TrimMaterial.NETHERITE, TrimMaterial.REDSTONE, TrimMaterial.EMERALD, TrimMaterial.LAPIS).random()
     }
+
+    private val trims: Map<Material, TrimPattern>
+        get() = mutableMapOf<Material, TrimPattern>().apply {
+            put(Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.RAISER)
+            put(Material.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.COAST)
+            put(Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.RIB)
+            put(Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.VEX)
+            put(Material.EYE_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.EYE)
+            put(Material.BOLT_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.BOLT)
+            put(Material.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.DUNE)
+            put(Material.FLOW_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.FLOW)
+            put(Material.HOST_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.HOST)
+            put(Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.SENTRY)
+            put(Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.SHAPER)
+            put(Material.SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.SILENCE)
+            put(Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.WILD)
+            put(Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.WARD)
+            put(Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.TIDE)
+            put(Material.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.WAYFINDER)
+            put(Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, TrimPattern.SNOUT)
+        }
 
     private fun randomTrimPattern(villager: Villager) : TrimPattern? {
         return if (plugin.config.getBoolean("villager-item-producing.forced-armor-trims")) {

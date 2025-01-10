@@ -6,7 +6,6 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.event.VillagerDataGenerateEvent
 import me.voxelsquid.quill.illager.IllagerManager
-import me.voxelsquid.quill.nms.VersionProvider.Companion.consume
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
@@ -19,10 +18,13 @@ import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.MenuManager
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
+import net.minecraft.world.entity.EquipmentSlot
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Sound
+import org.bukkit.craftbukkit.entity.CraftVillager
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Pose
@@ -256,6 +258,34 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                     this.addQuest(it.setQuestInfo(quest.questInfo).build().apply { timeCreated = quest.timeCreated })
                 }
             }
+        }
+
+        fun Villager.consume(
+            item: ItemStack,
+            sound: Sound,
+            duration: Int,
+            period: Long = 5L,
+            onDone: () -> Unit,
+        ) {
+            val nmsVillager = (this as CraftVillager).handle
+            val nmsItem = CraftItemStack.asNMSCopy(item)
+
+            var i = 0
+
+            plugin.server.scheduler.runTaskTimer(plugin, { task ->
+
+                nmsVillager.isNoAi = true
+                nmsVillager.setItemSlot(EquipmentSlot.MAINHAND, nmsItem)
+                this.world.playSound(this.location, sound, 1F, 1F)
+
+                if (i++ >= duration) {
+                    nmsVillager.setItemSlot(EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY)
+                    onDone.invoke()
+                    nmsVillager.isNoAi = false
+                    task.cancel()
+                }
+
+            }, 0, period)
         }
 
         fun Villager.eat() {
