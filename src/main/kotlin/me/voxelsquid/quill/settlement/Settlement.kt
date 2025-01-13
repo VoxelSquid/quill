@@ -35,10 +35,8 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
     val world        = QuestIntelligence.pluginInstance.server.getWorld(data.worldUUID)!!
     var territory    = BoundingBox.of(data.center, 64.0, 64.0, 64.0)
 
-    var arrivalPossibility = true
-
-    private val cuboidVisualizer  = CachedSettlementCuboid(world, territory)
-    private val tileEntities      = mutableMapOf<Material, Int>()
+    var newcomerArrivalPossibility = true
+    private val tileEntities = mutableMapOf<Material, Int>()
 
     private fun recountTileEntities() {
 
@@ -73,7 +71,7 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
                 "totalFoodAmount"         to villagers.sumOf { it.foodAmount }.toString(),
                 "starvingVillagersAmount" to villagers.count { it.foodAmount == 0 }.toString(),
                 "bedAmount"               to bedAmount().toString(),
-                "arrivalPossibility"      to if (arrivalPossibility) language.getString("settlement-menu.arrival-possibility.possible")!! else language.getString("settlement-menu.arrival-possibility.impossible")!!
+                "arrivalPossibility"      to if (newcomerArrivalPossibility) language.getString("settlement-menu.arrival-possibility.possible")!! else language.getString("settlement-menu.arrival-possibility.impossible")!!
             )
 
             return lore.map { line ->
@@ -189,10 +187,6 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
             .build()
 
         pages.first().open(player)
-    }
-
-    fun visualizeSettlementTerritory(player : Player) {
-        cuboidVisualizer.showBoundingBox(player)
     }
 
     private fun bedAmount() : Int = tileEntities[Material.RED_BED] ?: 0

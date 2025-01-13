@@ -8,6 +8,7 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.World
+import org.bukkit.craftbukkit.entity.CraftVillager
 import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -39,20 +40,6 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         plugin.server.pluginManager.registerEvents(this, plugin)
         this.startSettlementDetectionTask()
 
-        // Отображаем границы поселения каждые 20 тиков.
-        val visualize = false
-        if (visualize) {
-            plugin.server.scheduler.runTaskTimer(plugin, { _ ->
-                settlements.values.forEach { settlements ->
-                    settlements.forEach { settlement ->
-                        settlement.world.players.forEach { player ->
-                            settlement.visualizeSettlementTerritory(player)
-                        }
-                    }
-                }
-            }, 0, 20)
-        }
-
         plugin.enabledWorlds.forEach { world ->
             settlements[world] = mutableListOf()
         }
@@ -79,14 +66,27 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
                     plugin.server.scheduler.runTask(plugin) { _ ->
                         for (villager in villagers.shuffled()) {
 
-                            // Создаём поселение только с теми жителями, которые нигде не "прописаны".
+                            // Создаём поселение только с теми жителями, которые нигде не "прописаны"
                             val villagersAround = villager.getNearbyEntities(settlementDetectionDistance, settlementDetectionDistance, settlementDetectionDistance)
                                 .filterIsInstance<Villager>()
                                 .filter { it.settlement == null }
                                 .toMutableList()
 
-                            // Добавляем итерируемого жителя в список.
+                            // Добавляем итерируемого жителя в список
                             villagersAround.add(villager)
+
+                            // Если найденные бездомные находятся на территории поселения (или недалеко от него), то автоматически прописываем их
+                            settlements[world]?.forEach { settlement ->
+                                villagersAround.forEach {
+                                    if (settlement.data.center.distance(it.location) <= settlementDetectionDistance + settlementDetectionDistance / 2) {
+                                        it.settlement = settlement
+                                        (it as CraftVillager).handle.navigation.moveTo(settlement.data.center.x, settlement.data.center.y, settlement.data.center.z, 1.0)
+                                    }
+                                }
+                            }
+
+                            // На всякий случай чистим тех, кто мог получить прописку
+                            villagersAround.removeIf { it.settlement != null }
 
                             // Создание поселения моментально, но название будет сгенерировано чуть позже. Возможно, что работа с локациями не может происходить вне тика сервера.
                             if (villagersAround.size >= minimumOfVillagersToSettlementCreation) {

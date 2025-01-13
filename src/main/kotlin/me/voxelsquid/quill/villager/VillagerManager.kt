@@ -94,7 +94,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                 }
             })
 
-        }, 0, if (plugin.debug) 100 else foodIntervalTicks)
+        }, 0, foodIntervalTicks)
 
     }
 

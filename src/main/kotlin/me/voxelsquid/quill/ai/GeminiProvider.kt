@@ -243,7 +243,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "villagerProfessionLevel" to villager.professionLevelName,
             "questItem"               to if (quest.questType == QuestType.OMINOUS_BANNER) "ominous banner" else quest.questItem.type.name.replace('_', ' ').lowercase(),
             "questItemAmount"         to quest.questItem.amount.toString(),
-            "rewardItem"              to "${quest.rewardItem.type}",
+            "rewardItem"              to quest.rewardItem.type.name.replace('_', ' ').lowercase(),
             "language"                to plugin.config.getString("core-settings.language")!!,
             "treasureDescription"     to questManager.getTreasureItemDescription(quest.questItem),
             "settlementName"          to settlementName,

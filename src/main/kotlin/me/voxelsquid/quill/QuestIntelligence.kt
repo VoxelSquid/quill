@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
-import me.voxelsquid.quill.settlement.CachedSettlementCuboid.Companion.particleThreadPool
 import me.voxelsquid.quill.settlement.SettlementManager
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
@@ -80,7 +79,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
     override fun onDisable() {
         DialogueManager.dialogues.values.forEach(DialogueManager.DialogueWindow::destroy)
         MenuManager.openedMenuList.forEach(InteractionMenu::destroy)
-        particleThreadPool.shutdown()
         this.saveSettlements()
     }
 
