@@ -2,13 +2,20 @@ package me.voxelsquid.quill.settlement
 
 import com.google.gson.reflect.TypeToken
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.currentSettlement
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
 import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.title.Title
+import net.kyori.adventure.title.Title.Times
+import net.minecraft.world.entity.ai.goal.LlamaFollowCaravanGoal
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.World
 import org.bukkit.craftbukkit.entity.CraftVillager
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -17,19 +24,9 @@ import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.WorldLoadEvent
 import org.bukkit.event.world.WorldUnloadEvent
 import org.bukkit.persistence.PersistentDataType
+import java.time.Duration
+import kotlin.random.Random
 
-/*
-TODO Кодинг
- 1. Генерация названия для поселения с помощью ИИ. Необходимо создать промпт и учитывать биом.
- 2. Необходимо написать механизм сериализации поселений, чтобы информация сохранялась между сессиями.
-    Значения будут храниться в PDC мира, но для сохранения даты в JSON нужно будет создать сериализаторы. Скорее всего.
- 3. GUI для отображения статистики (кол-во блоков, колоколов, жители, профессии, настроение, еда, изумруды?..), управления и прочего.
- 4. Я решил нагло спиздить код симуляции жителей-игроков из RealisticVillagers. В том плагине куча лишнего говна, так что я сделаю свой вариант. Насколько я помню, там своя имплементация NMS жителя и фейкование пакетов.
-TODO Рабочий прототип
- 1. Игрок приходит в деревню. Во-первых.. с помощью тайлтла отображается название?
-    После этого квесты и прочее. По сути, игрок не сразу понимает, что деревня является самостоятельным субъектом. Это будет связано с повышением репутации.
-    Получается, всё упирается в BoundingBox? Как я вообще хочу тестировать эту фичу?
-*/
 class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     private val settlementDetectionDistance = 128.0
@@ -39,6 +36,8 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
         this.startSettlementDetectionTask()
+        this.startVisibilityTick()
+        this.startEnteringTick()
 
         plugin.enabledWorlds.forEach { world ->
             settlements[world] = mutableListOf()
@@ -52,6 +51,46 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
                 villager.settlement?.villagers?.add(villager)
             }
         }
+    }
+
+    private fun startEnteringTick() {
+
+        plugin.server.scheduler.runTaskTimerAsynchronously(plugin, { _ ->
+            plugin.enabledWorlds.forEach { world ->
+                world.players.forEach { player ->
+                    var settlement = settlements[world]?.find { it.territory.contains(player.location.toVector()) }
+
+                    if (settlement != null && player.currentSettlement == null && settlement.data.settlementName != "Default Settlement Name") {
+                        player.showTitle(Title.title(Component.text(settlement.data.settlementName).color(TextColor.fromHexString("#FFAA00")),
+                            Component.text(plugin.language?.getString("settlement-entering.entering") ?: ""),
+                            Times.times(Duration.ofSeconds(2), Duration.ofSeconds(2), Duration.ofSeconds(2))))
+                        player.currentSettlement = settlement.data.settlementName
+                    }
+
+                    if (settlement == null && player.currentSettlement != null) {
+                        settlement = settlements[world]?.find { it.data.settlementName == player.currentSettlement }
+                        player.showTitle(Title.title(Component.text("${settlement?.data?.settlementName}").color(TextColor.fromHexString("#FFAA00")),
+                            Component.text(plugin.language?.getString("settlement-entering.leaving") ?: ""),
+                            Times.times(Duration.ofSeconds(2), Duration.ofSeconds(2), Duration.ofSeconds(2))))
+                        player.currentSettlement = null
+                    }
+
+                }
+            }
+        }, 0, 20)
+
+    }
+
+    private fun startVisibilityTick() {
+        plugin.server.scheduler.runTaskTimer(plugin, { _ ->
+            settlements.values.forEach { settlementList ->
+                settlementList.filter { it.isNewArrivalPossible() }.forEach { settlement ->
+                    if (Random.nextInt(100) < 10) {
+                        settlement.world.spawnEntity(settlement.data.center, EntityType.VILLAGER)
+                    }
+                }
+            }
+        }, 0, 2400)
     }
 
     // Таск, в котором происходит поиск жителей, которые подохдят для создания сетлментов.
@@ -103,7 +142,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     }
 
     private fun createSettlement(world: World, center: Location, villagers: List<Villager>){
-        val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis(), true)
+        val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis())
         Settlement(data, villagers.toMutableSet()).also { settlement ->
             plugin.questGenerator.generateSettlementName(settlement)
             settlements[world]?.add(settlement)
@@ -124,20 +163,6 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
                     list.forEach { settlementData ->
                         plugin.debug("Settlement loaded: ${settlementData.settlementName}.")
                         settlements[world]?.add(Settlement(settlementData))
-                    }
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    private fun onPlayerInteract(event: PlayerInteractEvent) {
-        event.clickedBlock?.let { block ->
-            if (block.type == Material.BELL) {
-                settlements[event.player.world]?.forEach { settlement ->
-                    if (settlement.territory.contains(block.location.toVector())) {
-                        settlement.openControlPanelMenu(event.player)
-                        return
                     }
                 }
             }

@@ -1,6 +1,6 @@
 @file:Suppress("DEPRECATION")
 
-package me.voxelsquid.quill.settlement
+package me.voxelsquid.quill.util
 
 import org.bukkit.Bukkit
 import org.bukkit.Material

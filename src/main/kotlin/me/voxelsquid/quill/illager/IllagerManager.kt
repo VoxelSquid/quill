@@ -160,19 +160,20 @@ class IllagerManager : Listener {
                 .firstOrNull { it.fame <= -40 && it.gameMode == GameMode.SURVIVAL && it.inventory.helmet?.isSimilar(getOminousBanner()) ?: false }
                 ?.let { leader ->
 
-                    // Send message about new party member
-                    plugin.language?.let { language ->
-                        language.getString("illager-party.illager-decides-to-join")?.let { message ->
-                            leader.sendMessage(QuestIntelligence.messagePrefix + message.replace("{illagerName}", illager.customName ?: ""))
-                        }
-                    }
-
                     parties[leader]?.let { existingParty ->
+                        if (existingParty.illagerMembers.size > 6) return false
                         this.party = existingParty
                     } ?: run {
                         val party = IllagerParty(leader)
                         parties[leader] = party
                         this.party = party
+                    }
+
+                    // Send message about new party member
+                    plugin.language?.let { language ->
+                        language.getString("illager-party.illager-decides-to-join")?.let { message ->
+                            leader.sendMessage(QuestIntelligence.messagePrefix + message.replace("{illagerName}", illager.customName ?: ""))
+                        }
                     }
 
                     parties[leader]?.let { it.illagerMembers += illager }

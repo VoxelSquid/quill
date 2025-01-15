@@ -2,8 +2,6 @@ package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
-import me.voxelsquid.quill.QuestIntelligence.Companion.sendTutorialMessage
-import me.voxelsquid.quill.QuestIntelligence.TutorialMessage
 import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
@@ -87,7 +85,6 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
             if (villager.pose == Pose.SLEEPING) {
                 villager.personalData?.let {
                     villager.talk(player, it.sleepInterruptionMessages.random(), followDuringDialogue = false)
-                    player.sendTutorialMessage(TutorialMessage.SLEEP_INTERRUPTION)
                 }
                 return
             }
@@ -96,7 +93,6 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
             if (villager.getRespect(player) <= -40 || player.fame <= -40) {
                 villager.personalData?.let {
                     villager.talk(player, it.badReputationInteractionDenial.random(), followDuringDialogue = false)
-                    player.sendTutorialMessage(TutorialMessage.BAD_REPUTATION)
                 }
                 return
             }
@@ -113,7 +109,6 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
                 return
             }
 
-            player.sendTutorialMessage(TutorialMessage.VILLAGER_INTERACTION)
             player.inventory.heldItemSlot = 4
             this.showDefaultMenu(player, villager)
         }
@@ -153,7 +148,6 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.trade-button")!!).color(buttonTextColor)) {
             plugin.server.scheduler.runTaskLater(plugin, { _ -> villager.openTradeMenu(player) }, 1L)
-            player.sendTutorialMessage(TutorialMessage.QUESTING)
         }
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.actions-button")!!).color(buttonTextColor)) {
@@ -202,9 +196,6 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
                     ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.questDescriptionForFamousPlayer
                 })
 
-                if (player.dialogueFormat != DialogueManager.DialogueFormat.CHAT) {
-                    player.sendTutorialMessage(TutorialMessage.DIALOGUE)
-                }
             }
         }
 

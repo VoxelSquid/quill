@@ -4,6 +4,20 @@
 # Core settings of the plugin.
 core-settings:
 
+  # Get your API key FOR FREE: https://aistudio.google.com/app/apikey
+  # Currently, only Gemini IS supported.
+  api-key: "GEMINI_API_KEY"
+
+  # Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)
+  language: "ENGLISH"
+
+  # The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.
+  automatic-configuration-translation: true
+
+  # Add your worlds here.
+  enabled-worlds:
+    - "world"
+
   # Some countries may have problems connecting to AI. Proxy helps.
   # HTTP, SOCKS
   proxy:
@@ -12,10 +26,6 @@ core-settings:
     port: 1337
     username: "PROXY_USERNAME"
     password: "PROXY_PASSWORD"
-
-  # Get your API key FOR FREE: https://aistudio.google.com/app/apikey
-  # Currently, only Gemini IS supported.
-  api-key: "GEMINI_API_KEY"
 
   message-prefix: "§7§l.q§8§l/ §6>> §7"
 
@@ -33,19 +43,9 @@ core-settings:
       g: 0
       b: 0
 
-  # Add your worlds here.
-  enabled-worlds:
-    - "world"
-
-  # Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)
-  language: "ENGLISH"
-
   # The naming style affects the style in which the AI will name items.
   # Fantasy is the default, but you can write really anything here, from space dwarfs to names from the Warhammer or Star Wars universe. Or Star Trek, if you prefer. Live and prosper.
   naming-style: "Fantasy"
-
-  # The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.
-  automatic-configuration-translation: true
 
   # Maximum duration of quest existence in ticks.
   # Default is 48000, which is two game days.
@@ -118,18 +118,6 @@ reputation-settings:
     maximumMultiplier: 2.0
     fameMultiplier: 0.005
     respectMultiplier: 0.01
-
-
-# Settlements are a more advanced implementation of villages that allow players to interact with the village as an entity.
-# Players will be able to control village policies (e.g. determine price coefficients for outsiders, force villagers to work faster, etc.),
-# monitor statistics (general mood of villagers, number of beds, professions, food, etc.), expel villagers, expand settlement territories, and much more.
-settlements-settings:
-
-  # Limit the number of villagers that come into the settlement.
-  villager-limit: 30
-
-  # The amount of reputation required for a player to become mayor of a settlement.
-  mayor-reputation: 10000
 
 
 villager-item-producing:

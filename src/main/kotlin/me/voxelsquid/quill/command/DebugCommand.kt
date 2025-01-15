@@ -50,18 +50,6 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
         plugin.questGenerator = GeminiProvider(plugin)
     }
 
-    @Subcommand("tutorial")
-    @CommandPermission("quill.tutorial")
-    fun onTutorial(player: Player) {
-        if (player.persistentDataContainer.getOrDefault(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, false)) {
-            player.persistentDataContainer.set(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, false)
-            player.sendFormattedMessage(plugin.language?.getString("command-message.tutorial-disabled") ?: "ERR_MESSAGE_NOT_FOUND")
-        } else {
-            player.persistentDataContainer.set(QuestIntelligence.playerTutorialKey, PersistentDataType.BOOLEAN, true)
-            player.sendFormattedMessage(plugin.language?.getString("command-message.tutorial-enabled") ?: "ERR_MESSAGE_NOT_FOUND")
-        }
-    }
-
     @Subcommand("dialogue format")
     @CommandPermission("quill.dialogue.format")
     @Description("Specialized debug command for easy testing of villagers.")

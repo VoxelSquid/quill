@@ -3,9 +3,11 @@ package me.voxelsquid.quill
 import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
@@ -29,7 +31,6 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
-import org.ipvp.canvas.MenuFunctionListener
 import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
@@ -73,7 +74,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
         villagerManager   = VillagerManager(this)
         settlementManager = SettlementManager(this)
         this.server.pluginManager.registerEvents(this, this)
-        this.server.pluginManager.registerEvents(MenuFunctionListener(), this)
     }
 
     override fun onDisable() {
@@ -111,24 +111,14 @@ class QuestIntelligence : JavaPlugin(), Listener {
         .registerTypeAdapter(Location::class.java, LocationAdapter())
         .create()
 
-    @EventHandler
-    private fun onPlayerJoin(event: PlayerJoinEvent) {
-        event.player.sendTutorialMessage(TutorialMessage.FIRST_CONNECTION)
-    }
-
-    @EventHandler
-    private fun onPlayerQuit(event: PlayerQuitEvent) {
-        tutorialMessages.remove(event.player)
-    }
-
     companion object {
 
         var messagePrefix = ""
-        private val tutorialMessages: HashMap<Player, MutableList<TutorialMessage>> = hashMapOf()
 
-        val playerTutorialKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "tutorial") }
         val playerStatsKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "statistics") }
         val immersiveDialoguesKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
+        val currentSettlementKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "currentSettlmenet") }
+
         lateinit var pluginInstance: QuestIntelligence
         lateinit var languageFile: File
 
@@ -148,6 +138,15 @@ class QuestIntelligence : JavaPlugin(), Listener {
                 }
             }
 
+        var Player.currentSettlement: String?
+            get() = this.persistentDataContainer.get(currentSettlementKey, PersistentDataType.STRING)
+            set(value) {
+                if (value != null) {
+                    this.persistentDataContainer.set(currentSettlementKey, PersistentDataType.STRING, value)
+                } else this.persistentDataContainer.remove(currentSettlementKey)
+            }
+
+
         fun isChristmas(): Boolean {
             val calendar = Calendar.getInstance()
             val currentYear = calendar.get(Calendar.YEAR)
@@ -161,36 +160,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
             }
 
             return calendar.after(startOfRange) && calendar.before(endOfRange)
-        }
-
-        fun Player.sendTutorialMessage(tutorialMessage: TutorialMessage) {
-
-            var tutorialMode = this.persistentDataContainer.get(playerTutorialKey, PersistentDataType.BOOLEAN)
-
-            if (tutorialMode == null) {
-                this.persistentDataContainer.set(playerTutorialKey, PersistentDataType.BOOLEAN, true)
-                tutorialMode = true
-            }
-
-            if (!tutorialMode)
-                return
-
-            val messagesSentList = tutorialMessages.computeIfAbsent(this) {
-                mutableListOf()
-            }
-
-            if (!messagesSentList.contains(tutorialMessage)) {
-                pluginInstance.language?.let {
-                    val sound = Sound.valueOf(it.getString("player-tutorial.tutorial-message-sound")!!)
-                    this.playSound(this.location, sound, 1F, 1F)
-                    messagesSentList.add(tutorialMessage)
-
-                    it.getStringList(tutorialMessage.key).forEach { message ->
-                        this.sendMessage(message)
-                    }
-                }
-            }
-
         }
 
         fun Player.sendFormattedMessage(message: String) {
@@ -215,18 +184,9 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    val debug = true
+    val debug = false
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
-    }
-
-    enum class TutorialMessage(val key: String) {
-        FIRST_CONNECTION("player-tutorial.first-connection-message"),
-        VILLAGER_INTERACTION("player-tutorial.interaction-message"),
-        DIALOGUE("player-tutorial.dialogue-message"),
-        QUESTING("player-tutorial.questing-message"),
-        SLEEP_INTERRUPTION("player-tutorial.sleep-interruption-message"),
-        BAD_REPUTATION("player-tutorial.bad-reputation");
     }
 
 }
