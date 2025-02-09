@@ -1,11 +1,13 @@
 package me.voxelsquid.quill.event
 
-import me.voxelsquid.quill.villager.VillagerManager
-import org.bukkit.entity.Villager
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class VillagerDataGenerateEvent(val villager: Villager, val data: VillagerManager.PersonalVillagerData) :
+class HumanoidInitializationEvent(val player: Player, val entity: LivingEntity, val humanoidProvider: HumanoidController, val metadata: List<EntityData>) :
     Event() {
 
     override fun getHandlers(): HandlerList {

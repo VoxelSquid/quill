@@ -7,10 +7,10 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.ai.GeminiProvider
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
-import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
-import me.voxelsquid.quill.villager.VillagerManager.Companion.character
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
@@ -29,7 +29,7 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
         }
 
         plugin.commandManager.commandCompletions.registerCompletion("villagerPersonalities") {
-            CharacterType.getEnumValuesAsStrings()
+            HumanoidCharacterType.entries.map { it.name }
         }
 
         plugin.commandManager.commandCompletions.registerCompletion("settlements") { context ->
@@ -68,12 +68,12 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
     @CommandPermission("quill.villager.create")
     @CommandCompletion("@villagerPersonalities @villagerTypes")
     @Description("Specialized debug command for easy testing of villagers.")
-    fun onVillager(player: Player, personality: CharacterType, type: String) {
+    fun onVillager(player: Player, characterType: HumanoidCharacterType, type: String) {
 
         val world = player.world
         val villager = world.spawnEntity(player.location, EntityType.VILLAGER) as Villager
 
-        villager.character = personality
+        villager.setCharacterType(characterType)
 
         villager.villagerType = when (type) {
             "SNOW" -> Villager.Type.SNOW

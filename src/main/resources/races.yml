@@ -1,0 +1,38 @@
+# In this file you can customize (or even create new) races.
+
+# Dwarves are the first race added. Why? Because dwarves rule!
+dwarf:
+
+  # Targeted entity type.
+  target-entity-type: VILLAGER
+
+  # It won't be checked if target-entity-type is not a villager.
+  target-villager-type: SNOW
+
+  # A race description to be used by the AI when generating personal villager data and quests.
+  race-description: "Short statured craftsmen known for their love of alcohol and beards. With their naturally strong builds, they prefer to live in cold places, where they are often found. Excellent warriors, blacksmiths and drinking companions."
+
+  # One voice sound from this pool will be selected on entity spawn.
+  voice-sounds: [ ENTITY_VILLAGER_YES, ENTITY_VILLAGER_NO ]
+
+  # Will members of this race trade with players?
+  trade: true
+
+  # Will members of this race generate quests?
+  quest: true
+
+  # Reputation on start. Values lower than -40 means hostility on sight.
+  default-reputation: 0
+
+  # Entities have an inventory and we can specify the starting items they will have on spawn.
+  spawn-items:
+    - EMERALD-16-32
+
+  # Standard attributes that allow you to make the entity a bit more original and realistic.
+  basic-attributes:
+    - MAX_HEALTH-30.0
+    - SCALE-0.85
+
+
+# Hostile illager race.
+# ashborn: # TODO

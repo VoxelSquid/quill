@@ -4,8 +4,8 @@ package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
-import me.voxelsquid.quill.villager.VillagerManager.Companion.voicePitch
-import me.voxelsquid.quill.villager.VillagerManager.Companion.voiceSound
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voicePitch
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voiceSound
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Sound

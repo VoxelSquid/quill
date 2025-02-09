@@ -1,11 +1,11 @@
 package me.voxelsquid.quill.event
 
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
+import org.bukkit.entity.LivingEntity
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-data class IllagerCommonData(val illagerNameList: MutableList<String>, val illagerInteractionPhrases: MutableList<String>, val illagerHurtPhrases: MutableList<String>, val partyLeaderInteraction: MutableList<String>)
-class IllagerCommonDataGenerateEvent(val data: IllagerCommonData) :
-    Event() {
+class HumanoidPersonalDataGeneratedEvent(val entity: LivingEntity, val personalData: PersonalHumanoidData) : Event() {
 
     override fun getHandlers(): HandlerList {
         return HANDLERS
@@ -19,6 +19,7 @@ class IllagerCommonDataGenerateEvent(val data: IllagerCommonData) :
         fun getHandlerList(): HandlerList {
             return HANDLERS
         }
+
     }
 
 }

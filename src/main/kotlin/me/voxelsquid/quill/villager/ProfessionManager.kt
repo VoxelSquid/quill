@@ -1,14 +1,12 @@
-@file:Suppress("DEPRECATION")
-
 package me.voxelsquid.quill.villager
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
 import me.voxelsquid.quill.event.VillagerProduceItemEvent
-import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.takeItemFromQuillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.updateQuests
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.addItemToQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.takeItemFromQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
@@ -229,9 +227,7 @@ class ProfessionManager: Listener {
         }
 
         val meta = itemStack.itemMeta
-        val attributes: List<Attribute> = Registry.ATTRIBUTE.toMutableList().filter { attributeNames.contains(it.key.value()) }
-
-        plugin.logger.info("Test attributes: $attributes")
+        val attributes: List<Attribute> = Registry.ATTRIBUTE.toMutableList().filter { attributeNames.contains(it.key.value().uppercase()) }
 
         // Чистим дефолтные атрибуты чтобы не было конфликтов
         attributes.forEach { meta.removeAttributeModifier(it) }

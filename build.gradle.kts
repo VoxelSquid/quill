@@ -1,19 +1,19 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.1.9-OPEN-ALPHA"
+version = "0.2.0-BETA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
   main = "me.voxelsquid.quill.QuestIntelligence"
   load = BukkitPluginYaml.PluginLoadOrder.POSTWORLD
   authors.add("NoLogicWasHere")
-  apiVersion = "1.20"
+  apiVersion = "1.21"
 }
 
 plugins {
   kotlin("jvm") version "2.0.20"
-  id("io.papermc.paperweight.userdev") version "2.0.0-beta.11"
+  id("io.papermc.paperweight.userdev") version "2.0.0-beta.14"
   id("xyz.jpenilla.run-paper") version "2.3.1" // Adds runServer and runMojangMappedServer tasks for testing
   id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.2.0" // Generates plugin.yml based on the Gradle config
   id("com.gradleup.shadow") version "8.3.3"
@@ -24,6 +24,8 @@ repositories {
   maven("https://repo.aikar.co/content/groups/aikar/")
   maven("https://hub.spigotmc.org/nexus/content/groups/public/")
   maven("https://papermc.io/repo/repository/maven-public/")
+  maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+  maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
 }
 
 dependencies {
@@ -32,6 +34,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp:4.1.0")
   implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
   implementation("com.google.code.gson:gson:2.11.0")
+  compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 }
 
 tasks {
@@ -41,7 +44,7 @@ tasks {
   }
 
   javadoc {
-    options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
+    options.encoding = Charsets.UTF_8.name()
   }
 
   reobfJar {

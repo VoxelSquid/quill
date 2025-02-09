@@ -4,14 +4,12 @@ import com.google.gson.reflect.TypeToken
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.currentSettlement
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
-import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.settlement
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.title.Title
 import net.kyori.adventure.title.Title.Times
-import net.minecraft.world.entity.ai.goal.LlamaFollowCaravanGoal
 import org.bukkit.Location
-import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.World
 import org.bukkit.craftbukkit.entity.CraftVillager
@@ -19,10 +17,7 @@ import org.bukkit.entity.EntityType
 import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.ChunkLoadEvent
-import org.bukkit.event.world.WorldLoadEvent
-import org.bukkit.event.world.WorldUnloadEvent
 import org.bukkit.persistence.PersistentDataType
 import java.time.Duration
 import kotlin.random.Random

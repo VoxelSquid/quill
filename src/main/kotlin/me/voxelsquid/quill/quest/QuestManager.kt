@@ -4,6 +4,10 @@ import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.characterKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.personalDataKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getCharacterType
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
 import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.InventorySerializer
@@ -12,18 +16,17 @@ import me.voxelsquid.quill.util.ItemStackCalculator.Companion.getMaterialPrice
 import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
-import me.voxelsquid.quill.villager.VillagerManager.Companion.addItemToQuillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.consume
-import me.voxelsquid.quill.villager.VillagerManager.Companion.eat
-import me.voxelsquid.quill.villager.VillagerManager.Companion.hunger
-import me.voxelsquid.quill.villager.VillagerManager.Companion.personalData
-import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
-import me.voxelsquid.quill.villager.VillagerManager.Companion.quillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.removeQuest
-import me.voxelsquid.quill.villager.VillagerManager.Companion.takeItemFromQuillInventory
-import me.voxelsquid.quill.villager.VillagerManager.Companion.talk
-import me.voxelsquid.quill.villager.VillagerManager.Companion.updateQuests
-import me.voxelsquid.quill.villager.VillagerManager.Companion.villagerInventoryKey
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.addItemToQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.consume
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.eat
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.hunger
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.removeQuest
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.takeItemFromQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.villagerInventoryKey
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -107,9 +110,10 @@ class QuestManager(private val plugin: QuestIntelligence) {
         }
 
         plugin.debug("Found a villager!")
-        if (villager.personalData == null) {
+        if (villager.persistentDataContainer.get(personalDataKey, PersistentDataType.STRING) == null) {
+            plugin.logger.info("Villager at ${villager.location}.")
             plugin.debug("Found villager has no personal data. Generating it!")
-            plugin.questGenerator.generatePersonalVillagerData(villager)
+            plugin.questGenerator.generatePersonalHumanoidData(villager)
             return
         }
 

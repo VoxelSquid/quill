@@ -3,46 +3,43 @@ package me.voxelsquid.quill
 import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
-import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
 import me.voxelsquid.quill.util.LocationAdapter
-import me.voxelsquid.quill.villager.VillagerManager
+import me.voxelsquid.quill.humanoid.HumanoidTicker
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
 import me.voxelsquid.quill.villager.interaction.InteractionMenu
-import me.voxelsquid.quill.villager.interaction.MenuManager
+import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.entity.raid.Raid
-import org.bukkit.*
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.NamespacedKey
+import org.bukkit.World
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 
 class QuestIntelligence : JavaPlugin(), Listener {
 
     lateinit var configurationClip: ConfigurationClip
     lateinit var commandManager:    PaperCommandManager
-    lateinit var villagerManager:   VillagerManager
     lateinit var settlementManager: SettlementManager
     lateinit var questGenerator:    GeminiProvider
-
+    lateinit var humanoidManager:   HumanoidManager
 
     var language: YamlConfiguration? = null
     var baseColor = "§f"
@@ -59,8 +56,9 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         if (config.getString("core-settings.api-key") == "GEMINI_API_KEY") {
             logger.severe("The plugin must be configured before it can be used. You need to replace the value of ‘core-settings.api-key’ with a real Gemini API key (it is free of charge). See config.yml for details on how to get this key.")
-            logger.severe("QuestIntelligence will be disabled...")
+            logger.severe("QuestIntelligence will be disabled.")
             Bukkit.getServer().pluginManager.disablePlugin(this)
+            return
         }
 
         enabledWorlds = mutableListOf<World>().apply {
@@ -71,14 +69,16 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         this.setupCommands()
         questGenerator    = GeminiProvider(this)
-        villagerManager   = VillagerManager(this)
         settlementManager = SettlementManager(this)
+        humanoidManager   = HumanoidManager()
         this.server.pluginManager.registerEvents(this, this)
+
+        logger.info("QuestIntelligence is working! Bugs are possible.")
     }
 
     override fun onDisable() {
         DialogueManager.dialogues.values.forEach(DialogueManager.DialogueWindow::destroy)
-        MenuManager.openedMenuList.forEach(InteractionMenu::destroy)
+        InteractionMenuManager.openedMenuList.forEach(InteractionMenu::destroy)
         this.saveSettlements()
     }
 
@@ -184,7 +184,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    val debug = false
+    val debug = true
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }

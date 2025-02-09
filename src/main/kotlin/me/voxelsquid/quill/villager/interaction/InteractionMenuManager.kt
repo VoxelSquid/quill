@@ -1,19 +1,19 @@
 package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.humanoidRegistry
 import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
-import me.voxelsquid.quill.villager.VillagerManager.Companion.openTradeMenu
-import me.voxelsquid.quill.villager.VillagerManager.Companion.personalData
-import me.voxelsquid.quill.villager.VillagerManager.Companion.quests
-import me.voxelsquid.quill.villager.VillagerManager.Companion.talk
-import me.voxelsquid.quill.villager.VillagerManager.Companion.voicePitch
-import me.voxelsquid.quill.villager.VillagerManager.Companion.voiceSound
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.openTradeMenu
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voicePitch
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voiceSound
 import me.voxelsquid.quill.villager.interaction.DialogueManager.Companion.dialogues
-import me.voxelsquid.quill.villager.interaction.MenuManager.Companion.openedMenuList
+import me.voxelsquid.quill.villager.interaction.InteractionMenuManager.Companion.openedMenuList
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.TextColor
@@ -25,6 +25,7 @@ import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.entity.CraftVillager
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDeathEvent
@@ -36,7 +37,7 @@ import org.bukkit.util.Transformation
 import org.joml.AxisAngle4f
 import org.joml.Vector3f
 
-class MenuManager(private val plugin: QuestIntelligence): Listener {
+class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
     private val buttonTextColor = TextColor.fromHexString(plugin.config.getString("core-settings.menu-button-text-color")!!)!!
 
@@ -59,11 +60,18 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
         }
     }
 
-    @EventHandler
+    private val lastInteraction = mutableMapOf<Player, Long>()
+    @EventHandler(priority = EventPriority.HIGHEST)
     private fun handleVillagerInteraction(event: PlayerInteractEntityEvent) {
         (event.rightClicked as? Villager)?.let { villager ->
 
             val player: Player = event.player
+            val last = lastInteraction.computeIfAbsent(player) { System.currentTimeMillis() }
+            val time = System.currentTimeMillis()
+
+            if (time - last <= 200) {
+                return
+            } else lastInteraction[player] = time
 
             // Отмена стандартного события
             event.isCancelled = true
@@ -83,7 +91,7 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
             // Обработка состояния спящего жителя
             if (villager.pose == Pose.SLEEPING) {
-                villager.personalData?.let {
+                villager.getPersonalHumanoidData()?.let {
                     villager.talk(player, it.sleepInterruptionMessages.random(), followDuringDialogue = false)
                 }
                 return
@@ -91,7 +99,7 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
             // Обработка крайне негативной репутации
             if (villager.getRespect(player) <= -40 || player.fame <= -40) {
-                villager.personalData?.let {
+                villager.getPersonalHumanoidData()?.let {
                     villager.talk(player, it.badReputationInteractionDenial.random(), followDuringDialogue = false)
                 }
                 return
@@ -99,7 +107,7 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
             // Обработка взаимодействия с ребёнком
             if (!villager.isAdult) {
-                villager.personalData?.let { data ->
+                villager.getPersonalHumanoidData()?.let { data ->
                     if (villager.getRespect(player) <= -20 || player.fame <= -20) {
                         villager.talk(player, data.badReputationInteractionDenial.random(), followDuringDialogue = false)
                     } else if (villager.getRespect(player) >= 20 || player.fame >= 20) {
@@ -127,7 +135,7 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
             // Когда игрок спрашивает о квестах у безработного жителя
             if (villager.profession == Villager.Profession.NONE) {
-                villager.personalData?.let {
+                villager.getPersonalHumanoidData()?.let {
                     villager.talk(player, it.joblessMessages.random(), followDuringDialogue = true)
                     return@button
                 }
@@ -135,8 +143,8 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
             // Когда игрок спрашивает о квестах у жителя с работой, но без квестов
             if (villager.quests.isEmpty()) {
-                villager.personalData?.let {
-                    villager.talk(player, it.noQuestsForNow.random(), followDuringDialogue = true)
+                villager.getPersonalHumanoidData()?.let {
+                    villager.talk(player, it.noQuestMessages.random(), followDuringDialogue = true)
                     return@button
                 }
             }
@@ -232,24 +240,27 @@ class MenuManager(private val plugin: QuestIntelligence): Listener {
 
     @EventHandler
     private fun onPlayerDamageVillager(event: EntityDamageByEntityEvent) {
+        (event.damager as? Player)?.let { player ->
+            (event.entity as? LivingEntity)?.let { entity ->
 
-        if (event.entity !is Villager || event.damager !is Player)
-            return
+                if (!humanoidRegistry.contains(entity)) {
+                    return
+                }
 
-        val villager = event.entity as Villager
-        val player   = event.damager as Player
-        val personalData = villager.personalData ?: return
-        val message      = personalData.damageMessages.random()
+                val personalData = entity.getPersonalHumanoidData() ?: return
+                val message      = personalData.damageMessages.random()
 
-        // Скип диалога
-        if (dialogues.contains(player to villager)) {
-            player.playSound(villager.location, villager.voiceSound, 1F, villager.voicePitch)
-            dialogues[player to villager]?.destroy()
-            event.isCancelled = true
-            return
+                // Скип диалога
+                if (dialogues.contains(player to entity)) {
+                    dialogues[player to entity]?.destroy()
+                    event.isCancelled = true
+                    return
+                }
+
+                entity.talk(player, message, displaySize = 0.55F, followDuringDialogue = false, interruptPreviousDialogue = true)
+
+            }
         }
-
-        villager.talk(player, message, displaySize = 0.55F, followDuringDialogue = false, interruptPreviousDialogue = true)
     }
 
     class Builder(villager: Villager, viewer: Player) {

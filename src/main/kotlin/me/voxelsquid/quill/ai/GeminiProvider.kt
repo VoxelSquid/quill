@@ -5,26 +5,28 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
 import me.voxelsquid.quill.QuestIntelligence.Companion.languageFile
 import me.voxelsquid.quill.event.*
-import me.voxelsquid.quill.illager.IllagerManager.Companion.illagerCommonData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getCharacterType
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
-import me.voxelsquid.quill.villager.CharacterType
 import me.voxelsquid.quill.villager.ProfessionManager
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemAttributes
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemRarity
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.isUniqueItem
-import me.voxelsquid.quill.villager.VillagerManager
-import me.voxelsquid.quill.villager.VillagerManager.Companion.character
-import me.voxelsquid.quill.villager.VillagerManager.Companion.professionLevelName
-import me.voxelsquid.quill.villager.VillagerManager.Companion.settlement
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.professionLevelName
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.settlement
 import net.kyori.adventure.text.TextComponent
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.entity.Ageable
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
@@ -79,13 +81,6 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             plugin.language = YamlConfiguration.loadConfiguration(languageFile)
             GenerationRequest(this, client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
         }
-
-        // Late generation requests
-        plugin.server.scheduler.runTaskTimerAsynchronously(plugin, { _ ->
-            if (illagerCommonData == null) {
-                this.generateCommonIllagerData()
-            }
-        }, 100, 400)
     }
 
 
@@ -120,14 +115,15 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     }
 
-    fun generatePersonalVillagerData(villager: Villager) {
+    fun generatePersonalHumanoidData(entity: LivingEntity) {
 
         val extraArguments = "Avoid these names: $previousNames."
+        val race = entity.race?.name?.uppercase() ?: "dwarf"
 
         val placeholders = mapOf(
-            "villagerType"        to "${villager.villagerType}",
-            "villagerPersonality" to "${villager.character}",
-            "villagerGrowthStage" to if (villager.isAdult) "ADULT" else "KID",
+            "villagerRace"        to race,
+            "villagerPersonality" to "${entity.getCharacterType()}",
+            "villagerGrowthStage" to if (entity is Ageable && entity.isAdult) "ADULT" else "KID",
             "language"            to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"        to this.getRandomLetter(),
             "extraArguments"      to extraArguments,
@@ -141,34 +137,11 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
                 try {
-                    val pvd = plugin.gson.fromJson(cleanedJsonResponse, VillagerManager.PersonalVillagerData::class.java)
-                    this.previousNames.add(pvd.villagerName)
-                    plugin.server.pluginManager.callEvent(VillagerDataGenerateEvent(villager, pvd))
+                    val personalHumanoidData = plugin.gson.fromJson(cleanedJsonResponse, PersonalHumanoidData::class.java)
+                    this.previousNames.add(personalHumanoidData.villagerName)
+                    plugin.server.pluginManager.callEvent(HumanoidPersonalDataGeneratedEvent(entity, personalHumanoidData))
                 } catch (exception: JsonSyntaxException) {
-                    plugin.logger.warning("JsonSyntaxException during generating PDV! Please, report this to the developer!")
-                    plugin.logger.warning(cleanedJsonResponse)
-                }
-            }
-        }
-    }
-
-    private fun generateCommonIllagerData() {
-
-        val placeholders = mapOf(
-            "namingStyle" to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
-        )
-
-        val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("common-illager-data") + "Rules: '15% of words are swearing'") { acc, entry ->
-            acc.replace("{${entry.key}}", entry.value)
-        }
-
-        GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
-            plugin.server.scheduler.runTask(plugin) { _ ->
-                try {
-                    val icd = plugin.gson.fromJson(cleanedJsonResponse, IllagerCommonData::class.java)
-                    plugin.server.pluginManager.callEvent(IllagerCommonDataGenerateEvent(icd))
-                } catch (exception: JsonSyntaxException) {
-                    plugin.logger.warning("JsonSyntaxException during generating CID! Please, report this to the developer!")
+                    plugin.logger.warning("JsonSyntaxException during generating PersonalHumanoidData! Please, report this to the developer!")
                     plugin.logger.warning(cleanedJsonResponse)
                 }
             }
@@ -215,8 +188,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     fun generateQuestData(questManager: QuestManager, villager: Villager, quest: VillagerQuest.Builder) {
 
-        var extraArguments = when (villager.character) {
-            CharacterType.ANGRY, CharacterType.DRUNKARD -> "'20% of words are swearing'"
+        var extraArguments = when (villager.getCharacterType()) {
+            HumanoidCharacterType.ANGRY, HumanoidCharacterType.DRUNKARD -> "'20% of words are swearing'"
             else -> ""
         }
 
@@ -232,14 +205,24 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         val villagerName = villager.customName()?.let { (it as TextComponent).content() } ?: "unknown"
-        val settlementName = villager.settlement?.data?.settlementName ?: "no settlement"
+
+        val race = villager.race ?: run {
+            plugin.logger.severe("Trying to generate a quest for a non-existent race! Cancelling.")
+            return
+        }
+        val raceName = race.name
+        val raceDescription = race.description
+
+        extraArguments += "'Race description: $raceDescription'"
+
+        val settlementName  = villager.settlement?.data?.settlementName ?: "no settlement"
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
             "villagerName"            to villagerName,
-            "villagerType"            to "${villager.villagerType}",
+            "villagerRace"            to raceName,
             "villagerProfession"      to "${villager.profession}",
-            "villagerPersonality"     to "${villager.character}",
+            "villagerPersonality"     to "${villager.getCharacterType()}",
             "villagerProfessionLevel" to villager.professionLevelName,
             "questItem"               to if (quest.questType == QuestType.OMINOUS_BANNER) "ominous banner" else quest.questItem.type.name.replace('_', ' ').lowercase(),
             "questItemAmount"         to quest.questItem.amount.toString(),

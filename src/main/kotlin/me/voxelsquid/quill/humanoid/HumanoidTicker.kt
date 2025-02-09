@@ -1,23 +1,21 @@
-package me.voxelsquid.quill.villager
+package me.voxelsquid.quill.humanoid
 
 import com.google.common.reflect.TypeToken
 import io.papermc.paper.event.player.PlayerTradeEvent
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
-import me.voxelsquid.quill.event.VillagerDataGenerateEvent
-import me.voxelsquid.quill.illager.IllagerManager
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
-import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
+import me.voxelsquid.quill.villager.ProfessionManager
+import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
+import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import me.voxelsquid.quill.villager.interaction.DialogueManager
-import me.voxelsquid.quill.villager.interaction.MenuManager
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
+import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.minecraft.world.entity.EquipmentSlot
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -42,25 +40,19 @@ import org.bukkit.potion.PotionEffectType
 import kotlin.random.Random
 
 // TODO: Необходимо заново генерировать PVD, когда малой взрослеет (лол)
-class VillagerManager(instance: QuestIntelligence) : Listener {
+class HumanoidTicker : Listener {
 
-    private val interactionManager: MenuManager
-    private val professionManager:  ProfessionManager
-    private val reputationManager:  ReputationManager
-    private val illagerManager:     IllagerManager
+    private val interactionManager = InteractionMenuManager(plugin)
+    private val professionManager  = ProfessionManager()
+    private val reputationManager  = ReputationManager()
+
+    private val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
+    private val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
+    private val workIntervalTicks  = plugin.config.getLong("core-settings.tick-period.work")
 
     init {
 
-        plugin = instance
         plugin.server.pluginManager.registerEvents(this, plugin)
-        interactionManager = MenuManager(plugin)
-        professionManager  = ProfessionManager()
-        reputationManager  = ReputationManager()
-        illagerManager     = IllagerManager()
-
-        val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
-        val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
-        val workIntervalTicks  = plugin.config.getLong("core-settings.tick-period.work")
 
         // Quest tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
@@ -99,16 +91,11 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
     }
 
     @EventHandler
-    private fun onQuestSuccessfulGenerate(event: QuestGenerateEvent) {
+    private fun onQuestGenerate(event: QuestGenerateEvent) {
         val quest = event.quest
         event.villager.addQuest(quest)
-        plugin.debug("Successfully generated a new quest: ${quest.questInfo} and added it to villager ${(event.villager.customName() as TextComponent).content()}.")
+        plugin.debug("Successfully generated a new quest: ${quest.questInfo} and added it to villager ${event.villager.customName}.")
         plugin.debug("=== --- === --- === --- === --- === --- === --- === --- === --- ===")
-    }
-
-    @EventHandler
-    private fun onPersonalVillagerDataGenerate(event: VillagerDataGenerateEvent) {
-        this.savePersonalVillagerData(event.villager, event.data)
     }
 
     @EventHandler
@@ -127,27 +114,18 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         val trade    = event.trade
         val player   = event.player
 
+        // Сперва проверяем, если это попытка завершения квеста
         villager.quests.forEach { quest ->
             if (trade.ingredients[0].isSimilar(quest.questItem) && trade.result.isSimilar(quest.rewardItem)) {
                 questManager.finishQuest(player, villager, quest, trade.ingredients[0], trade.result)
+                return
             }
         }
-    }
 
-    data class PersonalVillagerData(val villagerName: String,
-                                    val sleepInterruptionMessages: MutableList<String>,
-                                    val damageMessages: MutableList<String>,
-                                    val joblessMessages: MutableList<String>,
-                                    val noQuestsForNow: MutableList<String>,
-                                    val badReputationInteractionDenial: MutableList<String>,
-                                    val kidInteractionFamousPlayer: MutableList<String>,
-                                    val kidInteractionNeutralPlayer: MutableList<String>)
-
-    private fun savePersonalVillagerData(villager: Villager, data: PersonalVillagerData) {
-        data.villagerName.let { name ->
-            villager.customName(Component.text(name))
-            villager.persistentDataContainer.set(villagerPersonalDataKey, PersistentDataType.STRING, plugin.gson.toJson(data))
+        if (!event.isCancelled) {
+            villager.takeItemFromQuillInventory(trade.result, trade.result.amount)
         }
+
     }
 
     companion object {
@@ -156,8 +134,6 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
         private var questManager    = QuestManager(plugin)
         private var dialogueManager = DialogueManager(plugin)
 
-        private val villagerPersonalDataKey: NamespacedKey = NamespacedKey(plugin, "personalVillagerData")
-        private val villagerPersonalityKey:  NamespacedKey = NamespacedKey(plugin, "personalityType")
         private val villagerQuestDataKey:    NamespacedKey = NamespacedKey(plugin, "questData")
         private val villagerVoiceSoundKey:   NamespacedKey = NamespacedKey(plugin, "voiceSound")
         private val villagerVoicePitchKey:   NamespacedKey = NamespacedKey(plugin, "voicePitch")
@@ -246,7 +222,7 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
 
         fun Villager.takeItemFromQuillInventory(item: ItemStack, amountToTake: Int) {
             val inventory = quillInventory
-            inventory.filterNotNull().find { it.type == item.type }?.apply { amount -= amountToTake }
+            inventory.filterNotNull().find { it.isSimilar(item) }?.apply { amount -= amountToTake }
             persistentDataContainer.set(villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inventory).toString())
         }
 
@@ -350,14 +326,6 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                 }
             }
 
-        val Villager.personalData : PersonalVillagerData?
-            get() {
-                persistentDataContainer.get(villagerPersonalDataKey, PersistentDataType.STRING)?.let { personalVillagerData ->
-                    return plugin.gson.fromJson(personalVillagerData, PersonalVillagerData::class.java)
-                }
-                return null
-            }
-
         val Villager.quillInventory: Inventory
             get() {
 
@@ -394,11 +362,6 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                 return quillInventory.filterNotNull().filter { itemStack -> itemsToProduce.contains(itemStack.type.toString()) }.toList()
             }
 
-        val Villager.foodAmount: Int
-            get() {
-                return quillInventory.filterNotNull().count { it.type.isEdible }
-            }
-
         val Villager.voiceSound: Sound
             get() {
                 val value = this.persistentDataContainer.get(villagerVoiceSoundKey, PersistentDataType.STRING)
@@ -416,21 +379,6 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
                     ?: (Random.nextFloat() * 1.25F + 0.75F).also { pitch ->
                         this.persistentDataContainer.set(villagerVoicePitchKey, PersistentDataType.FLOAT, pitch)
                     }
-            }
-
-        var Villager.character: CharacterType
-            get() {
-                val value = this.persistentDataContainer.get(villagerPersonalityKey, PersistentDataType.STRING)
-                return if (value != null) {
-                    CharacterType.valueOf(value)
-                } else {
-                    CharacterType.entries[Random.nextInt(CharacterType.entries.size)].also {
-                        this.persistentDataContainer.set(villagerPersonalityKey, PersistentDataType.STRING, it.toString())
-                    }
-                }
-            }
-            set(personality) {
-                this.persistentDataContainer.set(villagerPersonalityKey, PersistentDataType.STRING, personality.toString())
             }
 
         var Villager.hunger: Double
@@ -468,61 +416,3 @@ class VillagerManager(instance: QuestIntelligence) : Listener {
 
 }
 
-enum class CharacterType {
-
-    DEPRESSED,
-    OPTIMISTIC,
-    PESSIMISTIC,
-    KIND,
-    RUDE,
-    MEAN,
-    EMOTIONAL,
-    CYNICAL,
-    COLD,
-    FORMAL,
-    FRIENDLY,
-    FAMILIAR,
-    HUMOROUS,
-    TALKATIVE,
-    IRONIC,
-    SARCASTIC,
-    SERIOUS,
-    NOSTALGIC,
-    WITTY,
-    ADVENTUROUS,
-    MYSTERIOUS,
-    DREAMY,
-    IMPULSIVE,
-    OBSESSIVE,
-    RECKLESS,
-    HUMBLE,
-    FORGIVING,
-    RATIONAL,
-    ARTISTIC,
-    ANXIOUS,
-    PLAYFUL,
-    RELAXED,
-    GRUMPY,
-    INTELLECTUAL,
-    NAIVE,
-    IGNORANT,
-    ANGRY,
-    MAD_SCIENTIST,
-    DRUNKARD,
-    SANE,
-    ROMANTIC,
-    REBELLIOUS,
-    DRAMATIC,
-    LUCKY,
-    UNLUCKY,
-    THIEF,
-    POTHEAD,
-    CHILDLIKE;
-
-    companion object {
-        fun getEnumValuesAsStrings(): List<String> {
-            return entries.map { it.name }
-        }
-    }
-
-}
