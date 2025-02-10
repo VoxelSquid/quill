@@ -10,8 +10,7 @@ import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.openTradeMenu
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voicePitch
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voiceSound
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.villager.interaction.DialogueManager.Companion.dialogues
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager.Companion.openedMenuList
 import net.kyori.adventure.text.Component
@@ -36,7 +35,9 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.util.Transformation
 import org.joml.AxisAngle4f
 import org.joml.Vector3f
+import kotlin.random.Random
 
+@Suppress("UnstableApiUsage")
 class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
     private val buttonTextColor = TextColor.fromHexString(plugin.config.getString("core-settings.menu-button-text-color")!!)!!
@@ -66,8 +67,10 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
         (event.rightClicked as? Villager)?.let { villager ->
 
             val player: Player = event.player
-            val last = lastInteraction.computeIfAbsent(player) { System.currentTimeMillis() }
             val time = System.currentTimeMillis()
+            val last = lastInteraction.computeIfAbsent(player) {
+                System.currentTimeMillis()
+            }
 
             if (time - last <= 200) {
                 return
@@ -239,23 +242,37 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
     }
 
     @EventHandler
-    private fun onPlayerDamageVillager(event: EntityDamageByEntityEvent) {
-        (event.damager as? Player)?.let { player ->
+    private fun onPlayerDamageEntity(event: EntityDamageByEntityEvent) {
+        (event.damageSource.causingEntity as? Player)?.let { player ->
             (event.entity as? LivingEntity)?.let { entity ->
 
-                if (!humanoidRegistry.contains(entity)) {
+                if (!humanoidRegistry.contains(entity))
                     return
-                }
 
-                val personalData = entity.getPersonalHumanoidData() ?: return
-                val message      = personalData.damageMessages.random()
-
-                // Скип диалога
+                // Dialogue skip
                 if (dialogues.contains(player to entity)) {
                     dialogues[player to entity]?.destroy()
                     event.isCancelled = true
                     return
                 }
+
+                // Sound handling
+                if (entity.race != null) {
+
+                    // Lethal damage check
+                    if (event.finalDamage >= entity.health) {
+                        val sound = entity.race!!.deathSound
+                        player.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
+                        return
+                    }
+
+                    val sound = entity.race!!.hurtSound
+                    player.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
+                }
+
+                // Hurt message
+                val personalData = entity.getPersonalHumanoidData() ?: return
+                val message      = personalData.damageMessages.random()
 
                 entity.talk(player, message, displaySize = 0.55F, followDuringDialogue = false, interruptPreviousDialogue = true)
 

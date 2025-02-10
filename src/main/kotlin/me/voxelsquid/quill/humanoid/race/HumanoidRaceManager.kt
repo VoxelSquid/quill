@@ -5,17 +5,17 @@ import me.voxelsquid.quill.QuestIntelligence
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
+import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Villager
-import org.bukkit.event.Listener
 import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataType
 import java.io.File
 import kotlin.random.Random
 
+@Suppress("DEPRECATION")
 class HumanoidRaceManager {
 
     fun load() {
@@ -58,6 +58,22 @@ class HumanoidRaceManager {
                 }
             }
 
+            val voices = mutableListOf<PitchedSound>()
+            section.getStringList("sound.voice").forEach { voice ->
+                val (sound, min, max) = voice.split("-")
+                voices.add(PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble()))
+            }
+
+            val hurtSound = section.getString("sound.hurt")!!.let {
+                val (sound, min, max) = it.split("-")
+                PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
+            }
+
+            val deathSound = section.getString("sound.death")!!.let {
+                val (sound, min, max) = it.split("-")
+                PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
+            }
+
             val description = section.getString("race-description") ?: ""
             plugin.logger.info("Loading $name race with ${textures.size} skin amount.")
             plugin.logger.info("$name description: $description")
@@ -66,6 +82,9 @@ class HumanoidRaceManager {
                 EntityType.valueOf(targetEntityType),
                 targetVillagerType,
                 defaultReputation,
+                voices,
+                hurtSound,
+                deathSound,
                 spawnItems,
                 attributes,
                 textures,
@@ -75,10 +94,15 @@ class HumanoidRaceManager {
         }
     }
 
+    data class PitchedSound(val sound: Sound, val min: Double, val max: Double)
+
     data class Race(val name: String,
                     val targetEntityType: EntityType,
                     val targetVillagerType: Villager.Type,
                     val defaultReputation: Double,
+                    val voiceSounds: List<PitchedSound>,
+                    val hurtSound: PitchedSound,
+                    val deathSound: PitchedSound,
                     val spawnItems: List<SpawnItemStack>,
                     val attributes: Map<Attribute, Double>,
                     val skins: List<TextureProperty>,

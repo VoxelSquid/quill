@@ -4,8 +4,8 @@ package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voicePitch
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.voiceSound
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoicePitch
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoiceSound
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Sound
@@ -83,7 +83,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         player.sendMessage(formattedMessage)
 
         if (player.dialogueFormat != DialogueFormat.BOTH)
-            player.playSound(entity.location, when (entity) { is Villager -> entity.voiceSound; else -> determineVoiceSound(entity) }, 1F, when (entity) { is Villager -> entity.voicePitch; else -> 1.0F })
+            player.playSound(entity.location, when (entity) { is Villager -> entity.getVoiceSound(); else -> determineVoiceSound(entity) }, 1F, when (entity) { is Villager -> entity.getVoicePitch(); else -> 1.0F })
     }
 
 
@@ -126,8 +126,8 @@ class DialogueManager(private val plugin: QuestIntelligence) {
             plugin.config.getInt("core-settings.dialogue-text-display.background-color.b")
         )
 
-        private val voice: Sound = when (entity) { is Villager -> entity.voiceSound; else -> determineVoiceSound(entity) }
-        private val pitch: Float = when (entity) { is Villager -> entity.voicePitch; else -> 1.0F }
+        private val voice: Sound = when (entity) { is Villager -> entity.getVoiceSound(); else -> determineVoiceSound(entity) }
+        private val pitch: Float = when (entity) { is Villager -> entity.getVoicePitch(); else -> 1.0F }
 
         private val height = if (entity is Ageable && !entity.isAdult) 0.75 else 1.25
         private val maxDistance = 5.5

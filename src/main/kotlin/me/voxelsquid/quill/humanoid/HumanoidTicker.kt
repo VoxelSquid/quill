@@ -4,6 +4,8 @@ import com.google.common.reflect.TypeToken
 import io.papermc.paper.event.player.PlayerTradeEvent
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoicePitch
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoiceSound
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
@@ -135,8 +137,6 @@ class HumanoidTicker : Listener {
         private var dialogueManager = DialogueManager(plugin)
 
         private val villagerQuestDataKey:    NamespacedKey = NamespacedKey(plugin, "questData")
-        private val villagerVoiceSoundKey:   NamespacedKey = NamespacedKey(plugin, "voiceSound")
-        private val villagerVoicePitchKey:   NamespacedKey = NamespacedKey(plugin, "voicePitch")
         private val villagerHungerKey:       NamespacedKey = NamespacedKey(plugin, "hunger")
         private val villagerSettlementKey:   NamespacedKey = NamespacedKey(plugin, "settlement")
         val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "inventory")
@@ -286,7 +286,7 @@ class HumanoidTicker : Listener {
                 if (food.type == Material.HONEY_BOTTLE)
                     this.addItemToQuillInventory(ItemStack(Material.GLASS_BOTTLE))
 
-                villager.world.playSound(villager.location, villager.voiceSound, 1F, villager.voicePitch)
+                villager.world.playSound(villager.location, villager.getVoiceSound(), 1F, villager.getVoicePitch())
                 villager.world.playSound(villager.location, Sound.ENTITY_PLAYER_BURP, 1F, 1F)
                 villager.hunger += 7.5
 
@@ -360,25 +360,6 @@ class HumanoidTicker : Listener {
             get() {
                 val itemsToProduce = plugin.config.getStringList("villager-item-producing.profession.${this.profession}.item-produce")
                 return quillInventory.filterNotNull().filter { itemStack -> itemsToProduce.contains(itemStack.type.toString()) }.toList()
-            }
-
-        val Villager.voiceSound: Sound
-            get() {
-                val value = this.persistentDataContainer.get(villagerVoiceSoundKey, PersistentDataType.STRING)
-                return if (value != null) {
-                    Sound.valueOf(value)
-                } else {
-                    val sound = arrayOf(Sound.ENTITY_WANDERING_TRADER_YES, Sound.ENTITY_WANDERING_TRADER_NO, Sound.ENTITY_VILLAGER_YES, Sound.ENTITY_VILLAGER_NO, Sound.ENTITY_VINDICATOR_AMBIENT, Sound.ENTITY_VINDICATOR_CELEBRATE, Sound.ENTITY_VILLAGER_TRADE, Sound.ENTITY_PILLAGER_AMBIENT, Sound.ENTITY_WITCH_AMBIENT /* xD */).random()
-                    sound.also { this.persistentDataContainer.set(villagerVoiceSoundKey, PersistentDataType.STRING, it.toString()) }
-                }
-            }
-
-        val Villager.voicePitch: Float
-            get() {
-                return persistentDataContainer.get(villagerVoicePitchKey, PersistentDataType.FLOAT)
-                    ?: (Random.nextFloat() * 1.25F + 0.75F).also { pitch ->
-                        this.persistentDataContainer.set(villagerVoicePitchKey, PersistentDataType.FLOAT, pitch)
-                    }
             }
 
         var Villager.hunger: Double

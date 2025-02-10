@@ -4,10 +4,7 @@ import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.characterKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.personalDataKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getCharacterType
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.InventorySerializer
@@ -27,6 +24,7 @@ import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.takeItemFromQuillIn
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.villagerInventoryKey
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -94,6 +92,11 @@ class QuestManager(private val plugin: QuestIntelligence) {
         plugin.debug("Looking for a random villager...")
         val villager = this.getRandomVillager() ?: run {
             plugin.debug("Can't find a villager. Cancelling.")
+            return
+        }
+
+        if (villager.race == null) {
+            plugin.debug("Cancelling quest generation due to a non-existent humanoid race.")
             return
         }
 

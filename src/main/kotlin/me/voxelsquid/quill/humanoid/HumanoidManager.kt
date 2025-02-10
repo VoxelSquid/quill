@@ -4,17 +4,24 @@ import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.UserProfile
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.characterKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.characterKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.pitchKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.voiceKey
 import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.*
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import net.kyori.adventure.text.Component
 import org.bukkit.NamespacedKey
+import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scoreboard.Team
+import kotlin.random.Random
 
 class HumanoidManager : Listener {
 
@@ -50,6 +57,7 @@ class HumanoidManager : Listener {
 
     data class HumanoidController(val entity: LivingEntity,
                                   val profile: UserProfile,
+                                  val race: Race?,
                                   val subscribers: MutableList<Player> = mutableListOf(),
                                   var personalData: PersonalHumanoidData? = null) {
 
@@ -72,11 +80,13 @@ class HumanoidManager : Listener {
                 return plugin.gson.toJson(this)
             }
 
-        }
+            object HumanoidNamespace {
+                val personalDataKey = NamespacedKey(plugin, "PersonalData")
+                val characterKey    = NamespacedKey(plugin, "CharacterType")
+                val voiceKey        = NamespacedKey(plugin, "VoiceSound")
+                val pitchKey        = NamespacedKey(plugin, "VoicePitch")
+            }
 
-        companion object HumanoidNamespace {
-            val personalDataKey = NamespacedKey(plugin, "PersonalData")
-            val characterKey    = NamespacedKey(plugin, "CharacterType")
         }
 
     }
@@ -99,6 +109,30 @@ class HumanoidManager : Listener {
 
         fun LivingEntity.setCharacterType(characterType: HumanoidCharacterType) {
             this.persistentDataContainer.set(characterKey, PersistentDataType.STRING, characterType.toString())
+        }
+
+        fun LivingEntity.getVoiceSound(): Sound {
+            val value = this.persistentDataContainer.get(voiceKey, PersistentDataType.STRING)
+            return if (value != null) {
+                Sound.valueOf(value)
+            } else if (race != null) {
+                race!!.voiceSounds.random().sound.also {
+                    this.persistentDataContainer.set(
+                        voiceKey,
+                        PersistentDataType.STRING,
+                        it.toString()
+                    )
+                }
+            } else {
+                Sound.INTENTIONALLY_EMPTY
+            }
+        }
+
+        fun LivingEntity.getVoicePitch(): Float {
+            return persistentDataContainer.get(pitchKey, PersistentDataType.FLOAT)
+                ?: if (race != null ) Random.nextDouble(race!!.voiceSounds.random().min, race!!.voiceSounds.random().max).toFloat().also { pitch ->
+                    this.persistentDataContainer.set(pitchKey, PersistentDataType.FLOAT, pitch)
+                } else 1.0F
         }
 
     }
@@ -153,7 +187,7 @@ class HumanoidManager : Listener {
         THIEF,
         POTHEAD,
         RANDOM,
-        C418;
+        EVIL;
 
     }
 

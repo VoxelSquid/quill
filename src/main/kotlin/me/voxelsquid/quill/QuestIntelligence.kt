@@ -11,7 +11,6 @@ import me.voxelsquid.quill.settlement.SettlementManager
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
 import me.voxelsquid.quill.util.LocationAdapter
-import me.voxelsquid.quill.humanoid.HumanoidTicker
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
 import me.voxelsquid.quill.villager.interaction.InteractionMenu
@@ -72,8 +71,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
         settlementManager = SettlementManager(this)
         humanoidManager   = HumanoidManager()
         this.server.pluginManager.registerEvents(this, this)
-
-        logger.info("QuestIntelligence is working! Bugs are possible.")
     }
 
     override fun onDisable() {
@@ -92,7 +89,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     private fun setupCommands() {
         this.commandManager = PaperCommandManager(this)
-        this.commandManager.registerCommand(DebugCommand(pluginInstance))
+        this.commandManager.registerCommand(DebugCommand())
     }
 
     fun reloadConfigurations() {
@@ -115,12 +112,12 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         var messagePrefix = ""
 
-        val playerStatsKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "statistics") }
-        val immersiveDialoguesKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
-        val currentSettlementKey: NamespacedKey by lazy { NamespacedKey(pluginInstance, "currentSettlmenet") }
-
         lateinit var pluginInstance: QuestIntelligence
         lateinit var languageFile: File
+
+        val verboseKey            by lazy { NamespacedKey(pluginInstance, "verbose") }
+        val immersiveDialoguesKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
+        val currentSettlementKey  by lazy { NamespacedKey(pluginInstance, "currentSettlement") }
 
         fun getOminousBanner() : ItemStack {
             return CraftItemStack.asBukkitCopy(
@@ -164,6 +161,12 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
         fun Player.sendFormattedMessage(message: String) {
             this.sendMessage(messagePrefix + message)
+        }
+
+        fun Player.sendVerbose(message: String) {
+            if (player!!.persistentDataContainer.get(verboseKey, PersistentDataType.BOOLEAN) == true) {
+                this.sendMessage(messagePrefix + message)
+            }
         }
 
     }

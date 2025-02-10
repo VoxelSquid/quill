@@ -6,6 +6,7 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
+import me.voxelsquid.quill.QuestIntelligence.Companion.verboseKey
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
@@ -13,6 +14,7 @@ import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import org.bukkit.Bukkit
+import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
@@ -20,7 +22,7 @@ import org.bukkit.entity.Villager
 import org.bukkit.persistence.PersistentDataType
 
 @CommandAlias("quill|q")
-class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
+class DebugCommand : BaseCommand() {
 
     init {
 
@@ -123,8 +125,26 @@ class DebugCommand(private val plugin: QuestIntelligence) : BaseCommand() {
 
     @Subcommand("debug banner")
     @CommandPermission("quill.banner")
-    fun onBanner(player: Player) {
+    fun onDebugBanner(player: Player) {
         player.inventory.addItem(getOminousBanner().clone())
+    }
+
+    @Subcommand("debug verbose")
+    @CommandPermission("quill.verbose")
+    fun onDebugVerbose(player: Player) {
+
+        val data = player.persistentDataContainer
+        if (!data.has(verboseKey)) {
+            data.set(verboseKey, PersistentDataType.BOOLEAN, true)
+        } else data.set(verboseKey, PersistentDataType.BOOLEAN, !data.get(verboseKey, PersistentDataType.BOOLEAN)!!)
+
+        if (data.get(verboseKey, PersistentDataType.BOOLEAN) == true) {
+            player.sendFormattedMessage(plugin.language!!.getString("command-message.verbose.activated")!!)
+        } else player.sendFormattedMessage(plugin.language!!.getString("command-message.verbose.deactivated")!!)
+    }
+
+    companion object {
+        private val plugin = QuestIntelligence.pluginInstance
     }
 
 }

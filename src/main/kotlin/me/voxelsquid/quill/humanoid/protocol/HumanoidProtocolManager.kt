@@ -13,15 +13,18 @@ import com.github.retrooper.packetevents.protocol.player.GameMode
 import com.github.retrooper.packetevents.protocol.player.SkinSection
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
+import com.github.retrooper.packetevents.protocol.sound.SoundCategory
+import com.github.retrooper.packetevents.protocol.sound.Sounds
 import com.github.retrooper.packetevents.wrapper.PacketWrapper
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity
 import com.github.retrooper.packetevents.wrapper.play.server.*
 import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.sendVerbose
 import me.voxelsquid.quill.event.HumanoidInitializationEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Location
 import org.bukkit.attribute.Attribute
@@ -83,7 +86,7 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
         val playerInfoPacket = WrapperPlayServerPlayerInfoUpdate(EnumSet.of(WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER, WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED, WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY, WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE, WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME), info)
         val spawnEntityPacket = WrapperPlayServerSpawnEntity(entity.entityId, provider.profile.uuid, EntityTypes.PLAYER, entity.location.toPacketEventsLocation(), entity.location.yaw, 0, null)
 
-        player.sendMessage(" §b> Sending spawn packet and cached metadata. §7[id ${entity.entityId}]")
+        player.sendVerbose(" §b> Sending spawn packet and cached metadata. §7[id ${entity.entityId}]")
         player.sendPacket(playerInfoPacket)
         player.sendPacket(spawnEntityPacket)
         player.sendPacket(WrapperPlayServerEntityMetadata(entity.entityId, metadata))
@@ -91,19 +94,20 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             listOf(WrapperPlayServerUpdateAttributes.Property(Attributes.SCALE, entity.getAttribute(Attribute.SCALE)?.value ?: 1.0, emptyList())))
         )
 
-        // Delete the information about the fake player after a second, so that the skin has time to load and the player list doesn't show non-existent nicknames.
+        // Delete the information about the fake player, so that the skin has time to load and the player list doesn't show non-existent nicknames.
         plugin.server.scheduler.runTaskLater(plugin, { _ ->
             player.sendPacket(WrapperPlayServerPlayerInfoRemove(provider.profile.uuid))
-        }, 20L)
+        }, 35L)
 
         // Don't forget to collect the garbage.
         humanoidRegistry.keys.filter { !it.isValid }.forEach { garbage ->
+            plugin.debug("Removing invalid humanoid with ID ${entity.entityId} from registry.")
             humanoidRegistry.remove(garbage)
         }
 
     }
 
-    // We are currently listening for the sending of four packets: SPAWN_ENTITY, ENTITY_METADATA, ENTITY_HEAD_LOOK, and DESTROY_ENTITIES.
+    // We are currently listening for the sending of five packets: SOUND_EFFECT, SPAWN_ENTITY, ENTITY_METADATA, ENTITY_HEAD_LOOK, and DESTROY_ENTITIES.
     override fun onPacketPlaySend(event: PacketPlaySendEvent) {
 
         when (event.packetType) {
@@ -119,16 +123,16 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                 when (entity) {
                     is Villager -> {
 
-                        player.sendMessage(" §2> Trying to spawn a villager!")
+                        player.sendVerbose(" §2> Trying to spawn a villager!")
 
                         val humanoidProvider = humanoidRegistry[entity] ?: run {
-                            plugin.logger.info("Preventing villager with ID ${packet.entityId} from showing.")
+                            plugin.debug("Preventing villager with ID ${packet.entityId} from showing.")
                             event.isCancelled = true
                             return
                         }
 
                         if (!humanoidProvider.subscribers.contains(player)) {
-                            plugin.logger.info("Preventing disguised villager with ID ${packet.entityId} from undisguising.")
+                            plugin.debug("Preventing disguised villager with ID ${packet.entityId} from undisguising.")
                             event.isCancelled = true
                         }
 
@@ -156,14 +160,14 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                     val fixedPacket = metadata.removeIf(MUST_BE_REMOVED)
 
                     if (fixedPacket) {
-                        player.sendMessage(" §c> Preventing wrong villager metadata. §7[id ${entity.entityId}]")
+                        player.sendVerbose(" §c> Preventing wrong villager metadata. §7[id ${entity.entityId}]")
                         event.isCancelled = true
                     }
 
                     when {
 
                         !registered && fixedPacket -> {
-                            HumanoidController(entity, UserProfile(entity.uniqueId, "HideMyName")).also { createdProvider ->
+                            HumanoidController(entity, UserProfile(entity.uniqueId, "HideMyName"), entity.race).also { createdProvider ->
                                 humanoidRegistry[entity] = createdProvider
                                 createdProvider.profile.textureProperties = listOf(entity.race?.skins?.randomOrNull() ?: TextureProperty("textures", "", ""))
                                 createdProvider.subscribers.add(player)
@@ -173,8 +177,8 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                                     createdProvider.personalData = plugin.gson.fromJson(data, PersonalHumanoidData::class.java)
                                 }
 
-                                plugin.logger.info("Added a new villager with ID ${entity.entityId} at ${entity.location} to client entities registry.")
-                                player.sendMessage(" §3> Calling HumanoidInitializationEvent for a new villager. §7[id ${entity.entityId}]")
+                                plugin.debug("Added a new villager with ID ${entity.entityId} at ${entity.location} to client entities registry.")
+                                player.sendVerbose(" §3> Calling HumanoidInitializationEvent for a new villager. §7[id ${entity.entityId}]")
                                 plugin.server.scheduler.runTask(plugin) { _ ->
                                     plugin.server.pluginManager.callEvent(HumanoidInitializationEvent(player, entity, createdProvider, metadata))
                                 }
@@ -184,20 +188,20 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                         registered && fixedPacket && !subscribed -> {
                             humanoidProvider!!.subscribers.add(player)
                             plugin.server.scheduler.runTask(plugin) { _ ->
-                                player.sendMessage(" §3> Calling HumanoidInitializationEvent for an existing villager. §7[id ${entity.entityId}]")
+                                player.sendVerbose(" §3> Calling HumanoidInitializationEvent for an existing villager. §7[id ${entity.entityId}]")
                                 plugin.server.pluginManager.callEvent(HumanoidInitializationEvent(player, entity, humanoidProvider, metadata))
                             }
                         }
 
                         registered && fixedPacket && subscribed -> {
-                            player.sendMessage(" §e> Sending fixed villager metadata. §7[id ${entity.entityId}]")
+                            player.sendVerbose(" §e> Sending fixed villager metadata. §7[id ${entity.entityId}]")
                             player.sendPacket(WrapperPlayServerEntityMetadata(entity.entityId, metadata))
                         }
 
                     }
 
                     if (!event.isCancelled) {
-                        player.sendMessage(" §6> Received metadata packet! §7[id ${entity.entityId}]")
+                        player.sendVerbose(" §6> Received metadata packet! §7[id ${entity.entityId}]")
                     }
 
                 }
@@ -231,8 +235,31 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                     val humanoidProvider = humanoidRegistry[entity] ?: return
 
                     if (entity is Villager) {
-                        player.sendMessage(" §4> Destroying disguised villager. §7[id $entityId]")
+                        player.sendVerbose(" §4> Destroying disguised villager. §7[id $entityId]")
                         humanoidProvider.subscribers.remove(player)
+                    }
+                }
+
+            }
+
+            // If the villager's sound is categorised as NEUTRAL, there is a 99% chance that this is the standard villager "voice" and we need to remove it.
+            // Sadly, we can't replace it right here, because we don't know the exact entity, so we need to handle sound stuff somehow.
+            PacketType.Play.Server.SOUND_EFFECT -> {
+
+                val packet = WrapperPlayServerSoundEffect(event)
+
+                if (packet.soundCategory != SoundCategory.NEUTRAL)
+                    return
+
+                when (packet.sound) {
+                    Sounds.ENTITY_VILLAGER_AMBIENT,
+                    Sounds.ENTITY_VILLAGER_HURT,
+                    Sounds.ENTITY_VILLAGER_DEATH,
+                    Sounds.ENTITY_VILLAGER_NO,
+                    Sounds.ENTITY_VILLAGER_YES,
+                    Sounds.ENTITY_VILLAGER_CELEBRATE,
+                    Sounds.ENTITY_VILLAGER_TRADE -> {
+                        event.isCancelled = true
                     }
                 }
 

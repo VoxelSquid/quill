@@ -1,6 +1,6 @@
 # In this file you can customize (or even create new) races.
 
-# Dwarves are the first race added. Why? Because dwarves rule!
+# Dwarves are the first race added. Why? Because dwarves rules!
 dwarf:
 
   # Targeted entity type.
@@ -10,25 +10,36 @@ dwarf:
   target-villager-type: SNOW
 
   # A race description to be used by the AI when generating personal villager data and quests.
-  race-description: "Short statured craftsmen known for their love of alcohol and beards. With their naturally strong builds, they prefer to live in cold places, where they are often found. Excellent warriors, blacksmiths and drinking companions."
+  race-description: "Short statured craftsmen known for their love of alcohol, beards and deep voices. With their naturally strong builds, they prefer to live in cold places, where they are often found. Excellent warriors, blacksmiths and drinking companions."
 
-  # One voice sound from this pool will be selected on entity spawn.
-  voice-sounds: [ ENTITY_VILLAGER_YES, ENTITY_VILLAGER_NO ]
-
-  # Will members of this race trade with players?
-  trade: true
-
-  # Will members of this race generate quests?
-  quest: true
+  # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+  sound:
+    voice:
+      - ENTITY_VILLAGER_AMBIENT-0.65-0.85
+      - ENTITY_VILLAGER_YES-0.65-0.85
+      - ENTITY_VILLAGER_NO-0.65-0.85
+      - ENTITY_VILLAGER_TRADE-0.65-0.85
+      - ENTITY_PILLAGER_AMBIENT-0.65-0.95
+      - ENTITY_VINDICATOR_AMBIENT-0.65-0.95
+    death: ENTITY_VILLAGER_DEATH-0.55-0.75
+    hurt: ENTITY_VILLAGER_HURT-0.55-0.80
 
   # Reputation on start. Values lower than -40 means hostility on sight.
+  # TODO: Faction-driven reputation. It's not implemented now.
   default-reputation: 0
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  # TODO: It's not implemented now.
   spawn-items:
     - EMERALD-16-32
+    - LEATHER-16-32
+    - BREAD-8-32
+    - ???
 
   # Standard attributes that allow you to make the entity a bit more original and realistic.
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
   basic-attributes:
     - MAX_HEALTH-30.0
     - SCALE-0.85
