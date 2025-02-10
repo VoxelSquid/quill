@@ -1,12 +1,14 @@
 package me.voxelsquid.quill.humanoid
 
 import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.characterKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.pitchKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.skinKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.voiceKey
 import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager
@@ -85,6 +87,7 @@ class HumanoidManager : Listener {
                 val characterKey    = NamespacedKey(plugin, "CharacterType")
                 val voiceKey        = NamespacedKey(plugin, "VoiceSound")
                 val pitchKey        = NamespacedKey(plugin, "VoicePitch")
+                val skinKey         = NamespacedKey(plugin, "Skin")
             }
 
         }
@@ -133,6 +136,22 @@ class HumanoidManager : Listener {
                 ?: if (race != null ) Random.nextDouble(race!!.voiceSounds.random().min, race!!.voiceSounds.random().max).toFloat().also { pitch ->
                     this.persistentDataContainer.set(pitchKey, PersistentDataType.FLOAT, pitch)
                 } else 1.0F
+        }
+
+        fun LivingEntity.skin(): TextureProperty {
+
+            // If race is null, there can't be a skin
+            if (race == null)
+                return TextureProperty("textures", "", "")
+
+            val skin = persistentDataContainer.get(skinKey, PersistentDataType.STRING)
+            return if (skin != null) {
+                val (value, signature) = skin.split(":")
+                TextureProperty("textures", value, signature)
+            } else race!!.skins.random().also {
+                persistentDataContainer.set(skinKey, PersistentDataType.STRING, "${it.value}:${it.signature}")
+            }
+
         }
 
     }

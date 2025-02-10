@@ -82,7 +82,7 @@ class HumanoidTicker : Listener {
                             if (villager.hunger <= 17.5) {
                                 villager.eat()
                             }
-                        }, 5 + (index * 2L).coerceAtMost(40) + Random.nextInt(200))
+                        }, 5 + (index * 2L).coerceAtMost(40) + Random.nextInt(250))
 
                     }
                 }

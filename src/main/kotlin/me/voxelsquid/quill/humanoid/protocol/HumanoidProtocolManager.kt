@@ -25,6 +25,7 @@ import me.voxelsquid.quill.event.HumanoidInitializationEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.skin
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Location
 import org.bukkit.attribute.Attribute
@@ -169,8 +170,10 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                         !registered && fixedPacket -> {
                             HumanoidController(entity, UserProfile(entity.uniqueId, "HideMyName"), entity.race).also { createdProvider ->
                                 humanoidRegistry[entity] = createdProvider
-                                createdProvider.profile.textureProperties = listOf(entity.race?.skins?.randomOrNull() ?: TextureProperty("textures", "", ""))
                                 createdProvider.subscribers.add(player)
+
+                                // Load skin from PDC
+                                createdProvider.profile.textureProperties = listOf(entity.skin())
 
                                 // Load PHD
                                 entity.persistentDataContainer.get(personalDataKey, PersistentDataType.STRING)?.let { data ->

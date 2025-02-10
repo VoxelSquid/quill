@@ -5,6 +5,7 @@ import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getHumanoidController
 import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.InventorySerializer
@@ -92,6 +93,11 @@ class QuestManager(private val plugin: QuestIntelligence) {
         plugin.debug("Looking for a random villager...")
         val villager = this.getRandomVillager() ?: run {
             plugin.debug("Can't find a villager. Cancelling.")
+            return
+        }
+
+        if (villager.getHumanoidController() == null) {
+            plugin.debug("Cancelling quest generation due to a non-existent humanoid controller.")
             return
         }
 

@@ -34,9 +34,8 @@ dwarf:
   # TODO: It's not implemented now.
   spawn-items:
     - EMERALD-16-32
-    - LEATHER-16-32
-    - BREAD-8-32
-    - ???
+    # - LEATHER-16-32
+    # - BREAD-8-32
 
   # Standard attributes that allow you to make the entity a bit more original and realistic.
   # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
