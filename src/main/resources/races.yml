@@ -9,15 +9,20 @@ dwarf:
   # It won't be checked if target-entity-type is not a villager.
   target-villager-type: SNOW
 
+  # An item that members of the race will use for trading.
+  normal-currency: DIAMOND
+
+  # An item to be used when normal currency is insufficient.
+  special-currency: DIAMOND_BLOCK
+
   # A race description to be used by the AI when generating personal villager data and quests.
-  race-description: "Short statured craftsmen known for their love of alcohol, beards and deep voices. With their naturally strong builds, they prefer to live in cold places, where they are often found. Excellent warriors, blacksmiths and drinking companions."
+  race-description: "Short statured craftsmen known for their love of alcohol, beards and deep voices. With their naturally strong builds, they prefer to live in cold places, where they are often found. Excellent miners, blacksmiths and drinking companions."
 
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
     voice:
       - ENTITY_VILLAGER_AMBIENT-0.65-0.85
-      - ENTITY_VILLAGER_YES-0.65-0.85
       - ENTITY_VILLAGER_NO-0.65-0.85
       - ENTITY_VILLAGER_TRADE-0.65-0.85
       - ENTITY_PILLAGER_AMBIENT-0.65-0.95
@@ -25,17 +30,18 @@ dwarf:
     death: ENTITY_VILLAGER_DEATH-0.55-0.75
     hurt: ENTITY_VILLAGER_HURT-0.55-0.80
 
-  # Reputation on start. Values lower than -40 means hostility on sight.
-  # TODO: Faction-driven reputation. It's not implemented now.
-  default-reputation: 0
-
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-  # TODO: It's not implemented now.
   spawn-items:
-    - EMERALD-16-32
-    # - LEATHER-16-32
-    # - BREAD-8-32
+    - NETHERITE_INGOT-1-2
+    - DIAMOND-18-32
+    - DIAMOND-32-64
+    - EMERALD-8-16
+    - LEATHER-16-32
+    - STICK-16-32
+    - IRON_INGOT-12-24
+    - BREAD-8-16
+    - APPLE-8-24
 
   # Standard attributes that allow you to make the entity a bit more original and realistic.
   # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
@@ -43,6 +49,49 @@ dwarf:
     - MAX_HEALTH-30.0
     - SCALE-0.85
 
+# Orcs are almost as cool as dwarves. Lok'tar ogar!
+orc:
 
-# Hostile illager race.
-# ashborn: # TODO
+  # Targeted entity type.
+  target-entity-type: VILLAGER
+
+  # It won't be checked if target-entity-type is not a villager.
+  target-villager-type: DESERT
+
+  # An item that members of the race will use for trading.
+  normal-currency: GOLD_INGOT
+
+  # An item to be used when normal currency is insufficient.
+  special-currency: GOLD_BLOCK
+
+  # A race description to be used by the AI when generating personal villager data and quests.
+  race-description: "Possessing fangs and brute strength, but lacking in cunning, they are formidable warriors, resilient and towering. Their language is simple, bold and honest. Sometimes they use phrases from the Orc language that only they understand. Though often perceived as savage barbarians, orcs hold tradition in high regard and revere martial honor and spiritual shamanism, bound by a profound sense of community. Adapted to the rigors of the desert, they are invariably found beneath the relentless sun. Orcs are, to some, dangerous and powerful enemies, while to others, they are steadfast companions in arms."
+
+  # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+  sound:
+    voice:
+      - ENTITY_PILLAGER_AMBIENT-0.6-0.75
+      - ENTITY_VINDICATOR_AMBIENT-0.6-0.75
+      - ENTITY_VINDICATOR_HURT-0.6-0.75
+      - ENTITY_VINDICATOR_CELEBRATE-0.5-0.65
+      - ENTITY_EVOKER_AMBIENT-0.5-0.65
+    death: ENTITY_PILLAGER_DEATH-0.6-0.75
+    hurt: ENTITY_PILLAGER_HURT-0.6-0.75
+
+  # Entities have an inventory and we can specify the starting items they will have on spawn.
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  spawn-items:
+    - IRON_INGOT-48-64
+    - IRON_INGOT-6-32
+    - EMERALD-8-12
+    - LEATHER-16-32
+    - STICK-16-32
+    - BEEF-8-16
+    - ROTTEN_FLESH-8-16
+
+  # Standard attributes that allow you to make the entity a bit more original and realistic.
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
+  basic-attributes:
+    - MAX_HEALTH-40.0
+    - SCALE-1.125

@@ -182,7 +182,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
             return null
         }
 
-        val barterItems = this.generateQuestReward(questType, questItem, inventoryPrice, villagerItems)
+        val barterItems = this.determineQuestReward(villager, questType, questItem, inventoryPrice, villagerItems)
         val questReward = when {
             barterItems.isEmpty() -> {
                 plugin.debug("Villager has no items to use them as a reward. Cancelling quest generation.")
@@ -376,13 +376,15 @@ class QuestManager(private val plugin: QuestIntelligence) {
         }
     }
 
-    private fun generateQuestReward(
+    private fun determineQuestReward(
+        villager: Villager,
         questType: QuestType,
         questItem: ItemStack,
         inventoryPrice: Int,
         villagerItems: List<ItemStack>
     ): MutableList<ItemStack> {
 
+        // Награда за некоторые квесты определяется отдельно от prices.yml
         val questItemPrice = when (questType) {
             QuestType.OMINOUS_BANNER -> plugin.configurationClip.promptsConfig.getInt("ominous-banner-quest.reward-points")
             QuestType.BOOZE -> plugin.configurationClip.promptsConfig.getInt("booze-quest.reward-points")
@@ -392,7 +394,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
         val sortedInventory = villagerItems.toMutableList().apply {
             removeIf { it.type.isEdible || it.type == Material.ENCHANTED_BOOK || it.isSimilar(getOminousBanner())} // villagers won't use food for trading (and enchanted books as well, im too lazy to implement that logic right now)
-            sortedBy { if (it.type == Material.EMERALD) 0 else 1 } // emeralds > other stuff
+            sortedBy { if (it.type == villager.race!!.normalCurrency) 0 else 1 } // race currency > other stuff
         }
 
         if (questItemPrice == 0) {

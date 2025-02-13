@@ -25,6 +25,7 @@ import me.voxelsquid.quill.event.HumanoidInitializationEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.skin
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Location
@@ -74,10 +75,23 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             it.add(EntityData(17, EntityDataTypes.BYTE, SkinSection.ALL.mask))
         }
 
-        // Applying base attributes (I'm doing it here because I don't know where else it should be)
+        // Modifying base attributes
         entity.race?.let { race ->
             race.attributes.forEach { (attribute, value) ->
+
+                // Skipping scale modification. Otherwise villagers won't be able to get through the doors if they are too big. Scale changes through packets.
+                if (attribute == Attribute.SCALE)
+                    return@forEach
+
+                // Applying HP right after first modifying
+                if (attribute == Attribute.MAX_HEALTH && entity.getAttribute(attribute)?.baseValue != value) {
+                    entity.getAttribute(attribute)?.baseValue = value
+                    entity.health = value
+                    return@forEach
+                }
+
                 entity.getAttribute(attribute)?.baseValue = value
+
             }
         }
 
@@ -92,13 +106,13 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
         player.sendPacket(spawnEntityPacket)
         player.sendPacket(WrapperPlayServerEntityMetadata(entity.entityId, metadata))
         player.sendPacket(WrapperPlayServerUpdateAttributes(entity.entityId,
-            listOf(WrapperPlayServerUpdateAttributes.Property(Attributes.SCALE, entity.getAttribute(Attribute.SCALE)?.value ?: 1.0, emptyList())))
+            listOf(WrapperPlayServerUpdateAttributes.Property(Attributes.SCALE, entity.race?.attributes?.get(Attribute.SCALE) ?: 1.0, emptyList())))
         )
 
         // Delete the information about the fake player, so that the skin has time to load and the player list doesn't show non-existent nicknames.
         plugin.server.scheduler.runTaskLater(plugin, { _ ->
             player.sendPacket(WrapperPlayServerPlayerInfoRemove(provider.profile.uuid))
-        }, 35L)
+        }, 40L)
 
         // Don't forget to collect the garbage.
         humanoidRegistry.keys.filter { !it.isValid }.forEach { garbage ->
@@ -115,6 +129,10 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
 
             // To avoid showing the villagers' real nosy model, we cancel this packet until a packet with a fake entity is sent to the player.
             PacketType.Play.Server.SPAWN_ENTITY -> {
+
+                // There's no point in hiding entities if there's no humanoid villagers
+                if (!HUMANOID_VILLAGERS_ENABLED)
+                    return
 
                 val player = event.getPlayer<Player>()
                 val world  = player.world
@@ -156,6 +174,7 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                     val humanoidProvider = humanoidRegistry[entity]
                     val metadata = packet.readEntityMetadata()
 
+                    val enabled     = HUMANOID_VILLAGERS_ENABLED
                     val registered  = humanoidProvider != null
                     val subscribed  = humanoidProvider?.subscribers?.contains(player) ?: false
                     val fixedPacket = metadata.removeIf(MUST_BE_REMOVED)
@@ -168,27 +187,31 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                     when {
 
                         !registered && fixedPacket -> {
-                            HumanoidController(entity, UserProfile(entity.uniqueId, "HideMyName"), entity.race).also { createdProvider ->
-                                humanoidRegistry[entity] = createdProvider
-                                createdProvider.subscribers.add(player)
-
-                                // Load skin from PDC
-                                createdProvider.profile.textureProperties = listOf(entity.skin())
+                            HumanoidController(entity, UserProfile(entity.uniqueId, "HideMyName"), entity.race).also { controller ->
+                                humanoidRegistry[entity] = controller
+                                controller.subscribers.add(player)
 
                                 // Load PHD
                                 entity.persistentDataContainer.get(personalDataKey, PersistentDataType.STRING)?.let { data ->
-                                    createdProvider.personalData = plugin.gson.fromJson(data, PersonalHumanoidData::class.java)
+                                    controller.personalData = plugin.gson.fromJson(data, PersonalHumanoidData::class.java)
                                 }
+
+                                // There's no point in messing with spawn packets if humanoid villagers feature is disabled
+                                if (!enabled)
+                                    return
+
+                                // Load skin from PDC
+                                controller.profile.textureProperties = listOf(entity.skin())
 
                                 plugin.debug("Added a new villager with ID ${entity.entityId} at ${entity.location} to client entities registry.")
                                 player.sendVerbose(" §3> Calling HumanoidInitializationEvent for a new villager. §7[id ${entity.entityId}]")
                                 plugin.server.scheduler.runTask(plugin) { _ ->
-                                    plugin.server.pluginManager.callEvent(HumanoidInitializationEvent(player, entity, createdProvider, metadata))
+                                    plugin.server.pluginManager.callEvent(HumanoidInitializationEvent(player, entity, controller, metadata))
                                 }
                             }
                         }
 
-                        registered && fixedPacket && !subscribed -> {
+                        enabled && registered && fixedPacket && !subscribed -> {
                             humanoidProvider!!.subscribers.add(player)
                             plugin.server.scheduler.runTask(plugin) { _ ->
                                 player.sendVerbose(" §3> Calling HumanoidInitializationEvent for an existing villager. §7[id ${entity.entityId}]")
@@ -196,7 +219,7 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                             }
                         }
 
-                        registered && fixedPacket && subscribed -> {
+                        enabled && registered && fixedPacket && subscribed -> {
                             player.sendVerbose(" §e> Sending fixed villager metadata. §7[id ${entity.entityId}]")
                             player.sendPacket(WrapperPlayServerEntityMetadata(entity.entityId, metadata))
                         }
@@ -213,6 +236,9 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             // To prevent the head of a villager disguised as a player from spinning 360 degrees without a body, we need to send the right packet.
             PacketType.Play.Server.ENTITY_HEAD_LOOK -> {
 
+                if (!HUMANOID_VILLAGERS_ENABLED)
+                    return
+
                 val player   = event.getPlayer<Player>()
                 val world    = player.world
                 val packet   = WrapperPlayServerEntityHeadLook(event)
@@ -228,6 +254,9 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             // It is very important to handle this packet, as low range distance players may “unseen” disguised villagers, although they still remain in memory.
             // It also makes it easy to remove fake players from the registry when they are unloaded from memory.
             PacketType.Play.Server.DESTROY_ENTITIES -> {
+
+                if (!HUMANOID_VILLAGERS_ENABLED)
+                    return
 
                 val player = event.getPlayer<Player>()
                 val world  = player.world
@@ -248,6 +277,9 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             // If the villager's sound is categorised as NEUTRAL, there is a 99% chance that this is the standard villager "voice" and we need to remove it.
             // Sadly, we can't replace it right here, because we don't know the exact entity, so we need to handle sound stuff somehow.
             PacketType.Play.Server.SOUND_EFFECT -> {
+
+                if (!HUMANOID_VILLAGERS_ENABLED)
+                    return
 
                 val packet = WrapperPlayServerSoundEffect(event)
 
@@ -279,6 +311,9 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
 
             // If you don't cancel INTERACT_ENTITY packet with the disguised villager, the player will be kicked due to a protocol error.
             PacketType.Play.Client.INTERACT_ENTITY -> {
+
+                if (!HUMANOID_VILLAGERS_ENABLED)
+                    return
 
                 val packet = WrapperPlayClientInteractEntity(event)
                 val action = packet.action

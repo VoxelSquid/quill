@@ -18,6 +18,10 @@ core-settings:
   enabled-worlds:
     - "world"
 
+  # By default, all residents are replaced by player models that have skins and races with their own unique attributes.
+  # You can disable this feature or customize it in races.yml and skins.yml.
+  humanoid-villagers: true
+
   # Some countries may have problems connecting to AI. Proxy helps.
   # HTTP, SOCKS
   proxy:
@@ -219,7 +223,7 @@ villager-item-producing:
         - RABBIT_HIDE~8-24
         - "@DYE~16-32"
 
-      # Items from item-produce are also used when generating trade deals. Villagers will try to trade these items for emeralds.
+      # Items from item-produce are also used when generating trade deals. Villagers will try to trade these items for their race currency.
       item-produce:
         - LEATHER
         - LEATHER_BOOTS
@@ -274,7 +278,7 @@ villager-item-producing:
         - COPPER_BLOCK~4-8
         - COAL~12-24
         - IRON_INGOT~32-64
-        - DIAMOND~6-12
+        - DIAMOND~8-24
         - OAK_PLANKS~12-24
 
       item-produce:
@@ -282,6 +286,7 @@ villager-item-producing:
         - COPPER_INGOT
         - IRON_INGOT
         - DIAMOND
+        - NETHERITE_INGOT
         - IRON_HELMET
         - IRON_CHESTPLATE
         - IRON_LEGGINGS
@@ -338,7 +343,7 @@ villager-item-producing:
 
       item-priority:
         - LEATHER~8-32
-        - FEATHER~8-16
+        - FEATHER~8-32
         - PAPER~24-64
         - INK_SAC~16-24
         - GLOW_INK_SAC~4-12

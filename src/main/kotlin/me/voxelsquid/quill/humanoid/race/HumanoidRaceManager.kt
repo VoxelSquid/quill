@@ -2,6 +2,7 @@ package me.voxelsquid.quill.humanoid.race
 
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -28,7 +29,6 @@ class HumanoidRaceManager {
             val section            = config.getConfigurationSection(name)?: return
             val targetEntityType   = section.getString("target-entity-type") ?: return
             val targetVillagerType = section.getString("target-villager-type")?.let { Registry.VILLAGER_TYPE.get(NamespacedKey.minecraft(it.lowercase())) } ?: Registry.VILLAGER_TYPE.get(NamespacedKey.minecraft("plains"))
-            val defaultReputation  = section.getDouble("default-reputation")
 
             val spawnItems = mutableListOf<SpawnItemStack>()
             section.getStringList("spawn-items").let { items ->
@@ -74,6 +74,9 @@ class HumanoidRaceManager {
                 PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
             }
 
+            val normalCurrency = Material.valueOf(section.getString("normal-currency")!!)
+            val specialCurrency = Material.valueOf(section.getString("special-currency")!!)
+
             val description = section.getString("race-description") ?: ""
             plugin.logger.info("Loading $name race with ${textures.size} skin amount.")
             plugin.logger.info("$name description: $description")
@@ -81,14 +84,15 @@ class HumanoidRaceManager {
                 name,
                 EntityType.valueOf(targetEntityType),
                 targetVillagerType,
-                defaultReputation,
                 voices,
                 hurtSound,
                 deathSound,
                 spawnItems,
                 attributes,
                 textures,
-                description
+                description,
+                normalCurrency,
+                specialCurrency
             )
 
         }
@@ -99,18 +103,30 @@ class HumanoidRaceManager {
     data class Race(val name: String,
                     val targetEntityType: EntityType,
                     val targetVillagerType: Villager.Type,
-                    val defaultReputation: Double,
                     val voiceSounds: List<PitchedSound>,
                     val hurtSound: PitchedSound,
                     val deathSound: PitchedSound,
                     val spawnItems: List<SpawnItemStack>,
                     val attributes: Map<Attribute, Double>,
                     val skins: List<TextureProperty>,
-                    val description: String = "") {
+                    val description: String = "",
+                    val normalCurrency: Material,
+                    val specialCurrency: Material) {
 
         // A predicate that simplifies the verification of an entity that can be racially labeled.
         val matching: (LivingEntity) -> Boolean = { entity ->
             entity is Villager && entity.villagerType == targetVillagerType || entity !is Villager && entity.type == targetEntityType
+        }
+
+        companion object {
+            // Default villager race will be used if humanoid-villagers in config.yml is false.
+            val VILLAGER_RACE = Race("villager",
+                EntityType.VILLAGER,
+                Villager.Type.PLAINS,
+                listOf( Sound.ENTITY_WANDERING_TRADER_YES, Sound.ENTITY_WANDERING_TRADER_NO, Sound.ENTITY_VILLAGER_YES, Sound.ENTITY_VILLAGER_NO, Sound.ENTITY_VINDICATOR_AMBIENT, Sound.ENTITY_VINDICATOR_CELEBRATE, Sound.ENTITY_VILLAGER_TRADE, Sound.ENTITY_PILLAGER_AMBIENT, Sound.ENTITY_WITCH_AMBIENT ).map { PitchedSound(it, 0.9, 1.05) },
+                PitchedSound(Sound.ENTITY_VILLAGER_HURT, 0.95, 1.05),
+                PitchedSound(Sound.ENTITY_VILLAGER_DEATH, 0.95, 1.05),
+                listOf(SpawnItemStack(Material.EMERALD, 32, 64), SpawnItemStack(Material.IRON_INGOT, 32, 64), SpawnItemStack(Material.LEATHER, 32, 64), SpawnItemStack(Material.DIAMOND, 2, 4), SpawnItemStack(Material.BREAD, 32, 64), SpawnItemStack(Material.STICK, 16, 32), SpawnItemStack(Material.APPLE, 32, 64)), mapOf(), listOf(), "", Material.EMERALD, Material.EMERALD_BLOCK)
         }
 
     }
@@ -127,9 +143,9 @@ class HumanoidRaceManager {
 
         val LivingEntity.race: Race?
             get() {
-                return racesRegistry.values.find { race ->
+                return if (HUMANOID_VILLAGERS_ENABLED) return racesRegistry.values.find { race ->
                     race.matching(this)
-                }
+                } else Race.VILLAGER_RACE
             }
     }
 

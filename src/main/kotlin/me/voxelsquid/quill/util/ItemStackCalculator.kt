@@ -18,6 +18,7 @@ class ItemStackCalculator {
             ) }.sumOf { it.calculatePrice() }
         }
 
+        /** Calculates stack price. */
         fun ItemStack.calculatePrice(): Int {
 
             if (this.isSimilar(getOminousBanner()))

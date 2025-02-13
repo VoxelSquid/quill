@@ -3,7 +3,7 @@ package me.voxelsquid.quill.humanoid
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
-import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.characterKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
@@ -12,8 +12,8 @@ import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalH
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.voiceKey
 import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager
-import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.*
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Race
 import net.kyori.adventure.text.Component
 import org.bukkit.NamespacedKey
 import org.bukkit.Sound
@@ -96,8 +96,10 @@ class HumanoidManager : Listener {
 
     companion object HumanoidEntityExtension {
 
-        private val plugin   = QuestIntelligence.pluginInstance
+        private val plugin = pluginInstance
+
         val humanoidRegistry = hashMapOf<LivingEntity, HumanoidController>()
+        val HUMANOID_VILLAGERS_ENABLED = plugin.config.getBoolean("core-settings.humanoid-villagers")
 
         fun LivingEntity.getHumanoidController()   = humanoidRegistry[this]
         fun LivingEntity.getPersonalHumanoidData() = this.getHumanoidController()?.personalData
@@ -206,7 +208,8 @@ class HumanoidManager : Listener {
         THIEF,
         POTHEAD,
         RANDOM,
-        EVIL;
+        EVIL,
+        SHAMAN;
 
     }
 

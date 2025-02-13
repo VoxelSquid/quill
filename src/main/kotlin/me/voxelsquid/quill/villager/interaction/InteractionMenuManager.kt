@@ -1,20 +1,23 @@
 package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.humanoidRegistry
 import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.openTradeMenu
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
+import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
+import me.voxelsquid.quill.humanoid.HumanoidTradeHandler.Companion.openTradeMenu
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.villager.interaction.DialogueManager.Companion.dialogues
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager.Companion.openedMenuList
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Color
 import org.bukkit.Location
@@ -27,6 +30,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
@@ -158,11 +162,28 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
         }
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.trade-button")!!).color(buttonTextColor)) {
-            plugin.server.scheduler.runTaskLater(plugin, { _ -> villager.openTradeMenu(player) }, 1L)
+
+            // Когда игрок спрашивает о торговле у безработного жителя
+            if (villager.profession == Villager.Profession.NONE) {
+                villager.getPersonalHumanoidData()?.let {
+                    villager.talk(player, it.joblessMessages.random(), followDuringDialogue = true)
+                    return@button
+                }
+            }
+
+            plugin.server.scheduler.runTaskLater(plugin, { _ ->
+                villager.openTradeMenu(player)
+            }, 1L)
         }
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.actions-button")!!).color(buttonTextColor)) {
             this.showActionMenu(player, villager)
+        }
+
+        if (plugin.debug) {
+            builder.button(Component.text("Debug").color(NamedTextColor.RED)) {
+                this.showDebugMenu(player, villager)
+            }
         }
 
         builder.button(Component.text(plugin.language!!.getString("interaction-menu.close-button")!!).color(buttonTextColor)) { menu ->
@@ -170,6 +191,18 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
         }
 
         builder.build()
+    }
+
+    private fun showDebugMenu(player: Player, villager: Villager) {
+
+        val builder = Builder(villager, player)
+        builder.button(Component.text("Inventory").color(NamedTextColor.RED)) {
+            player.playSound(player.location, Sound.BLOCK_ENDER_CHEST_OPEN, 1F, 1F)
+            player.openInventory(villager.quillInventory)
+        }
+
+        builder.build()
+
     }
 
     private fun showActionMenu(player: Player, villager: Villager) {
@@ -242,6 +275,29 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
     }
 
     @EventHandler
+    private fun onEntityDamage(event: EntityDamageEvent) {
+        (event.entity as? LivingEntity)?.let { entity ->
+
+            val world = entity.world
+
+            // Sound handling
+            if (HUMANOID_VILLAGERS_ENABLED && entity.race != null) {
+
+                // Lethal damage check
+                if (event.finalDamage >= entity.health) {
+                    val sound = entity.race!!.deathSound
+                    world.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
+                    return
+                }
+
+                val sound = entity.race!!.hurtSound
+                world.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
+            }
+
+        }
+    }
+
+    @EventHandler
     private fun onPlayerDamageEntity(event: EntityDamageByEntityEvent) {
         (event.damageSource.causingEntity as? Player)?.let { player ->
             (event.entity as? LivingEntity)?.let { entity ->
@@ -256,19 +312,9 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
                     return
                 }
 
-                // Sound handling
-                if (entity.race != null) {
-
-                    // Lethal damage check
-                    if (event.finalDamage >= entity.health) {
-                        val sound = entity.race!!.deathSound
-                        player.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
-                        return
-                    }
-
-                    val sound = entity.race!!.hurtSound
-                    player.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
-                }
+                // Lethal damage check
+                if (event.finalDamage >= entity.health)
+                    return
 
                 // Hurt message
                 val personalData = entity.getPersonalHumanoidData() ?: return

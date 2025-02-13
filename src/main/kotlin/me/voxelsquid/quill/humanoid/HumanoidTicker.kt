@@ -6,16 +6,14 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoicePitch
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getVoiceSound
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
-import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.villager.ProfessionManager
 import me.voxelsquid.quill.villager.ReputationManager
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
-import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.minecraft.world.entity.EquipmentSlot
@@ -34,7 +32,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.MerchantRecipe
 import org.bukkit.inventory.meta.SuspiciousStewMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
@@ -47,6 +44,7 @@ class HumanoidTicker : Listener {
     private val interactionManager = InteractionMenuManager(plugin)
     private val professionManager  = ProfessionManager()
     private val reputationManager  = ReputationManager()
+    private val tradeHandler       = HumanoidTradeHandler()
 
     private val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
     private val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
@@ -59,12 +57,12 @@ class HumanoidTicker : Listener {
         // Quest tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
             questManager.prepareQuest()
-        }, 0, if (plugin.debug) 100 else questIntervalTicks)
+        }, 0, if (plugin.debug) 200 else questIntervalTicks)
 
         // Work tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
             professionManager.produceProfessionItem()
-        }, 0, if (plugin.debug) 100 else workIntervalTicks)
+        }, 0, if (plugin.debug) 200 else workIntervalTicks)
 
         // Food tick
         plugin.server.scheduler.runTaskTimer(plugin, { _ ->
@@ -140,74 +138,6 @@ class HumanoidTicker : Listener {
         private val villagerHungerKey:       NamespacedKey = NamespacedKey(plugin, "hunger")
         private val villagerSettlementKey:   NamespacedKey = NamespacedKey(plugin, "settlement")
         val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "inventory")
-
-        /** Trade lists are unique and personal for each player, prices are affected by villager respect and player honor. */
-        fun Villager.openTradeMenu(player : Player) {
-
-            // Первым делом обновляем квесты!
-            this.updateQuests()
-
-            val quests = quests
-            val itemsToTrade = producedItems
-            val questTrades = mutableListOf<MerchantRecipe>()
-
-            this.recipes = mutableListOf() // cleaning
-
-            // Adding quest trades first
-            if (quests.isNotEmpty()) {
-                quests.forEach { quest ->
-                    val recipe = MerchantRecipe(quest.rewardItem, 1)
-                    recipe.addIngredient(quest.questItem)
-                    questTrades += recipe
-                }
-            }
-
-            // Adding produced items trades
-            itemsToTrade.forEach { item ->
-
-                // We skip adding identical trades
-                if (recipes.find { recipe -> recipe.result.isSimilar(item) } != null) {
-                    return@forEach
-                }
-
-                var price = item.calculatePrice() // Определяем цену предмета
-                val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 3.0)
-                price = (price.toDouble() * multiplier).toInt()
-
-                val emeraldBlockPrice = plugin.configurationClip.pricesConfig.getInt("EMERALD_BLOCK")
-                val emeraldPrice = plugin.configurationClip.pricesConfig.getInt("EMERALD")
-                val emeraldBlockAmount = price / emeraldBlockPrice
-                var emeraldAmount = (price - emeraldBlockAmount * emeraldBlockPrice) / emeraldPrice
-                val recipe = MerchantRecipe(item, 1)
-
-                // We use emerald blocks in trading only if the total amount of emeralds (including emerald blocks * 9) is greater than 64. Otherwise, regular emeralds can be used.
-                if (emeraldBlockAmount > 0 && emeraldBlockAmount * 9 + emeraldAmount > 64) {
-                    recipe.addIngredient(ItemStack(Material.EMERALD_BLOCK, emeraldBlockAmount))
-                } else emeraldAmount += emeraldBlockAmount * 9
-
-                if (emeraldAmount > 0) {
-                    recipe.addIngredient(ItemStack(Material.EMERALD, emeraldAmount))
-                }
-
-                if (recipe.ingredients.isEmpty())
-                    return@forEach
-
-                this.recipes = recipes + recipe
-            }
-
-            val sorted = recipes.toMutableList().sortedWith(compareBy({ it.result.type }, { it.result.calculatePrice() }))
-
-            // Quest trades always first
-            recipes = questTrades + sorted
-
-            if (recipes.isEmpty()) {
-                this.shakeHead()
-                return
-                // TODO: Добавить фразы, когда у жителей нет никаких торговых сделок.
-            }
-
-            player.openMerchant(this, false)
-        }
 
         fun Villager.addItemToQuillInventory(vararg items: ItemStack) {
             val inventory = quillInventory
@@ -342,24 +272,13 @@ class HumanoidTicker : Listener {
                     }
                 }
 
-                // TODO: Необходимо сделать стартовые предметы конфигурируемыми.
-                if (inventory.isEmpty) {
-                    inventory.addItem(ItemStack(Material.EMERALD, 18 + Random.nextInt(36)))
-                    inventory.addItem(ItemStack(Material.IRON_INGOT, 50 + Random.nextInt(8)))
-                    inventory.addItem(ItemStack(Material.STICK, 50 + Random.nextInt(8)))
-                    inventory.addItem(ItemStack(Material.GOLD_INGOT, 8 + Random.nextInt(8)))
-                    inventory.addItem(ItemStack(Material.BREAD, 12 + Random.nextInt(16)))
-                    inventory.addItem(ItemStack(Material.APPLE, 8 + Random.nextInt(16)))
-                    inventory.addItem(ItemStack(Material.COOKIE, 8 + Random.nextInt(16)))
+                if (race != null && inventory.isEmpty) {
+                    race!!.spawnItems.forEach { item ->
+                        inventory.addItem(item.build())
+                    }
                 }
 
                 return inventory
-            }
-
-        private val Villager.producedItems: List<ItemStack>
-            get() {
-                val itemsToProduce = plugin.config.getStringList("villager-item-producing.profession.${this.profession}.item-produce")
-                return quillInventory.filterNotNull().filter { itemStack -> itemsToProduce.contains(itemStack.type.toString()) }.toList()
             }
 
         var Villager.hunger: Double

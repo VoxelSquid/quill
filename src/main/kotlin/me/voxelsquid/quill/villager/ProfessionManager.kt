@@ -7,6 +7,7 @@ import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.addItemToQuillInven
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.takeItemFromQuillInventory
 import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
@@ -53,13 +54,14 @@ class ProfessionManager: Listener {
                     uniqueItemProduceQueue.remove(villager)
                 }
             }
-        }, 0, 100)
+        }, 0, 400)
 
         plugin.server.scheduler.runTaskAsynchronously(plugin) { _ ->
 
             for (villager in villagers) {
 
                 val profession = villager.profession
+
                 if (!plugin.config.contains("villager-item-producing.profession.$profession"))
                     continue
 
