@@ -34,11 +34,11 @@ dwarf:
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   spawn-items:
     - NETHERITE_INGOT-1-2
-    - DIAMOND-18-32
     - DIAMOND-32-64
-    - EMERALD-8-16
+    - EMERALD-16-32
     - LEATHER-16-32
-    - STICK-16-32
+    - ARROW-32-64
+    - STICK-32-48
     - IRON_INGOT-12-24
     - BREAD-8-16
     - APPLE-8-24
@@ -83,10 +83,9 @@ orc:
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   spawn-items:
     - IRON_INGOT-48-64
-    - IRON_INGOT-6-32
-    - EMERALD-8-12
+    - EMERALD-16-32
     - LEATHER-16-32
-    - STICK-16-32
+    - STICK-32-48
     - BEEF-8-16
     - ROTTEN_FLESH-8-16
 
@@ -95,3 +94,102 @@ orc:
   basic-attributes:
     - MAX_HEALTH-40.0
     - SCALE-1.125
+
+# Elves replace the villagers of the taiga.
+elf:
+
+  # Targeted entity type.
+  target-entity-type: VILLAGER
+
+  # It won't be checked if target-entity-type is not a villager.
+  target-villager-type: TAIGA
+
+  # An item that members of the race will use for trading.
+  normal-currency: EMERALD
+
+  # An item to be used when normal currency is insufficient.
+  special-currency: EMERALD_BLOCK
+
+  # A race description to be used by the AI when generating personal villager data and quests.
+  race-description: "Graceful, wise, mysterious long-living beings deeply connected to nature, elves are known for their archery skills, love of forests, and serene demeanor. They are often found in taiga biomes, living in harmony with the woods and its creatures. Elves are skilled in crafts and possess a keen eye for beauty and detail."
+
+  # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+  sound:
+    voice:
+      - ENTITY_VILLAGER_AMBIENT-1.0-1.4
+      - ENTITY_VILLAGER_YES-1.0-1.4
+      - ENTITY_VILLAGER_TRADE-1.0-1.4
+    death: ENTITY_VILLAGER_DEATH-1.0-1.4
+    hurt: ENTITY_VILLAGER_HURT-1.0-1.4
+
+  # Entities have an inventory and we can specify the starting items they will have on spawn.
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  spawn-items:
+    - EMERALD-16-32
+    - IRON_INGOT-16-32
+    - DIAMOND-8-16
+    - STICK-32-48
+    - APPLE-32-64
+    - ARROW-32-64
+    - ARROW-32-64
+    - SPECTRAL_ARROW-16-32
+    - SWEET_BERRIES-32-64
+
+  # Standard attributes that allow you to make the entity a bit more original and realistic.
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
+  basic-attributes:
+    - MAX_HEALTH-20.0
+    - SCALE-1.0
+
+# Humans replace the villagers of the plains.
+human:
+
+  # Targeted entity type.
+  target-entity-type: VILLAGER
+
+  # It won't be checked if target-entity-type is not a villager.
+  target-villager-type: PLAINS
+
+  # An item that members of the race will use for trading.
+  normal-currency: EMERALD
+
+  # An item to be used when normal currency is insufficient.
+  special-currency: EMERALD_BLOCK
+
+  # A race description to be used by the AI when generating personal villager data and quests.
+  race-description: "Adaptable and versatile, humans are found throughout the world, skilled in many trades and known for their resilience. They are the most common race and form the backbone of many societies. Humans are known for their ingenuity and capacity for both great good and great evil."
+
+  # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+  sound:
+    voice:
+      - ENTITY_VILLAGER_NO-0.9-1.4
+      - ENTITY_VILLAGER_TRADE-0.9-1.4
+      - ENTITY_PILLAGER_AMBIENT-0.9-0.75
+      - ENTITY_WANDERING_TRADER_NO-0.9-1.4
+      - ENTITY_WANDERING_TRADER_AMBIENT-0.9-1.4
+      - ENTITY_VINDICATOR_AMBIENT-0.9-1.4
+      - ENTITY_ILLUSIONER_AMBIENT-0.9-1.4
+    death: ENTITY_VILLAGER_DEATH-0.8-1.4
+    hurt: ENTITY_VILLAGER_HURT-0.8-1.4
+
+  # Entities have an inventory and we can specify the starting items they will have on spawn.
+  # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  spawn-items:
+    - EMERALD-16-32
+    - IRON_INGOT-16-32
+    - DIAMOND-8-16
+    - BREAD-16-32
+    - APPLE-16-32
+    - STICK-32-64
+    - ARROW-32-64
+    - COAL-16-32
+    - CARROT-8-16
+    - POTATO-8-16
+
+  # Standard attributes that allow you to make the entity a bit more original and realistic.
+  # https://hub.spigotmc.org/javadocs/spigot/org/bukkit/attribute/Attribute.html
+  basic-attributes:
+    - MAX_HEALTH-20.0
+    - SCALE-1.0

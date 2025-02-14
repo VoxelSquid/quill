@@ -42,7 +42,7 @@ class HumanoidTradeHandler {
 
         fun Villager.openTradeMenu(player: Player) {
 
-            // Each race has their own currency.
+            // Each race has own currency.
             val race = race ?: throw IllegalStateException("Trying to open a quill trade menu for an entity without race.")
             val currency = race.normalCurrency
             val specialCurrency = race.specialCurrency

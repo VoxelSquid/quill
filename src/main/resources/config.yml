@@ -18,7 +18,7 @@ core-settings:
   enabled-worlds:
     - "world"
 
-  # By default, all residents are replaced by player models that have skins and races with their own unique attributes.
+  # By default, all villagers are replaced by player models that have skins and races with their own unique attributes.
   # You can disable this feature or customize it in races.yml and skins.yml.
   humanoid-villagers: true
 
@@ -218,6 +218,7 @@ villager-item-producing:
 
       # Items from item-priority will not be selected as quest rewards. These items will be requested by villagers as quest items when generating a quest related to collecting professions items.
       item-priority:
+        - IRON_INGOT~12-24
         - LEATHER~16-48
         - ROTTEN_FLESH~8-16
         - RABBIT_HIDE~8-24
@@ -226,6 +227,7 @@ villager-item-producing:
       # Items from item-produce are also used when generating trade deals. Villagers will try to trade these items for their race currency.
       item-produce:
         - LEATHER
+        - IRON_INGOT
         - LEATHER_BOOTS
         - LEATHER_CHESTPLATE
         - LEATHER_HELMET
@@ -253,6 +255,7 @@ villager-item-producing:
         - DEEPSLATE_BRICKS
         - CLAY
         - DIAMOND
+        - COAL_BLOCK
         - COAL
         - "@TERRACOTTA"
 
@@ -261,13 +264,20 @@ villager-item-producing:
       item-priority:
         - STICK~16-32
         - FLINT~16-32
+        - FEATHER~16-32
         - STRING~16-32
         - TRIPWIRE~8-16
+        - ARROW~16-32
+        - IRON_INGOT~8-16
+        - SPECTRAL_ARROW~16-32
 
       item-produce:
         - ARROW
         - BOW
         - CROSSBOW
+        - FEATHER
+        - IRON_INGOT
+        - SPECTRAL_ARROW
 
     ARMORER:
 
@@ -463,12 +473,17 @@ villager-item-producing:
         - CHARCOAL~12-24
         - EMERALD~12-24
         - SPYGLASS~1
-        - SNOWBALL~8-16
+        - SNOWBALL~12-16
         - WRITABLE_BOOK~1
         - RABBIT_FOOT~1
+        - IRON_INGOT~8-16
 
       item-produce:
         - BREAD
+        - COAL
+        - WHEAT
+        - GUNPOWDER
+        - ARROW
 
     FARMER:
 

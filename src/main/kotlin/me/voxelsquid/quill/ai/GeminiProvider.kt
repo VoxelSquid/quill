@@ -155,9 +155,16 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val settlementName = villager.settlement?.data?.settlementName ?: "no settlement"
         val settlementLevel = villager.settlement?.size().toString()
 
+        val race = villager.race ?: run {
+            plugin.logger.severe("Trying to generate an unique item for a non-existent race! Cancelling.")
+            return
+        }
+        val raceName = race.name
+
         val placeholders = mutableMapOf(
             "villagerName"            to villagerName,
             "villagerType"            to "${villager.villagerType}",
+            "villagerRace"            to raceName,
             "villagerProfession"      to "${villager.profession}",
             "villagerProfessionLevel" to villager.professionLevelName,
             "language"                to plugin.config.getString("core-settings.language")!!,
