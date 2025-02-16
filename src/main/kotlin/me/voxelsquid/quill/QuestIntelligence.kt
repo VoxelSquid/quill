@@ -41,8 +41,8 @@ class QuestIntelligence : JavaPlugin(), Listener {
     lateinit var humanoidManager:   HumanoidManager
 
     var language: YamlConfiguration? = null
-    var baseColor = "§f"
-    var importantWordColor = "§c"
+    var baseColor             = "§f"
+    var importantWordColor    = "§c"
     var interestingStuffColor = "§c"
 
     override fun onEnable() {
@@ -187,7 +187,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
 
     }
 
-    val debug = true
+    val debug = false
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }

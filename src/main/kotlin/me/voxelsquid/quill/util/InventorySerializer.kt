@@ -6,7 +6,7 @@ import com.google.gson.JsonParser
 import org.bukkit.Bukkit
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
-import org.spongepowered.configurate.yaml.internal.snakeyaml.external.biz.base64Coder.Base64Coder
+import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder
 
 class InventorySerializer {
 

@@ -78,8 +78,7 @@ class HumanoidRaceManager {
             val specialCurrency = Material.valueOf(section.getString("special-currency")!!)
 
             val description = section.getString("race-description") ?: ""
-            plugin.logger.info("Loading $name race with ${textures.size} skin amount.")
-            plugin.logger.info("$name description: $description")
+            plugin.logger.info("Loading $name race with ${textures.size} skin variations.")
             racesRegistry[name] = Race(
                 name,
                 EntityType.valueOf(targetEntityType),
