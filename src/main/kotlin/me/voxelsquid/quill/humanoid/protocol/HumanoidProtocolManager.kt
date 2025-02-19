@@ -80,7 +80,8 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             race.attributes.forEach { (attribute, value) ->
 
                 // Skipping scale modification. Otherwise villagers won't be able to get through the doors if they are too big. Scale changes through packets.
-                if (attribute == Attribute.SCALE)
+                // Cancelling only if entity is larger than 1.0.
+                if (attribute == Attribute.SCALE && value > 1.0)
                     return@forEach
 
                 // Applying HP right after first modifying

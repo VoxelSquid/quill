@@ -51,6 +51,9 @@ core-settings:
   # Fantasy is the default, but you can write really anything here, from space dwarfs to names from the Warhammer or Star Wars universe. Or Star Trek, if you prefer. Live and prosper.
   naming-style: "Fantasy"
 
+  # Some personality types will swear in their phrases. You may not like this, so I've added the option to disable it.
+  swearing: true
+
   # Maximum duration of quest existence in ticks.
   # Default is 48000, which is two game days.
   quest-time-limit: 48000
@@ -69,7 +72,7 @@ core-settings:
     work: 2400
 
     # Default is 400
-    quest: 400
+    quest: 200
 
   # The standard format of villagers' dialogs for every player on the server.
   # IMMERSIVE: the message from the villager will be received in a cOoL dIaLoGuE wInDoW.

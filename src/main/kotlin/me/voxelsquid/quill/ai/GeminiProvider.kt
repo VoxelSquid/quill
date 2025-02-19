@@ -119,6 +119,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
         val extraArguments = "Avoid these names: $previousNames."
         val race = entity.race?.name?.uppercase() ?: "dwarf"
+        val raceDescription = entity.race?.description ?: ""
 
         val placeholders = mapOf(
             "villagerRace"        to race,
@@ -127,7 +128,8 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "language"            to "${plugin.config.getString("core-settings.language")}",
             "randomLetter"        to this.getRandomLetter(),
             "extraArguments"      to extraArguments,
-            "namingStyle"         to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
+            "namingStyle"         to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy"),
+            "raceDescription"     to raceDescription
         )
 
         val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("personal-villager-data")!!) { acc, entry ->
@@ -195,10 +197,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     fun generateQuestData(questManager: QuestManager, villager: Villager, quest: VillagerQuest.Builder) {
 
-        var extraArguments = when (villager.getCharacterType()) {
+        var extraArguments = if (plugin.config.getBoolean("core-settings.swearing")) when (villager.getCharacterType()) {
             HumanoidCharacterType.ANGRY, HumanoidCharacterType.DRUNKARD -> "'20% of words are swearing'"
             else -> ""
-        }
+        } else ""
 
         if (isChristmas()) {
             extraArguments += "'It's Christmas!'"
@@ -217,12 +219,11 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             plugin.logger.severe("Trying to generate a quest for a non-existent race! Cancelling.")
             return
         }
+
         val raceName = race.name
         val raceDescription = race.description
 
-        extraArguments += "'Race description: $raceDescription'"
-
-        val settlementName  = villager.settlement?.data?.settlementName ?: "no settlement"
+        val settlementName  = villager.settlement?.data?.settlementName ?: ""
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
@@ -238,6 +239,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "treasureDescription"     to questManager.getTreasureItemDescription(quest.questItem),
             "settlementName"          to settlementName,
             "settlementLevel"         to settlementLevel,
+            "raceDescription"         to raceDescription,
             "extraArguments"          to "[$extraArguments]"
         )
 
