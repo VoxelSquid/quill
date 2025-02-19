@@ -45,15 +45,9 @@ class InventorySerializer {
             return inventory
         }
 
-        /** Base64 serialization. */
-        fun serializeItemStack(item: ItemStack): String {
-            return Base64Coder.encodeLines(item.serializeAsBytes())
-        }
+        fun serializeItemStack(item: ItemStack): String = Base64Coder.encodeLines(item.serializeAsBytes())
+        fun deserializeItemStack(base64: String) = ItemStack.deserializeBytes(Base64Coder.decodeLines(base64))
 
-        /** Base64 deserialization. */
-        fun deserializeItemStack(base64: String): ItemStack {
-            return ItemStack.deserializeBytes(Base64Coder.decodeLines(base64))
-        }
 
     }
 

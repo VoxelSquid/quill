@@ -240,9 +240,8 @@ class QuestManager(private val plugin: QuestIntelligence) {
             inventory.getItem(slotIndex)?.let { item -> item.amount -= quest.rewardItem.amount }
         }
 
-        // Добавляем предмет в инвентарь жителя и сохраняем его
-        inventory.addItem(questItem)
-        villager.persistentDataContainer.set(villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inventory).toString())
+        // Добавляем предмет в инвентарь жителя
+        villager.addItemToQuillInventory(questItem)
 
         // TODO: Добавляем игроку в стату +1 выполненный квест
         player.fame += 0.5

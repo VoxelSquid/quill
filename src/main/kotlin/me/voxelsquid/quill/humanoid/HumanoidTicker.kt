@@ -137,7 +137,7 @@ class HumanoidTicker : Listener {
         private val villagerQuestDataKey:    NamespacedKey = NamespacedKey(plugin, "questData")
         private val villagerHungerKey:       NamespacedKey = NamespacedKey(plugin, "hunger")
         private val villagerSettlementKey:   NamespacedKey = NamespacedKey(plugin, "settlement")
-        val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "inventory")
+        val villagerInventoryKey:            NamespacedKey = NamespacedKey(plugin, "Inventory")
 
         fun Villager.addItemToQuillInventory(vararg items: ItemStack) {
             val inventory = quillInventory
@@ -259,18 +259,22 @@ class HumanoidTicker : Listener {
         val Villager.quillInventory: Inventory
             get() {
 
+                fun createNewInventory() = Bukkit.createInventory(null, 54).also {
+                    persistentDataContainer.set(
+                        villagerInventoryKey,
+                        PersistentDataType.STRING,
+                        InventorySerializer.jsonifyInventory(it).toString()
+                    )
+                }
+
                 val jsonInventory = persistentDataContainer.get(villagerInventoryKey, PersistentDataType.STRING)
                 val inventory = if (jsonInventory != null) {
-                    InventorySerializer.dejsonifyInventory(jsonInventory)
-                } else {
-                    Bukkit.createInventory(null, 54).also {
-                            persistentDataContainer.set(
-                            villagerInventoryKey,
-                            PersistentDataType.STRING,
-                            InventorySerializer.jsonifyInventory(it).toString()
-                        )
+                    try {
+                        InventorySerializer.dejsonifyInventory(jsonInventory)
+                    } catch (exception: Exception) {
+                        createNewInventory()
                     }
-                }
+                } else createNewInventory()
 
                 if (race != null && inventory.isEmpty) {
                     race!!.spawnItems.forEach { item ->

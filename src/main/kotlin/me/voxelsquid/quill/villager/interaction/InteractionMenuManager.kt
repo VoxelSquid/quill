@@ -35,6 +35,7 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerItemHeldEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.util.Transformation
 import org.joml.AxisAngle4f
@@ -64,6 +65,12 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
             dialogues.values.filter { it.entity == villager }.forEach(DialogueManager.DialogueWindow::destroy)
         }
     }
+
+    @EventHandler
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
+        lastInteraction[event.player] = System.currentTimeMillis()
+    }
+
 
     private val lastInteraction = mutableMapOf<Player, Long>()
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -281,7 +288,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
             val world = entity.world
 
             // Sound handling
-            if (HUMANOID_VILLAGERS_ENABLED && entity.race != null) {
+            if (HUMANOID_VILLAGERS_ENABLED && entity.race != null && !dialogues.contains(event.damageSource.causingEntity to entity)) {
 
                 // Lethal damage check
                 if (event.finalDamage >= entity.health) {

@@ -169,8 +169,6 @@ class DialogueManager(private val plugin: QuestIntelligence) {
 
                     for (word in words) {
 
-
-
                         if (!plugin.isEnabled || word.isEmpty() || isCancelled || isDestroyed)
                             break
 

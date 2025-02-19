@@ -404,8 +404,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         private fun handleError(e: Throwable) {
-            plugin.logger.info("ERROR DURING REQUEST WAITING!!! AAAAAAAAAAAAAA!")
-            e.printStackTrace()
+            if (plugin.debug) {
+                plugin.debug("Error during request waiting!")
+                e.printStackTrace()
+            }
         }
 
         private fun cleanQuestJson(questJson: String): String =

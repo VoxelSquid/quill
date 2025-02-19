@@ -513,6 +513,8 @@ villager-item-producing:
 
       item-produce:
         - BOWL
+        - WHEAT
+        - BONE_MEAL
         - BREAD
         - CAKE
         - COOKIE

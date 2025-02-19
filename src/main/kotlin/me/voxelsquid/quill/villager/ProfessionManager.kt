@@ -82,8 +82,7 @@ class ProfessionManager: Listener {
                     val recipes = Bukkit.getRecipesFor(ItemStack(Material.valueOf(itemToProduce)))
 
                     if (recipes.isEmpty()) {
-                        plugin.logger.warning("Uncraftable item in [\"config.yml\", villager-item-producing.profession.$profession.item-produce]: $itemToProduce!")
-                        plugin.logger.warning("Remove it and reload the config using /q reload!")
+                        plugin.debug("Uncraftable item in [\"config.yml\", villager-item-producing.profession.$profession.item-produce]: $itemToProduce!")
                         continue
                     }
 
@@ -100,7 +99,11 @@ class ProfessionManager: Listener {
                         })
 
                         is FurnaceRecipe -> {
-                            recipeIngredients.add((recipe.inputChoice as MaterialChoice).itemStack.type)
+                            try {
+                                recipeIngredients.add((recipe.inputChoice as MaterialChoice).itemStack.type)
+                            } catch (exception: ClassCastException) {
+                                plugin.debug("Error during profession tick! ClassCastException while casting FurnaceRecipe, item: ${recipe.key}.")
+                            }
                         }
 
                         else -> {

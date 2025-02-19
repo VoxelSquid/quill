@@ -48,6 +48,12 @@ class QuestIntelligence : JavaPlugin(), Listener {
     override fun onEnable() {
         pluginInstance = this
 
+        if (server.pluginManager.isPluginEnabled("RealisticVillagers")) {
+            logger.severe("QuestIntelligence is incompatible with RealisticVillagers and will be disabled.")
+            server.pluginManager.disablePlugin(this)
+            return
+        }
+
         languageFile = File(pluginInstance.dataFolder, "language.yml")
         super.saveResource("config.yml", false)
         super.saveResource("language.yml", false)
