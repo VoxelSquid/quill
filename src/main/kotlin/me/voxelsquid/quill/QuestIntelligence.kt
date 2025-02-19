@@ -3,7 +3,8 @@ package me.voxelsquid.quill
 import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import me.voxelsquid.quill.ai.GeminiProvider
+import me.voxelsquid.quill.ai.AIProvider
+import me.voxelsquid.quill.ai.AIFeature
 import me.voxelsquid.quill.command.DebugCommand
 import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
@@ -37,8 +38,9 @@ class QuestIntelligence : JavaPlugin(), Listener {
     lateinit var configurationClip: ConfigurationClip
     lateinit var commandManager:    PaperCommandManager
     lateinit var settlementManager: SettlementManager
-    lateinit var questGenerator:    GeminiProvider
+    lateinit var questGenerator:    AIProvider
     lateinit var humanoidManager:   HumanoidManager
+    lateinit var aiFeature:         AIFeature
 
     var language: YamlConfiguration? = null
     var baseColor             = "§f"
@@ -73,7 +75,8 @@ class QuestIntelligence : JavaPlugin(), Listener {
         }
 
         this.setupCommands()
-        questGenerator    = GeminiProvider(this)
+        aiFeature = AIFeature(this)
+        questGenerator    = aiFeature.getProvider()
         settlementManager = SettlementManager(this)
         humanoidManager   = HumanoidManager()
         this.server.pluginManager.registerEvents(this, this)

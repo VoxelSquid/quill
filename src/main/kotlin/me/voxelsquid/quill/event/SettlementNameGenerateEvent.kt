@@ -1,11 +1,11 @@
 package me.voxelsquid.quill.event
 
-import me.voxelsquid.quill.ai.GeminiProvider
+import me.voxelsquid.quill.ai.AIProvider
 import me.voxelsquid.quill.settlement.Settlement
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class SettlementNameGenerateEvent(val settlement: Settlement, val data: GeminiProvider.SettlementInformation) :
+class SettlementNameGenerateEvent(val settlement: Settlement, val data: AIProvider.SettlementInformation) :
     Event() {
 
     override fun getHandlers(): HandlerList {

@@ -7,7 +7,7 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.QuestIntelligence.Companion.verboseKey
-import me.voxelsquid.quill.ai.GeminiProvider
+import me.voxelsquid.quill.ai.AIProvider
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
@@ -49,7 +49,7 @@ class DebugCommand : BaseCommand() {
     @CommandPermission("quill.reload")
     fun onReload(sender: CommandSender) {
         plugin.reloadConfigurations()
-        plugin.questGenerator = GeminiProvider(plugin)
+        plugin.questGenerator = plugin.aiFeature.getProvider()
     }
 
     @Subcommand("dialogue format")
