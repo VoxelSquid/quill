@@ -117,7 +117,7 @@ class GenerationRequest(
     private fun handleError(e: Throwable) {
         if (plugin.debug) {
             plugin.debug("Error during request waiting!")
-            e.printStackTrace()
+            plugin.logger.severe(e.stackTrace.joinToString("\n"))
         }
     }
 
