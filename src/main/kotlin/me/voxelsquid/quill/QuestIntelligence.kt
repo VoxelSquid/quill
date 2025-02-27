@@ -54,6 +54,12 @@ class QuestIntelligence : JavaPlugin(), Listener {
             return
         }
 
+        if (!server.pluginManager.isPluginEnabled("packetevents")) {
+            logger.severe("QuestIntelligence requires PacketEvents to work. Please install it.")
+            server.pluginManager.disablePlugin(this)
+            return
+        }
+
         languageFile = File(pluginInstance.dataFolder, "language.yml")
         super.saveResource("config.yml", false)
         super.saveResource("language.yml", false)

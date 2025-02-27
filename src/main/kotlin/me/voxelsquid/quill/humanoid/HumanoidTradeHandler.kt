@@ -61,8 +61,11 @@ class HumanoidTradeHandler {
                 }
             }
 
+            val tradeProfessionItemsOnly = QuestIntelligence.pluginInstance.config.getBoolean("villager-item-producing.trade-profession-items-only")
+            val itemsToTrade = if (tradeProfessionItemsOnly) producedItems else quillInventory.filterNotNull()
+
             // Going through every produced item.
-            producedItems.forEach { item ->
+            itemsToTrade.forEach { item ->
 
                 if (item.type == race.normalCurrency)
                     return@forEach
@@ -75,6 +78,7 @@ class HumanoidTradeHandler {
                 val trade = TradingSlot(Material.AIR, 0) to TradingSlot(Material.AIR, 0)
 
                 var price = item.calculatePrice()
+
                 val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 3.0)
                 price = (price.toDouble() * multiplier).toInt()
 
@@ -119,8 +123,9 @@ class HumanoidTradeHandler {
             // Sort by type, then by price.
             val sorted = recipes.toMutableList().sortedWith(compareBy({ it.result.type }, { it.result.calculatePrice() }))
 
-            if (recipes.isEmpty()) {
+            if (recipes.isEmpty() && questTrades.isEmpty()) {
                 this.shakeHead()
+
                 return
                 // TODO: Добавить фразы, когда у жителей нет никаких торговых сделок.
             }

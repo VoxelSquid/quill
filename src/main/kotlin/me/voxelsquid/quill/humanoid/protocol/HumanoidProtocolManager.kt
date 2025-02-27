@@ -22,10 +22,12 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendVerbose
 import me.voxelsquid.quill.event.HumanoidInitializationEvent
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.skin
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Location
@@ -107,7 +109,7 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
         player.sendPacket(spawnEntityPacket)
         player.sendPacket(WrapperPlayServerEntityMetadata(entity.entityId, metadata))
         player.sendPacket(WrapperPlayServerUpdateAttributes(entity.entityId,
-            listOf(WrapperPlayServerUpdateAttributes.Property(Attributes.SCALE, entity.race?.attributes?.get(Attribute.SCALE) ?: 1.0, emptyList())))
+            listOf(WrapperPlayServerUpdateAttributes.Property(Attributes.SCALE, (entity.race?.attributes?.get(Attribute.SCALE) ?: 1.0) - if (entity.gender == HumanoidManager.HumanoidGender.FEMALE) 0.05 else 0.0, emptyList())))
         )
 
         // Delete the information about the fake player, so that the skin has time to load and the player list doesn't show non-existent nicknames.
@@ -126,6 +128,13 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
     // We are currently listening for the sending of five packets: SOUND_EFFECT, SPAWN_ENTITY, ENTITY_METADATA, ENTITY_HEAD_LOOK, and DESTROY_ENTITIES.
     override fun onPacketPlaySend(event: PacketPlaySendEvent) {
 
+        val player = event.getPlayer<Player>() ?: return
+        val world  = player.world
+
+        // Smart world check.
+        if (!plugin.enabledWorlds.contains(world))
+            return
+
         when (event.packetType) {
 
             // To avoid showing the villagers' real nosy model, we cancel this packet until a packet with a fake entity is sent to the player.
@@ -135,8 +144,6 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                 if (!HUMANOID_VILLAGERS_ENABLED)
                     return
 
-                val player = event.getPlayer<Player>()
-                val world  = player.world
                 val packet = WrapperPlayServerSpawnEntity(event)
                 val entity = SpigotConversionUtil.getEntityById(world, packet.entityId) ?: return
 
@@ -165,8 +172,6 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
             // Besides, a mechanism of lazy initialization is implemented here. If a villager has no HumanoidProvider, it means only one thing — the player sees it for the FIRST time.
             PacketType.Play.Server.ENTITY_METADATA -> {
 
-                val player = event.getPlayer<Player>()
-                val world  = player.world
                 val packet = PacketWrapper(event, false)
                 val entity = SpigotConversionUtil.getEntityById(world, packet.readVarInt()) ?: return
 
@@ -240,8 +245,6 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                 if (!HUMANOID_VILLAGERS_ENABLED)
                     return
 
-                val player   = event.getPlayer<Player>()
-                val world    = player.world
                 val packet   = WrapperPlayServerEntityHeadLook(event)
                 val entity   = SpigotConversionUtil.getEntityById(world, packet.entityId) ?: return
                 val location = entity.location
@@ -259,8 +262,6 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                 if (!HUMANOID_VILLAGERS_ENABLED)
                     return
 
-                val player = event.getPlayer<Player>()
-                val world  = player.world
                 val packet = WrapperPlayServerDestroyEntities(event)
 
                 for (entityId in packet.entityIds) {
@@ -308,6 +309,13 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
 
     override fun onPacketPlayReceive(event: PacketPlayReceiveEvent) {
 
+        val player = event.getPlayer<Player>() ?: return
+        val world  = player.world
+
+        // Smart world check.
+        if (!plugin.enabledWorlds.contains(world))
+            return
+
         when (event.packetType) {
 
             // If you don't cancel INTERACT_ENTITY packet with the disguised villager, the player will be kicked due to a protocol error.
@@ -322,7 +330,6 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
                 if (action == WrapperPlayClientInteractEntity.InteractAction.ATTACK)
                     return
 
-                val player = event.getPlayer<Player>()
                 val entity = SpigotConversionUtil.getEntityById(player.world, packet.entityId) ?: return
 
                 if (humanoidRegistry.containsKey(entity)) {

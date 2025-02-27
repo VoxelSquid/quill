@@ -1,7 +1,9 @@
 package me.voxelsquid.quill.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.humanoidRegistry
 import me.voxelsquid.quill.villager.ReputationManager
@@ -292,12 +294,12 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
                 // Lethal damage check
                 if (event.finalDamage >= entity.health) {
-                    val sound = entity.race!!.deathSound
+                    val sound = if (entity.gender == HumanoidManager.HumanoidGender.MALE) entity.race!!.maleDeathSound else entity.race!!.femaleDeathSound
                     world.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
                     return
                 }
 
-                val sound = entity.race!!.hurtSound
+                val sound = if (entity.gender == HumanoidManager.HumanoidGender.MALE) entity.race!!.maleHurtSound else entity.race!!.femaleHurtSound
                 world.playSound(entity.eyeLocation, sound.sound, 1F, Random.nextDouble(sound.min, sound.max).toFloat())
             }
 

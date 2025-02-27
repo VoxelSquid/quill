@@ -144,7 +144,7 @@ villager-item-producing:
 
   # If true, random smithing template will be applied to each unique item that is armor.
   # If false, the armorer will only use the smithing templates they has in their inventory. (armorers have a quest for collecting them)
-  forced-armor-trims: false
+  forced-armor-trims: true
 
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   # A list of items whose quality will depend on the level of the crafter's skill.
@@ -211,6 +211,11 @@ villager-item-producing:
       - PROTECTION
       - ARMOR_TOUGHNESS
       - MAX_HEALTH
+
+
+  # If true, villagers will trade only their profession items
+  # If false, villagers will trade everything they have
+  trade-profession-items-only: true
 
   # Villagers in different professions will request different items that are specific to their needs. The same applies to the items produced.
   # The prefix "@" at the beginning indicates that all items containing the specified value are implied. For example, @DYE means that all dyes are used.

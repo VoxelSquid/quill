@@ -2,6 +2,7 @@ package me.voxelsquid.quill.humanoid.race
 
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -46,30 +47,53 @@ class HumanoidRaceManager {
                 }
             }
 
-            val textures = mutableListOf<TextureProperty>()
+            val maleSkins = mutableListOf<TextureProperty>()
+            val femaleSkins = mutableListOf<TextureProperty>()
             skins.getKeys(false).forEach { skin ->
                 skins.getConfigurationSection(skin)?.let { data ->
-                    val race = data.getString("race")
-                    val texture = data.getString("texture")
+                    val race      = data.getString("race")
+                    val texture   = data.getString("texture")
                     val signature = data.getString("signature")
+                    val gender    = HumanoidManager.HumanoidGender.valueOf(data.getString("gender")!!)
                     if (race == name && texture != null && signature != null) {
-                        textures.add(TextureProperty("textures", texture, signature))
+
+                        when (gender) {
+                            HumanoidManager.HumanoidGender.MALE -> maleSkins.add(TextureProperty("textures", texture, signature))
+                            HumanoidManager.HumanoidGender.FEMALE -> femaleSkins.add(TextureProperty("textures", texture, signature))
+                        }
+
                     }
                 }
             }
 
-            val voices = mutableListOf<PitchedSound>()
-            section.getStringList("sound.voice").forEach { voice ->
+            val maleVoices = mutableListOf<PitchedSound>()
+            section.getStringList("sound.male.voice").forEach { voice ->
                 val (sound, min, max) = voice.split("-")
-                voices.add(PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble()))
+                maleVoices.add(PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble()))
             }
 
-            val hurtSound = section.getString("sound.hurt")!!.let {
+            val maleHurtSound = section.getString("sound.male.hurt")!!.let {
                 val (sound, min, max) = it.split("-")
                 PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
             }
 
-            val deathSound = section.getString("sound.death")!!.let {
+            val maleDeathSound = section.getString("sound.male.death")!!.let {
+                val (sound, min, max) = it.split("-")
+                PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
+            }
+
+            val femaleVoices = mutableListOf<PitchedSound>()
+            section.getStringList("sound.female.voice").forEach { voice ->
+                val (sound, min, max) = voice.split("-")
+                femaleVoices.add(PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble()))
+            }
+
+            val femaleHurtSound = section.getString("sound.female.hurt")!!.let {
+                val (sound, min, max) = it.split("-")
+                PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
+            }
+
+            val femaleDeathSound = section.getString("sound.female.death")!!.let {
                 val (sound, min, max) = it.split("-")
                 PitchedSound(Sound.valueOf(sound), min.toDouble(), max.toDouble())
             }
@@ -78,17 +102,22 @@ class HumanoidRaceManager {
             val specialCurrency = Material.valueOf(section.getString("special-currency")!!)
 
             val description = section.getString("race-description") ?: ""
-            plugin.logger.info("Loading $name race with ${textures.size} skin variations.")
+            plugin.logger.info("Loading $name race with ${maleSkins.size} male skin variations.")
+            plugin.logger.info("Loading $name race with ${femaleSkins.size} female skin variations.")
             racesRegistry[name] = Race(
                 name,
                 EntityType.valueOf(targetEntityType),
                 targetVillagerType,
-                voices,
-                hurtSound,
-                deathSound,
+                maleVoices,
+                femaleVoices,
+                maleHurtSound,
+                maleDeathSound,
+                femaleHurtSound,
+                femaleDeathSound,
                 spawnItems,
                 attributes,
-                textures,
+                maleSkins,
+                femaleSkins,
                 description,
                 normalCurrency,
                 specialCurrency
@@ -102,12 +131,16 @@ class HumanoidRaceManager {
     data class Race(val name: String,
                     val targetEntityType: EntityType,
                     val targetVillagerType: Villager.Type,
-                    val voiceSounds: List<PitchedSound>,
-                    val hurtSound: PitchedSound,
-                    val deathSound: PitchedSound,
+                    val maleVoices: List<PitchedSound>,
+                    val femaleVoices: List<PitchedSound>,
+                    val maleHurtSound: PitchedSound,
+                    val maleDeathSound: PitchedSound,
+                    val femaleHurtSound: PitchedSound,
+                    val femaleDeathSound: PitchedSound,
                     val spawnItems: List<SpawnItemStack>,
                     val attributes: Map<Attribute, Double>,
-                    val skins: List<TextureProperty>,
+                    val maleSkins: List<TextureProperty>,
+                    val femaleSkins: List<TextureProperty>,
                     val description: String = "",
                     val normalCurrency: Material,
                     val specialCurrency: Material) {
@@ -118,14 +151,19 @@ class HumanoidRaceManager {
         }
 
         companion object {
+
+            private val voices = listOf( Sound.ENTITY_WANDERING_TRADER_YES, Sound.ENTITY_WANDERING_TRADER_NO, Sound.ENTITY_VILLAGER_YES, Sound.ENTITY_VILLAGER_NO, Sound.ENTITY_VINDICATOR_AMBIENT, Sound.ENTITY_VINDICATOR_CELEBRATE, Sound.ENTITY_VILLAGER_TRADE, Sound.ENTITY_PILLAGER_AMBIENT, Sound.ENTITY_WITCH_AMBIENT ).map { PitchedSound(it, 0.9, 1.05) }
+
             // Default villager race will be used if humanoid-villagers in config.yml is false.
             val VILLAGER_RACE = Race("villager",
                 EntityType.VILLAGER,
                 Villager.Type.PLAINS,
-                listOf( Sound.ENTITY_WANDERING_TRADER_YES, Sound.ENTITY_WANDERING_TRADER_NO, Sound.ENTITY_VILLAGER_YES, Sound.ENTITY_VILLAGER_NO, Sound.ENTITY_VINDICATOR_AMBIENT, Sound.ENTITY_VINDICATOR_CELEBRATE, Sound.ENTITY_VILLAGER_TRADE, Sound.ENTITY_PILLAGER_AMBIENT, Sound.ENTITY_WITCH_AMBIENT ).map { PitchedSound(it, 0.9, 1.05) },
+                voices, voices,
                 PitchedSound(Sound.ENTITY_VILLAGER_HURT, 0.95, 1.05),
                 PitchedSound(Sound.ENTITY_VILLAGER_DEATH, 0.95, 1.05),
-                listOf(SpawnItemStack(Material.EMERALD, 32, 64), SpawnItemStack(Material.IRON_INGOT, 32, 64), SpawnItemStack(Material.LEATHER, 32, 64), SpawnItemStack(Material.DIAMOND, 2, 4), SpawnItemStack(Material.BREAD, 32, 64), SpawnItemStack(Material.STICK, 16, 32), SpawnItemStack(Material.APPLE, 32, 64)), mapOf(), listOf(), "", Material.EMERALD, Material.EMERALD_BLOCK)
+                PitchedSound(Sound.ENTITY_VILLAGER_HURT, 0.95, 1.05),
+                PitchedSound(Sound.ENTITY_VILLAGER_DEATH, 0.95, 1.05),
+                listOf(SpawnItemStack(Material.EMERALD, 32, 64), SpawnItemStack(Material.IRON_INGOT, 32, 64), SpawnItemStack(Material.LEATHER, 32, 64), SpawnItemStack(Material.DIAMOND, 2, 4), SpawnItemStack(Material.BREAD, 32, 64), SpawnItemStack(Material.STICK, 16, 32), SpawnItemStack(Material.APPLE, 32, 64)), mapOf(), listOf(), listOf(), "", Material.EMERALD, Material.EMERALD_BLOCK)
         }
 
     }

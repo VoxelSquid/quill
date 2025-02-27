@@ -8,6 +8,7 @@ import me.voxelsquid.quill.event.*
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.QuestType
@@ -122,6 +123,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val raceDescription = entity.race?.description ?: ""
 
         val placeholders = mapOf(
+            "villagerGender"      to entity.gender.toString(),
             "villagerRace"        to race,
             "villagerPersonality" to "${entity.getCharacterType()}",
             "villagerGrowthStage" to if (entity is Ageable && entity.isAdult) "ADULT" else "KID",
@@ -164,6 +166,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val raceName = race.name
 
         val placeholders = mutableMapOf(
+            "villagerGender"          to villager.gender.toString(),
             "villagerName"            to villagerName,
             "villagerType"            to "${villager.villagerType}",
             "villagerRace"            to raceName,
@@ -227,6 +230,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         val settlementLevel = villager.settlement?.size().toString()
 
         val placeholders = mutableMapOf(
+            "villagerGender"          to villager.gender.toString(),
             "villagerName"            to villagerName,
             "villagerRace"            to raceName,
             "villagerProfession"      to "${villager.profession}",

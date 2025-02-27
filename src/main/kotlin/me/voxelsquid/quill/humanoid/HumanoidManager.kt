@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.protocol.player.UserProfile
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.characterKey
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.genderKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.pitchKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.skinKey
@@ -88,6 +89,7 @@ class HumanoidManager : Listener {
                 val voiceKey        = NamespacedKey(plugin, "VoiceSound")
                 val pitchKey        = NamespacedKey(plugin, "VoicePitch")
                 val skinKey         = NamespacedKey(plugin, "Skin")
+                val genderKey       = NamespacedKey(plugin, "Gender")
             }
 
         }
@@ -117,11 +119,15 @@ class HumanoidManager : Listener {
         }
 
         fun LivingEntity.getVoiceSound(): Sound {
-            val value = this.persistentDataContainer.get(voiceKey, PersistentDataType.STRING)
-            return if (value != null) {
-                Sound.valueOf(value)
+            val voice = this.persistentDataContainer.get(voiceKey, PersistentDataType.STRING)
+            return if (voice != null) {
+                Sound.valueOf(voice)
             } else if (race != null) {
-                race!!.voiceSounds.random().sound.also {
+
+                // The voice of an NPC depends on its gender
+                val voices = if (this.gender == HumanoidGender.MALE) race!!.maleVoices else race!!.femaleVoices
+
+                voices.random().sound.also {
                     this.persistentDataContainer.set(
                         voiceKey,
                         PersistentDataType.STRING,
@@ -135,14 +141,15 @@ class HumanoidManager : Listener {
 
         fun LivingEntity.getVoicePitch(): Float {
             return persistentDataContainer.get(pitchKey, PersistentDataType.FLOAT)
-                ?: if (race != null ) Random.nextDouble(race!!.voiceSounds.random().min, race!!.voiceSounds.random().max).toFloat().also { pitch ->
+                ?: if (race != null ) Random.nextDouble(race!!.maleVoices.random().min, race!!.maleVoices.random().max).toFloat().also { pitch ->
                     this.persistentDataContainer.set(pitchKey, PersistentDataType.FLOAT, pitch)
                 } else 1.0F
         }
 
+        // Skins are stored in the humanoid PDC in texture:signature format as a string.
         fun LivingEntity.skin(): TextureProperty {
 
-            // If race is null, there can't be a skin
+            // If humanoid race is null, blank TextureProperty (no skin) will be used.
             if (race == null)
                 return TextureProperty("textures", "", "")
 
@@ -150,12 +157,29 @@ class HumanoidManager : Listener {
             return if (skin != null) {
                 val (value, signature) = skin.split(":")
                 TextureProperty("textures", value, signature)
-            } else race!!.skins.random().also {
-                persistentDataContainer.set(skinKey, PersistentDataType.STRING, "${it.value}:${it.signature}")
+            } else {
+                val skins = if (gender == HumanoidGender.MALE) race!!.maleSkins else race!!.femaleSkins
+                skins.random().also {
+                    persistentDataContainer.set(skinKey, PersistentDataType.STRING, "${it.value}:${it.signature}")
+                }
             }
 
         }
 
+        // The humanoid's gender is lazily initialized (like everything I touch), affects skin selection and is used in prompts.
+        val LivingEntity.gender: HumanoidGender
+            get() {
+                return if (persistentDataContainer.has(genderKey)) {
+                    HumanoidGender.valueOf(persistentDataContainer.get(genderKey, PersistentDataType.STRING)!!)
+                } else {
+                    HumanoidGender.entries.random().also { persistentDataContainer.set(genderKey, PersistentDataType.STRING, it.toString()) }
+                }
+            }
+
+    }
+
+    enum class HumanoidGender {
+        MALE, FEMALE
     }
 
     enum class HumanoidCharacterType {

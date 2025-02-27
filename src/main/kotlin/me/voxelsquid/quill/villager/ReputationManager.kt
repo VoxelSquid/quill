@@ -1,6 +1,8 @@
 package me.voxelsquid.quill.villager
 
 import me.voxelsquid.quill.QuestIntelligence
+import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
+import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager.Companion
 import org.bukkit.GameMode
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.*
@@ -25,6 +27,10 @@ class ReputationManager : Listener {
         val killer = event.damageSource.causingEntity ?: return
 
         (killer as? Player)?.let { player ->
+
+            // Smart world check.
+            if (!plugin.enabledWorlds.contains(player.world))
+                return
 
             // Respect
             when (victim) {
@@ -52,6 +58,11 @@ class ReputationManager : Listener {
     @EventHandler
     private fun handleRaidFinish(event: RaidFinishEvent) {
         event.winners.forEach { player ->
+
+            // Smart world check.
+            if (!plugin.enabledWorlds.contains(player.world))
+                return
+
             player.changeRespect((plugin.config.getDouble("reputation-settings.respect.raid-finish")))
             player.fame += plugin.config.getDouble("reputation-settings.fame.raid-finish")
         }

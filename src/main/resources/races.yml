@@ -21,14 +21,24 @@ dwarf:
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
-    voice:
-      - ENTITY_VILLAGER_AMBIENT-0.65-0.85
-      - ENTITY_VILLAGER_NO-0.65-0.85
-      - ENTITY_VILLAGER_TRADE-0.65-0.85
-      - ENTITY_PILLAGER_AMBIENT-0.65-0.95
-      - ENTITY_VINDICATOR_AMBIENT-0.65-0.95
-    death: ENTITY_VILLAGER_DEATH-0.55-0.75
-    hurt: ENTITY_VILLAGER_HURT-0.55-0.80
+    male:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-0.65-0.85
+        - ENTITY_VILLAGER_NO-0.65-0.85
+        - ENTITY_VILLAGER_TRADE-0.65-0.85
+        - ENTITY_PILLAGER_AMBIENT-0.65-0.85
+        - ENTITY_VINDICATOR_AMBIENT-0.65-0.85
+      death: ENTITY_VILLAGER_DEATH-0.55-0.65
+      hurt: ENTITY_VILLAGER_HURT-0.55-0.70
+    female:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-0.95-1.55
+        - ENTITY_VILLAGER_NO-0.95-1.55
+        - ENTITY_VILLAGER_TRADE-0.95-1.55
+        - ENTITY_PILLAGER_AMBIENT-0.95-1.55
+        - ENTITY_VINDICATOR_AMBIENT-0.95-1.55
+      death: ENTITY_VILLAGER_DEATH-0.95-1.55
+      hurt: ENTITY_VILLAGER_HURT-0.95-1.50
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -70,14 +80,24 @@ orc:
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
-    voice:
-      - ENTITY_PILLAGER_AMBIENT-0.6-0.75
-      - ENTITY_VINDICATOR_AMBIENT-0.6-0.75
-      - ENTITY_VINDICATOR_HURT-0.6-0.75
-      - ENTITY_VINDICATOR_CELEBRATE-0.5-0.65
-      - ENTITY_EVOKER_AMBIENT-0.5-0.65
-    death: ENTITY_PILLAGER_DEATH-0.6-0.75
-    hurt: ENTITY_PILLAGER_HURT-0.6-0.75
+    male:
+      voice:
+        - ENTITY_PILLAGER_AMBIENT-0.6-0.75
+        - ENTITY_VINDICATOR_AMBIENT-0.6-0.75
+        - ENTITY_VINDICATOR_HURT-0.6-0.75
+        - ENTITY_VINDICATOR_CELEBRATE-0.5-0.65
+        - ENTITY_EVOKER_AMBIENT-0.5-0.65
+      death: ENTITY_PILLAGER_DEATH-0.6-0.75
+      hurt: ENTITY_PILLAGER_HURT-0.6-0.75
+    female:
+      voice:
+        - ENTITY_PILLAGER_AMBIENT-0.9-1.25
+        - ENTITY_VINDICATOR_AMBIENT-0.9-1.25
+        - ENTITY_VINDICATOR_HURT-0.9-1.25
+        - ENTITY_VINDICATOR_CELEBRATE-0.9-1.25
+        - ENTITY_EVOKER_AMBIENT-0.9-1.25
+      death: ENTITY_PILLAGER_DEATH-0.9-1.25
+      hurt: ENTITY_PILLAGER_HURT-0.9-1.25
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -116,12 +136,20 @@ elf:
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
-    voice:
-      - ENTITY_VILLAGER_AMBIENT-1.0-1.4
-      - ENTITY_VILLAGER_YES-1.0-1.4
-      - ENTITY_VILLAGER_TRADE-1.0-1.4
-    death: ENTITY_VILLAGER_DEATH-1.0-1.4
-    hurt: ENTITY_VILLAGER_HURT-1.0-1.4
+    male:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-1.0-1.4
+        - ENTITY_VILLAGER_YES-1.0-1.4
+        - ENTITY_VILLAGER_TRADE-1.0-1.4
+      death: ENTITY_VILLAGER_DEATH-1.0-1.4
+      hurt: ENTITY_VILLAGER_HURT-1.0-1.4
+    female:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-1.2-1.5
+        - ENTITY_VILLAGER_YES-1.2-1.5
+        - ENTITY_VILLAGER_TRADE-1.2-1.4
+      death: ENTITY_VILLAGER_DEATH-1.2-1.5
+      hurt: ENTITY_VILLAGER_HURT-1.2-1.5
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -163,16 +191,28 @@ human:
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
-    voice:
-      - ENTITY_VILLAGER_NO-0.9-1.4
-      - ENTITY_VILLAGER_TRADE-0.9-1.4
-      - ENTITY_PILLAGER_AMBIENT-0.9-1.4
-      - ENTITY_WANDERING_TRADER_NO-0.9-1.4
-      - ENTITY_WANDERING_TRADER_AMBIENT-0.9-1.4
-      - ENTITY_VINDICATOR_AMBIENT-0.9-1.4
-      - ENTITY_ILLUSIONER_AMBIENT-0.9-1.4
-    death: ENTITY_VILLAGER_DEATH-0.8-1.4
-    hurt: ENTITY_VILLAGER_HURT-0.8-1.4
+    male:
+      voice:
+        - ENTITY_VILLAGER_NO-0.9-1.4
+        - ENTITY_VILLAGER_TRADE-0.9-1.4
+        - ENTITY_PILLAGER_AMBIENT-0.9-1.4
+        - ENTITY_WANDERING_TRADER_NO-0.9-1.4
+        - ENTITY_WANDERING_TRADER_AMBIENT-0.9-1.4
+        - ENTITY_VINDICATOR_AMBIENT-0.9-1.4
+        - ENTITY_ILLUSIONER_AMBIENT-0.9-1.4
+      death: ENTITY_VILLAGER_DEATH-0.8-1.4
+      hurt: ENTITY_VILLAGER_HURT-0.8-1.4
+    female:
+      voice:
+        - ENTITY_VILLAGER_NO-1.1-1.45
+        - ENTITY_VILLAGER_TRADE-1.1-1.45
+        - ENTITY_PILLAGER_AMBIENT-1.1-1.45
+        - ENTITY_WANDERING_TRADER_NO-1.1-1.45
+        - ENTITY_WANDERING_TRADER_AMBIENT-1.1-1.45
+        - ENTITY_VINDICATOR_AMBIENT-1.1-1.45
+        - ENTITY_ILLUSIONER_AMBIENT-1.1-1.45
+      death: ENTITY_VILLAGER_DEATH-1.1-1.5
+      hurt: ENCHANT_THORNS_HIT-1.1-1.4
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
@@ -210,18 +250,27 @@ goblin:
   special-currency: EMERALD_BLOCK
 
   # A race description to be used by the AI when generating personal villager data and quests.
-  race-description: "Small, sneaky and greedy creatures known for their cunning and love of shiny objects. Goblins are often considered annoying and untrustworthy, but they are also surprisingly resourceful and intelligent. They can be found in savanna biomes, scavenging for loot and causing mischief."
+  race-description: "Small, sneaky and greedy creatures known for their green skin, cunning and love of shiny objects. Goblins are often considered annoying and untrustworthy, but they are also surprisingly resourceful and intelligent. They can be found in savanna biomes, scavenging for loot and causing mischief."
 
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
   sound:
-    voice:
-      - ENTITY_VILLAGER_AMBIENT-1.3-1.6
-      - ENTITY_VILLAGER_YES-1.3-1.6
-      - ENTITY_VILLAGER_NO-1.3-1.6
-      - ENTITY_VILLAGER_TRADE-1.3-1.6
-    death: ENTITY_VILLAGER_DEATH-1.3-1.6
-    hurt: ENTITY_VILLAGER_HURT-1.3-1.6
+    male:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-1.2-1.4
+        - ENTITY_VILLAGER_YES-1.2-1.4
+        - ENTITY_ARMADILLO_HURT-1.2-1.4
+        - ENTITY_VILLAGER_TRADE-1.2-1.4
+      death: ENTITY_VILLAGER_DEATH-1.2-1.4
+      hurt: ENTITY_VILLAGER_HURT-1.2-1.4
+    female:
+      voice:
+        - ENTITY_VILLAGER_AMBIENT-1.3-1.6
+        - ENTITY_VILLAGER_YES-1.3-1.6
+        - ENTITY_VILLAGER_NO-1.3-1.6
+        - ENTITY_VILLAGER_TRADE-1.3-1.6
+      death: ENTITY_VILLAGER_DEATH-1.3-1.6
+      hurt: ENCHANT_THORNS_HIT-1.3-1.6
 
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
