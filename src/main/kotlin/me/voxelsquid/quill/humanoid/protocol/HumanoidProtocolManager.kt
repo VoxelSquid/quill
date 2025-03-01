@@ -24,15 +24,13 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.sendVerbose
 import me.voxelsquid.quill.event.HumanoidInitializationEvent
 import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.skin
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import org.bukkit.Location
 import org.bukkit.attribute.Attribute
-import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
@@ -199,7 +197,7 @@ class HumanoidProtocolManager(private val humanoidRegistry: HashMap<LivingEntity
 
                                 // Load PHD
                                 entity.persistentDataContainer.get(personalDataKey, PersistentDataType.STRING)?.let { data ->
-                                    controller.personalData = plugin.gson.fromJson(data, PersonalHumanoidData::class.java)
+                                    controller.personalData = plugin.gson.fromJson(data, HumanoidManager.PersonalHumanoidData::class.java)
                                 }
 
                                 // There's no point in messing with spawn packets if humanoid villagers feature is disabled

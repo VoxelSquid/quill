@@ -1,9 +1,9 @@
 package me.voxelsquid.quill.humanoid
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quests
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.updateQuests
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.getMaterialPrice

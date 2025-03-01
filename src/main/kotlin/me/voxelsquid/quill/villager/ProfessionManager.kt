@@ -3,10 +3,10 @@ package me.voxelsquid.quill.villager
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.event.UniqueItemGenerateEvent
 import me.voxelsquid.quill.event.VillagerProduceItemEvent
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.addItemToQuillInventory
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.takeItemFromQuillInventory
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.updateQuests
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.addItemToQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.takeItemFromQuillInventory
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.updateQuests
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor

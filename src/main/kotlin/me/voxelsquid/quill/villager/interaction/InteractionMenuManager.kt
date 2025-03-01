@@ -6,13 +6,13 @@ import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.HUMA
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getPersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.humanoidRegistry
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quests
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.talk
 import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quests
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.quillInventory
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.talk
 import me.voxelsquid.quill.humanoid.HumanoidTradeHandler.Companion.openTradeMenu
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.villager.interaction.DialogueManager.Companion.dialogues

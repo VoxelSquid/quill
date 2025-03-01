@@ -3,238 +3,307 @@ package me.voxelsquid.quill.humanoid
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
+import com.google.common.reflect.TypeToken
+import io.papermc.paper.event.player.PlayerTradeEvent
+import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.characterKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.genderKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.personalDataKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.pitchKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.skinKey
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData.HumanoidNamespace.voiceKey
-import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
+import me.voxelsquid.quill.event.QuestGenerateEvent
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager
-import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Race
+import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
+import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
+import me.voxelsquid.quill.quest.QuestManager
+import me.voxelsquid.quill.quest.data.VillagerQuest
+import me.voxelsquid.quill.settlement.Settlement
+import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
+import me.voxelsquid.quill.util.InventorySerializer
+import me.voxelsquid.quill.villager.ProfessionManager
+import me.voxelsquid.quill.villager.ReputationManager
+import me.voxelsquid.quill.villager.interaction.DialogueManager
+import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.kyori.adventure.text.Component
+import net.minecraft.world.entity.EquipmentSlot
+import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Sound
+import org.bukkit.craftbukkit.entity.CraftVillager
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.entity.Pose
+import org.bukkit.entity.Villager
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityPickupItemEvent
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.SuspiciousStewMeta
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 import org.bukkit.scoreboard.Team
 import kotlin.random.Random
 
 class HumanoidManager : Listener {
 
-    private val raceManager     = HumanoidRaceManager()
-    private val protocolManager = HumanoidProtocolManager(humanoidRegistry)
-    private val humanoidTicker  = HumanoidTicker()
+    private val plugin = pluginInstance
+    private val raceManager        = HumanoidRaceManager()
+    private val protocolManager    = HumanoidProtocolManager(humanoidRegistry)
+    private val interactionManager = InteractionMenuManager(plugin)
+    private val professionManager  = ProfessionManager()
+    private val reputationManager  = ReputationManager()
+    private val tradeHandler       = HumanoidTradeHandler()
+    private val questManager       = QuestManager(plugin)
+    private val dialogueManager    = DialogueManager(plugin)
+
+    private val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
+    private val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
+    private val workIntervalTicks  = plugin.config.getLong("core-settings.tick-period.work")
 
     init {
         PacketEvents.getAPI().eventManager.registerListener(protocolManager)
         plugin.server.pluginManager.registerEvents(protocolManager, plugin)
         plugin.server.pluginManager.registerEvents(this, plugin)
-        this.checkNamelessTeam()
+        checkNamelessTeam()
         raceManager.load()
+        startTickers()
     }
 
     private fun checkNamelessTeam() {
-        if (plugin.server.scoreboardManager.mainScoreboard.getEntryTeam("HideMyName") == null) {
-            plugin.server.scoreboardManager.mainScoreboard.registerNewTeam("GoAheadMakeMyDay").also { team ->
-                team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER)
-                team.addEntry("HideMyName")
-            }
+        plugin.server.scoreboardManager.mainScoreboard.getEntryTeam("HideMyName") ?: plugin.server.scoreboardManager.mainScoreboard.registerNewTeam("GoAheadMakeMyDay").also {
+            it.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER)
+            it.addEntry("HideMyName")
         }
+    }
+
+    private fun startTickers() {
+        plugin.server.scheduler.runTaskTimer(plugin, { _ -> questManager.prepareQuest() }, 0, if (plugin.debug) 200 else questIntervalTicks)
+        plugin.server.scheduler.runTaskTimer(plugin, { _ -> professionManager.produceProfessionItem() }, 0, if (plugin.debug) 200 else workIntervalTicks)
+        plugin.server.scheduler.runTaskTimer(plugin, { _ ->
+            plugin.enabledWorlds.flatMap { it.entities.filterIsInstance<Villager>() }.shuffled().forEachIndexed { index, villager ->
+                if (villager.pose != Pose.SLEEPING) {
+                    villager.hunger = (villager.hunger - 2.5).coerceAtLeast(0.0)
+                    if (villager.hunger <= 17.5) {
+                        plugin.server.scheduler.runTaskLater(plugin, { _ -> villager.eat() }, 5 + (index * 2L).coerceAtMost(40) + Random.nextInt(250))
+                    }
+                }
+            }
+        }, 0, foodIntervalTicks)
     }
 
     @EventHandler
-    private fun whenPersonalDataGenerated(event: HumanoidPersonalDataGeneratedEvent) {
-        event.entity.getHumanoidController()?.let { controller ->
+    private fun onPersonalDataGenerated(event: HumanoidPersonalDataGeneratedEvent) {
+        event.entity.getHumanoidController()?.let {
             event.entity.customName(Component.text(event.personalData.villagerName))
-            controller.personalData = event.personalData
-            controller.savePersonalData()
-        } ?: throw IllegalArgumentException("PersonalHumanoidData generated for non-existent humanoid. It wasn't supposed to happen.")
+            it.personalData = event.personalData
+            it.savePersonalData()
+        } ?: throw IllegalArgumentException("PersonalHumanoidData generated for non-existent humanoid. Whoops.")
     }
 
-    data class HumanoidController(val entity: LivingEntity,
-                                  val profile: UserProfile,
-                                  val race: Race?,
-                                  val subscribers: MutableList<Player> = mutableListOf(),
-                                  var personalData: PersonalHumanoidData? = null) {
+    @EventHandler
+    private fun onQuestGenerate(event: QuestGenerateEvent) {
+        event.villager.addQuest(event.quest)
+        plugin.debug("Quest '${event.quest.questInfo}' spawned for villager ${event.villager.customName}. Lucky them.")
+    }
 
-        fun savePersonalData() {
-            this.personalData?.let { data ->
-                entity.persistentDataContainer.set(personalDataKey, PersistentDataType.STRING, data.toString())
-            } ?: throw NullPointerException("Trying to save non-existent personal data.")
-        }
+    @EventHandler
+    private fun onVillagerPickupItem(event: EntityPickupItemEvent) {
+        (event.entity as? Villager)?.addItemToQuillInventory(event.item.itemStack)
+    }
 
-        data class PersonalHumanoidData(val villagerName: String,
-                                        val sleepInterruptionMessages: MutableList<String>,
-                                        val damageMessages: MutableList<String>,
-                                        val joblessMessages: MutableList<String>,
-                                        val noQuestMessages: MutableList<String>,
-                                        val badReputationInteractionDenial: MutableList<String>,
-                                        val kidInteractionFamousPlayer: MutableList<String>,
-                                        val kidInteractionNeutralPlayer: MutableList<String>) {
-
-            override fun toString(): String {
-                return plugin.gson.toJson(this)
+    @EventHandler
+    private fun onPlayerTrade(event: PlayerTradeEvent) {
+        (event.villager as? Villager)?.let { villager ->
+            villager.quests.find { event.trade.ingredients[0].isSimilar(it.questItem) && event.trade.result.isSimilar(it.rewardItem) }?.let {
+                questManager.finishQuest(event.player, villager, it, event.trade.ingredients[0], event.trade.result)
+                return
             }
-
-            object HumanoidNamespace {
-                val personalDataKey = NamespacedKey(plugin, "PersonalData")
-                val characterKey    = NamespacedKey(plugin, "CharacterType")
-                val voiceKey        = NamespacedKey(plugin, "VoiceSound")
-                val pitchKey        = NamespacedKey(plugin, "VoicePitch")
-                val skinKey         = NamespacedKey(plugin, "Skin")
-                val genderKey       = NamespacedKey(plugin, "Gender")
-            }
-
+            if (!event.isCancelled) villager.takeItemFromQuillInventory(event.trade.result, event.trade.result.amount)
         }
+    }
 
+    data class HumanoidController(
+        val entity: LivingEntity,
+        val profile: UserProfile,
+        val race: Race?,
+        val subscribers: MutableList<Player> = mutableListOf(),
+        var personalData: PersonalHumanoidData? = null
+    ) {
+        fun savePersonalData() = personalData?.let {
+            entity.persistentDataContainer.set(HumanoidNamespace.personalDataKey, PersistentDataType.STRING, it.toString())
+        } ?: throw NullPointerException("Saving null personal data? Nice try.")
+    }
+
+    data class PersonalHumanoidData(
+        val villagerName: String,
+        val sleepInterruptionMessages: MutableList<String>,
+        val damageMessages: MutableList<String>,
+        val joblessMessages: MutableList<String>,
+        val noQuestMessages: MutableList<String>,
+        val badReputationInteractionDenial: MutableList<String>,
+        val kidInteractionFamousPlayer: MutableList<String>,
+        val kidInteractionNeutralPlayer: MutableList<String>
+    ) {
+        override fun toString() = plugin.gson.toJson(this)
     }
 
     companion object HumanoidEntityExtension {
 
-        private val plugin = pluginInstance
-
+        val plugin = QuestIntelligence.pluginInstance
         val humanoidRegistry = hashMapOf<LivingEntity, HumanoidController>()
-        val HUMANOID_VILLAGERS_ENABLED = plugin.config.getBoolean("core-settings.humanoid-villagers")
+        val HUMANOID_VILLAGERS_ENABLED = pluginInstance.config.getBoolean("core-settings.humanoid-villagers")
 
-        fun LivingEntity.getHumanoidController()   = humanoidRegistry[this]
-        fun LivingEntity.getPersonalHumanoidData() = this.getHumanoidController()?.personalData
+        fun LivingEntity.getHumanoidController() = humanoidRegistry[this]
+        fun LivingEntity.getPersonalHumanoidData() = getHumanoidController()?.personalData
 
-        fun LivingEntity.getCharacterType(): HumanoidCharacterType {
-            return this.persistentDataContainer.get(characterKey, PersistentDataType.STRING)?.let { character ->
-                HumanoidCharacterType.valueOf(character)
-            } ?: HumanoidCharacterType.entries.random().also {
-                this.setCharacterType(it)
-            }
-        }
+        fun LivingEntity.getCharacterType() = persistentDataContainer.get(HumanoidNamespace.characterKey, PersistentDataType.STRING)?.let {
+            HumanoidCharacterType.valueOf(it)
+        } ?: HumanoidCharacterType.entries.random().also { setCharacterType(it) }
 
         fun LivingEntity.setCharacterType(characterType: HumanoidCharacterType) {
-            this.persistentDataContainer.set(characterKey, PersistentDataType.STRING, characterType.toString())
+            persistentDataContainer.set(HumanoidNamespace.characterKey, PersistentDataType.STRING, characterType.toString())
         }
 
-        fun LivingEntity.getVoiceSound(): Sound {
-            val voice = this.persistentDataContainer.get(voiceKey, PersistentDataType.STRING)
-            return if (voice != null) {
-                Sound.valueOf(voice)
-            } else if (race != null) {
+        fun LivingEntity.getVoiceSound() = persistentDataContainer.get(HumanoidNamespace.voiceKey, PersistentDataType.STRING)?.let {
+            Sound.valueOf(it)
+        } ?: race?.let {
+            val voices = if (gender == HumanoidGender.MALE) it.maleVoices else it.femaleVoices
+            voices.random().sound.also { sound -> persistentDataContainer.set(HumanoidNamespace.voiceKey, PersistentDataType.STRING, sound.toString()) }
+        } ?: Sound.INTENTIONALLY_EMPTY
 
-                // The voice of an NPC depends on its gender
-                val voices = if (this.gender == HumanoidGender.MALE) race!!.maleVoices else race!!.femaleVoices
-
-                voices.random().sound.also {
-                    this.persistentDataContainer.set(
-                        voiceKey,
-                        PersistentDataType.STRING,
-                        it.toString()
-                    )
-                }
-            } else {
-                Sound.INTENTIONALLY_EMPTY
+        fun LivingEntity.getVoicePitch() = persistentDataContainer.get(HumanoidNamespace.pitchKey, PersistentDataType.FLOAT) ?: race?.let {
+            Random.nextDouble(it.maleVoices.random().min, it.maleVoices.random().max).toFloat().also { pitch ->
+                persistentDataContainer.set(HumanoidNamespace.pitchKey, PersistentDataType.FLOAT, pitch)
             }
-        }
+        } ?: 1.0F
 
-        fun LivingEntity.getVoicePitch(): Float {
-            return persistentDataContainer.get(pitchKey, PersistentDataType.FLOAT)
-                ?: if (race != null ) Random.nextDouble(race!!.maleVoices.random().min, race!!.maleVoices.random().max).toFloat().also { pitch ->
-                    this.persistentDataContainer.set(pitchKey, PersistentDataType.FLOAT, pitch)
-                } else 1.0F
-        }
-
-        // Skins are stored in the humanoid PDC in texture:signature format as a string.
-        fun LivingEntity.skin(): TextureProperty {
-
-            // If humanoid race is null, blank TextureProperty (no skin) will be used.
-            if (race == null)
-                return TextureProperty("textures", "", "")
-
-            val skin = persistentDataContainer.get(skinKey, PersistentDataType.STRING)
-            return if (skin != null) {
-                val (value, signature) = skin.split(":")
-                TextureProperty("textures", value, signature)
-            } else {
-                val skins = if (gender == HumanoidGender.MALE) race!!.maleSkins else race!!.femaleSkins
-                skins.random().also {
-                    persistentDataContainer.set(skinKey, PersistentDataType.STRING, "${it.value}:${it.signature}")
-                }
+        fun LivingEntity.skin() = race?.let { r ->
+            persistentDataContainer.get(HumanoidNamespace.skinKey, PersistentDataType.STRING)?.let { skin ->
+                val (value, signature) = skin.split(":"); TextureProperty("textures", value, signature)
+            } ?: (if (gender == HumanoidGender.MALE) r.maleSkins else r.femaleSkins).random().also {
+                persistentDataContainer.set(HumanoidNamespace.skinKey, PersistentDataType.STRING, "${it.value}:${it.signature}")
             }
+        } ?: TextureProperty("textures", "", "")
 
-        }
-
-        // The humanoid's gender is lazily initialized (like everything I touch), affects skin selection and is used in prompts.
         val LivingEntity.gender: HumanoidGender
-            get() {
-                return if (persistentDataContainer.has(genderKey)) {
-                    HumanoidGender.valueOf(persistentDataContainer.get(genderKey, PersistentDataType.STRING)!!)
-                } else {
-                    HumanoidGender.entries.random().also { persistentDataContainer.set(genderKey, PersistentDataType.STRING, it.toString()) }
+            get() = persistentDataContainer.get(HumanoidNamespace.genderKey, PersistentDataType.STRING)?.let {
+                HumanoidGender.valueOf(it)
+            } ?: HumanoidGender.entries.random().also { persistentDataContainer.set(HumanoidNamespace.genderKey, PersistentDataType.STRING, it.toString()) }
+
+        fun Villager.addItemToQuillInventory(vararg items: ItemStack) = quillInventory.let { inv ->
+            items.forEach { it.amount = it.amount.coerceAtMost(it.maxStackSize); inv.addItem(it) }
+            persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
+        }
+
+        fun Villager.takeItemFromQuillInventory(item: ItemStack, amountToTake: Int) = quillInventory.filterNotNull().find {
+            it.isSimilar(item)
+        }?.also { it.amount -= amountToTake }?.let {
+            persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(quillInventory).toString())
+        }
+
+        fun Villager.updateQuests() = quests.forEach { quest ->
+            removeQuest(quest)
+            pluginInstance.humanoidManager.questManager.buildQuest(quest.type, this, quest.questItem)?.let {
+                addQuest(it.setQuestInfo(quest.questInfo).build().apply { timeCreated = quest.timeCreated })
+            }
+        }
+
+        fun Villager.consume(item: ItemStack, sound: Sound, duration: Int, period: Long = 5L, onDone: () -> Unit) {
+            val nmsVillager = (this as CraftVillager).handle
+            val nmsItem = CraftItemStack.asNMSCopy(item)
+            var ticks = 0
+            pluginInstance.server.scheduler.runTaskTimer(pluginInstance, { task ->
+                nmsVillager.isNoAi = true
+                nmsVillager.setItemSlot(EquipmentSlot.MAINHAND, nmsItem)
+                world.playSound(location, sound, 1F, 1F)
+                if (++ticks >= duration) {
+                    nmsVillager.setItemSlot(EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY)
+                    onDone()
+                    nmsVillager.isNoAi = false
+                    task.cancel()
                 }
+            }, 0, period)
+        }
+
+        fun Villager.eat() = quillInventory.filterNotNull().find { it.type.isEdible }?.let { food ->
+            val sound = when (food.type) {
+                Material.HONEY_BOTTLE -> Sound.ITEM_HONEY_BOTTLE_DRINK
+                Material.MUSHROOM_STEW, Material.RABBIT_STEW, Material.SUSPICIOUS_STEW -> Sound.ENTITY_GENERIC_DRINK
+                else -> Sound.ENTITY_GENERIC_EAT
+            }
+            consume(food, sound, 3, period = 7) {
+                takeItemFromQuillInventory(food, 1)
+                if (food.type.toString().contains("STEW")) {
+                    addItemToQuillInventory(ItemStack(Material.BOWL))
+                    (food.itemMeta as? SuspiciousStewMeta)?.customEffects?.forEach { addPotionEffect(it) }
+                }
+                if (food.type == Material.HONEY_BOTTLE) addItemToQuillInventory(ItemStack(Material.GLASS_BOTTLE))
+                world.playSound(location, getVoiceSound(), 1F, getVoicePitch())
+                world.playSound(location, Sound.ENTITY_PLAYER_BURP, 1F, 1F)
+                hunger += 7.5
+                if (hunger >= 20.0) addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 200, 1))
+            }
+        }
+
+        fun LivingEntity.talk(player: Player, text: String?, displaySize: Float = pluginInstance.config.getDouble("core-settings.dialogue-text-display.default-size").toFloat(), followDuringDialogue: Boolean = true, interruptPreviousDialogue: Boolean = false) {
+            text?.let { pluginInstance.humanoidManager.dialogueManager.startDialogue(player to this, it, size = displaySize, follow = followDuringDialogue, interrupt = interruptPreviousDialogue) }
+        }
+
+        val Villager.professionLevelName get() = when (villagerLevel) { 1 -> "NOVICE"; 2 -> "APPRENTICE"; 3 -> "JOURNEYMAN"; 4 -> "EXPERT"; else -> "MASTER" }
+
+        var Villager.settlement: Settlement?
+            get() = persistentDataContainer.get(HumanoidNamespace.villagerSettlementKey, PersistentDataType.STRING)?.let { name -> settlements[world]?.find { it.data.settlementName == name } }
+            set(value) { value?.let { persistentDataContainer.set(HumanoidNamespace.villagerSettlementKey, PersistentDataType.STRING, it.data.settlementName) } }
+
+        val Villager.quillInventory: Inventory
+            get() = persistentDataContainer.get(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING)?.let {
+                InventorySerializer.dejsonifyInventory(it)
+            } ?: Bukkit.createInventory(null, 54).also { inv ->
+                race?.spawnItems?.forEach { item -> inv.addItem(item.build()) }
+                persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
             }
 
+        var Villager.hunger: Double
+            get() = persistentDataContainer.get(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE) ?: 20.0.also { persistentDataContainer.set(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE, it) }
+            set(value) { persistentDataContainer.set(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE, value) }
+
+        val Villager.quests: MutableList<VillagerQuest>
+            get() = persistentDataContainer.get(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING)?.let {
+                pluginInstance.gson.fromJson(it, object : TypeToken<MutableList<VillagerQuest>>() {}.type)
+            } ?: mutableListOf()
+
+        fun Villager.addQuest(quest: VillagerQuest) {
+            persistentDataContainer.set(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { add(quest) }))
+        }
+
+        fun Villager.removeQuest(quest: VillagerQuest) {
+            persistentDataContainer.set(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { removeIf { it.questInfo.twoWordsDescription == quest.questInfo.twoWordsDescription } }))
+        }
     }
 
-    enum class HumanoidGender {
-        MALE, FEMALE
-    }
+    enum class HumanoidGender { MALE, FEMALE }
 
     enum class HumanoidCharacterType {
-
-        DEPRESSED,
-        OPTIMISTIC,
-        PESSIMISTIC,
-        KIND,
-        RUDE,
-        MEAN,
-        EMOTIONAL,
-        CYNICAL,
-        COLD,
-        FORMAL,
-        FRIENDLY,
-        FAMILIAR,
-        HUMOROUS,
-        TALKATIVE,
-        IRONIC,
-        SARCASTIC,
-        SERIOUS,
-        NOSTALGIC,
-        WITTY,
-        ADVENTUROUS,
-        MYSTERIOUS,
-        DREAMY,
-        IMPULSIVE,
-        OBSESSIVE,
-        RECKLESS,
-        HUMBLE,
-        FORGIVING,
-        RATIONAL,
-        ARTISTIC,
-        ANXIOUS,
-        PLAYFUL,
-        RELAXED,
-        GRUMPY,
-        INTELLECTUAL,
-        NAIVE,
-        IGNORANT,
-        ANGRY,
-        MAD_SCIENTIST,
-        DRUNKARD,
-        SANE,
-        ROMANTIC,
-        REBELLIOUS,
-        DRAMATIC,
-        LUCKY,
-        UNLUCKY,
-        THIEF,
-        POTHEAD,
-        RANDOM,
-        EVIL,
-        SHAMAN;
-
+        DEPRESSED, OPTIMISTIC, PESSIMISTIC, KIND, RUDE, MEAN, EMOTIONAL, CYNICAL, COLD, FORMAL,
+        FRIENDLY, FAMILIAR, HUMOROUS, TALKATIVE, IRONIC, SARCASTIC, SERIOUS, NOSTALGIC, WITTY,
+        ADVENTUROUS, MYSTERIOUS, DREAMY, IMPULSIVE, OBSESSIVE, RECKLESS, HUMBLE, FORGIVING,
+        RATIONAL, ARTISTIC, ANXIOUS, PLAYFUL, RELAXED, GRUMPY, INTELLECTUAL, NAIVE, IGNORANT,
+        ANGRY, MAD_SCIENTIST, DRUNKARD, SANE, ROMANTIC, REBELLIOUS, DRAMATIC, LUCKY, UNLUCKY,
+        THIEF, POTHEAD, RANDOM, EVIL, SHAMAN
     }
 
+    object HumanoidNamespace {
+        val personalDataKey       = NamespacedKey(pluginInstance, "PersonalData")
+        val characterKey          = NamespacedKey(pluginInstance, "CharacterType")
+        val voiceKey              = NamespacedKey(pluginInstance, "VoiceSound")
+        val pitchKey              = NamespacedKey(pluginInstance, "VoicePitch")
+        val skinKey               = NamespacedKey(pluginInstance, "Skin")
+        val genderKey             = NamespacedKey(pluginInstance, "Gender")
+        val villagerQuestDataKey  = NamespacedKey(pluginInstance, "questData")
+        val villagerHungerKey     = NamespacedKey(pluginInstance, "hunger")
+        val villagerSettlementKey = NamespacedKey(pluginInstance, "settlement")
+        val villagerInventoryKey  = NamespacedKey(pluginInstance, "Inventory")
+    }
 }

@@ -5,10 +5,12 @@ import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
 import me.voxelsquid.quill.QuestIntelligence.Companion.languageFile
 import me.voxelsquid.quill.event.*
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.getCharacterType
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.gender
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.professionLevelName
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.settlement
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.quest.QuestManager
 import me.voxelsquid.quill.quest.data.QuestType
@@ -19,8 +21,6 @@ import me.voxelsquid.quill.villager.ProfessionManager
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemAttributes
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.getUniqueItemRarity
 import me.voxelsquid.quill.villager.ProfessionManager.Companion.isUniqueItem
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.professionLevelName
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.settlement
 import net.kyori.adventure.text.TextComponent
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -141,7 +141,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedJsonResponse ->
             plugin.server.scheduler.runTask(plugin) { _ ->
                 try {
-                    val personalHumanoidData = plugin.gson.fromJson(cleanedJsonResponse, PersonalHumanoidData::class.java)
+                    val personalHumanoidData = plugin.gson.fromJson(cleanedJsonResponse, HumanoidManager.PersonalHumanoidData::class.java)
                     this.previousNames.add(personalHumanoidData.villagerName)
                     plugin.server.pluginManager.callEvent(HumanoidPersonalDataGeneratedEvent(entity, personalHumanoidData))
                 } catch (exception: JsonSyntaxException) {

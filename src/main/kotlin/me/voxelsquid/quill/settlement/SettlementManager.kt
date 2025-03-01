@@ -4,7 +4,7 @@ import com.google.gson.reflect.TypeToken
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.currentSettlement
 import me.voxelsquid.quill.event.SettlementNameGenerateEvent
-import me.voxelsquid.quill.humanoid.HumanoidTicker.Companion.settlement
+import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.settlement
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.title.Title

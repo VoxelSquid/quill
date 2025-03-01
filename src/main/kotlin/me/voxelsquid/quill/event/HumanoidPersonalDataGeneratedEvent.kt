@@ -1,11 +1,11 @@
 package me.voxelsquid.quill.event
 
-import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidController.PersonalHumanoidData
+import me.voxelsquid.quill.humanoid.HumanoidManager
 import org.bukkit.entity.LivingEntity
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class HumanoidPersonalDataGeneratedEvent(val entity: LivingEntity, val personalData: PersonalHumanoidData) : Event() {
+class HumanoidPersonalDataGeneratedEvent(val entity: LivingEntity, val personalData: HumanoidManager.PersonalHumanoidData) : Event() {
 
     override fun getHandlers(): HandlerList {
         return HANDLERS

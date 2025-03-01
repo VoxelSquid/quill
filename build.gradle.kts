@@ -31,6 +31,7 @@ repositories {
 
 dependencies {
   implementation(kotlin("stdlib-jdk8"))
+  implementation("org.jetbrains.kotlin:kotlin-reflect")
   paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
   implementation("com.squareup.okhttp3:okhttp:4.1.0")
   implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
