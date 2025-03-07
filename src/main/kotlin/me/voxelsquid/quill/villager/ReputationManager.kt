@@ -1,8 +1,6 @@
 package me.voxelsquid.quill.villager
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager
-import me.voxelsquid.quill.humanoid.protocol.HumanoidProtocolManager.Companion
 import org.bukkit.GameMode
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.*

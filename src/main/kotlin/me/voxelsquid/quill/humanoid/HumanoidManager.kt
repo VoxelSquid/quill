@@ -5,7 +5,6 @@ import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
 import com.google.common.reflect.TypeToken
 import io.papermc.paper.event.player.PlayerTradeEvent
-import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.event.HumanoidPersonalDataGeneratedEvent
 import me.voxelsquid.quill.event.QuestGenerateEvent
@@ -48,7 +47,6 @@ import kotlin.random.Random
 
 class HumanoidManager : Listener {
 
-    private val plugin = pluginInstance
     private val raceManager        = HumanoidRaceManager()
     private val protocolManager    = HumanoidProtocolManager(humanoidRegistry)
     private val interactionManager = InteractionMenuManager(plugin)
@@ -146,12 +144,12 @@ class HumanoidManager : Listener {
         val kidInteractionFamousPlayer: MutableList<String>,
         val kidInteractionNeutralPlayer: MutableList<String>
     ) {
-        override fun toString() = plugin.gson.toJson(this)
+        override fun toString(): String = plugin.gson.toJson(this)
     }
 
     companion object HumanoidEntityExtension {
 
-        val plugin = QuestIntelligence.pluginInstance
+        val plugin = pluginInstance
         val humanoidRegistry = hashMapOf<LivingEntity, HumanoidController>()
         val HUMANOID_VILLAGERS_ENABLED = pluginInstance.config.getBoolean("core-settings.humanoid-villagers")
 
@@ -166,7 +164,7 @@ class HumanoidManager : Listener {
             persistentDataContainer.set(HumanoidNamespace.characterKey, PersistentDataType.STRING, characterType.toString())
         }
 
-        fun LivingEntity.getVoiceSound() = persistentDataContainer.get(HumanoidNamespace.voiceKey, PersistentDataType.STRING)?.let {
+        fun LivingEntity.getVoiceSound(): Sound = persistentDataContainer.get(HumanoidNamespace.voiceKey, PersistentDataType.STRING)?.let {
             Sound.valueOf(it)
         } ?: race?.let {
             val voices = if (gender == HumanoidGender.MALE) it.maleVoices else it.femaleVoices
@@ -194,13 +192,13 @@ class HumanoidManager : Listener {
 
         fun Villager.addItemToQuillInventory(vararg items: ItemStack) = quillInventory.let { inv ->
             items.forEach { it.amount = it.amount.coerceAtMost(it.maxStackSize); inv.addItem(it) }
-            persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
+            persistentDataContainer.set(HumanoidNamespace.inventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
         }
 
         fun Villager.takeItemFromQuillInventory(item: ItemStack, amountToTake: Int) = quillInventory.filterNotNull().find {
             it.isSimilar(item)
         }?.also { it.amount -= amountToTake }?.let {
-            persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(quillInventory).toString())
+            persistentDataContainer.set(HumanoidNamespace.inventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(quillInventory).toString())
         }
 
         fun Villager.updateQuests() = quests.forEach { quest ->
@@ -254,32 +252,32 @@ class HumanoidManager : Listener {
         val Villager.professionLevelName get() = when (villagerLevel) { 1 -> "NOVICE"; 2 -> "APPRENTICE"; 3 -> "JOURNEYMAN"; 4 -> "EXPERT"; else -> "MASTER" }
 
         var Villager.settlement: Settlement?
-            get() = persistentDataContainer.get(HumanoidNamespace.villagerSettlementKey, PersistentDataType.STRING)?.let { name -> settlements[world]?.find { it.data.settlementName == name } }
-            set(value) { value?.let { persistentDataContainer.set(HumanoidNamespace.villagerSettlementKey, PersistentDataType.STRING, it.data.settlementName) } }
+            get() = persistentDataContainer.get(HumanoidNamespace.settlementKey, PersistentDataType.STRING)?.let { name -> settlements[world]?.find { it.data.settlementName == name } }
+            set(value) { value?.let { persistentDataContainer.set(HumanoidNamespace.settlementKey, PersistentDataType.STRING, it.data.settlementName) } }
 
         val Villager.quillInventory: Inventory
-            get() = persistentDataContainer.get(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING)?.let {
+            get() = persistentDataContainer.get(HumanoidNamespace.inventoryKey, PersistentDataType.STRING)?.let {
                 InventorySerializer.dejsonifyInventory(it)
             } ?: Bukkit.createInventory(null, 54).also { inv ->
                 race?.spawnItems?.forEach { item -> inv.addItem(item.build()) }
-                persistentDataContainer.set(HumanoidNamespace.villagerInventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
+                persistentDataContainer.set(HumanoidNamespace.inventoryKey, PersistentDataType.STRING, InventorySerializer.jsonifyInventory(inv).toString())
             }
 
         var Villager.hunger: Double
-            get() = persistentDataContainer.get(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE) ?: 20.0.also { persistentDataContainer.set(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE, it) }
-            set(value) { persistentDataContainer.set(HumanoidNamespace.villagerHungerKey, PersistentDataType.DOUBLE, value) }
+            get() = persistentDataContainer.get(HumanoidNamespace.hungerKey, PersistentDataType.DOUBLE) ?: 20.0.also { persistentDataContainer.set(HumanoidNamespace.hungerKey, PersistentDataType.DOUBLE, it) }
+            set(value) { persistentDataContainer.set(HumanoidNamespace.hungerKey, PersistentDataType.DOUBLE, value) }
 
         val Villager.quests: MutableList<VillagerQuest>
-            get() = persistentDataContainer.get(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING)?.let {
+            get() = persistentDataContainer.get(HumanoidNamespace.questDataKey, PersistentDataType.STRING)?.let {
                 pluginInstance.gson.fromJson(it, object : TypeToken<MutableList<VillagerQuest>>() {}.type)
             } ?: mutableListOf()
 
         fun Villager.addQuest(quest: VillagerQuest) {
-            persistentDataContainer.set(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { add(quest) }))
+            persistentDataContainer.set(HumanoidNamespace.questDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { add(quest) }))
         }
 
         fun Villager.removeQuest(quest: VillagerQuest) {
-            persistentDataContainer.set(HumanoidNamespace.villagerQuestDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { removeIf { it.questInfo.twoWordsDescription == quest.questInfo.twoWordsDescription } }))
+            persistentDataContainer.set(HumanoidNamespace.questDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { removeIf { it.questInfo.twoWordsDescription == quest.questInfo.twoWordsDescription } }))
         }
     }
 
@@ -295,15 +293,16 @@ class HumanoidManager : Listener {
     }
 
     object HumanoidNamespace {
-        val personalDataKey       = NamespacedKey(pluginInstance, "PersonalData")
-        val characterKey          = NamespacedKey(pluginInstance, "CharacterType")
-        val voiceKey              = NamespacedKey(pluginInstance, "VoiceSound")
-        val pitchKey              = NamespacedKey(pluginInstance, "VoicePitch")
-        val skinKey               = NamespacedKey(pluginInstance, "Skin")
-        val genderKey             = NamespacedKey(pluginInstance, "Gender")
-        val villagerQuestDataKey  = NamespacedKey(pluginInstance, "questData")
-        val villagerHungerKey     = NamespacedKey(pluginInstance, "hunger")
-        val villagerSettlementKey = NamespacedKey(pluginInstance, "settlement")
-        val villagerInventoryKey  = NamespacedKey(pluginInstance, "Inventory")
+        val personalDataKey = NamespacedKey(pluginInstance, "PersonalData")
+        val characterKey    = NamespacedKey(pluginInstance, "CharacterType")
+        val voiceKey        = NamespacedKey(pluginInstance, "VoiceSound")
+        val pitchKey        = NamespacedKey(pluginInstance, "VoicePitch")
+        val skinKey         = NamespacedKey(pluginInstance, "Skin")
+        val genderKey       = NamespacedKey(pluginInstance, "Gender")
+        val questDataKey    = NamespacedKey(pluginInstance, "QuestData")
+        val hungerKey       = NamespacedKey(pluginInstance, "Hunger")
+        val settlementKey   = NamespacedKey(pluginInstance, "Settlement")
+        val inventoryKey    = NamespacedKey(pluginInstance, "Inventory")
     }
+
 }

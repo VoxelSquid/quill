@@ -1,5 +1,6 @@
 package me.voxelsquid.quill
 
+import me.voxelsquid.quill.util.ConfigContainer
 import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -17,10 +18,7 @@ import me.voxelsquid.quill.villager.interaction.InteractionMenu
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.entity.raid.Raid
-import org.bukkit.Bukkit
-import org.bukkit.Location
-import org.bukkit.NamespacedKey
-import org.bukkit.World
+import org.bukkit.*
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.inventory.CraftItemStack
@@ -45,8 +43,12 @@ class QuestIntelligence : JavaPlugin(), Listener {
     var importantWordColor    = "§c"
     var interestingStuffColor = "§c"
 
+    val example = ConfigContainer(dataFolder, path = "sperma", defaultValue = Material.EMERALD, comments = listOf("ebalo", "sosalo")).get()
+
     override fun onEnable() {
         pluginInstance = this
+
+        ConfigContainer(dataFolder, path = "ASSSSSSS", defaultValue = Material.GOLD_ORE, comments = listOf("ebalo", "sosalo")).get()
 
         if (server.pluginManager.isPluginEnabled("RealisticVillagers")) {
             logger.severe("QuestIntelligence is incompatible with RealisticVillagers and will be disabled.")
