@@ -9,10 +9,6 @@ import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.huma
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quests
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.talk
-import me.voxelsquid.quill.villager.ReputationManager
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
-import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import me.voxelsquid.quill.humanoid.HumanoidTradeHandler.Companion.openTradeMenu
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.villager.interaction.DialogueManager.Companion.dialogues
@@ -113,25 +109,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
                 return
             }
 
-            // Обработка крайне негативной репутации
-            if (villager.getRespect(player) <= -40 || player.fame <= -40) {
-                villager.getPersonalHumanoidData()?.let {
-                    villager.talk(player, it.badReputationInteractionDenial.random(), followDuringDialogue = false)
-                }
-                return
-            }
-
-            // Обработка взаимодействия с ребёнком
-            if (!villager.isAdult) {
-                villager.getPersonalHumanoidData()?.let { data ->
-                    if (villager.getRespect(player) <= -20 || player.fame <= -20) {
-                        villager.talk(player, data.badReputationInteractionDenial.random(), followDuringDialogue = false)
-                    } else if (villager.getRespect(player) >= 20 || player.fame >= 20) {
-                        villager.talk(player, data.kidInteractionFamousPlayer.random(), followDuringDialogue = false)
-                    } else villager.talk(player, data.kidInteractionNeutralPlayer.random(), followDuringDialogue = false)
-                }
-                return
-            }
+            // TODO: Дети.
 
             player.inventory.heldItemSlot = 4
             this.showDefaultMenu(player, villager)
@@ -147,7 +125,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
         val builder = Builder(villager, player)
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.quests-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.quests-button")!!).color(buttonTextColor)) {
 
             // Когда игрок спрашивает о квестах у безработного жителя
             if (villager.profession == Villager.Profession.NONE) {
@@ -170,7 +148,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
             }
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.trade-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.trade-button")!!).color(buttonTextColor)) {
 
             // Когда игрок спрашивает о торговле у безработного жителя
             if (villager.profession == Villager.Profession.NONE) {
@@ -185,7 +163,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
             }, 1L)
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.actions-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.actions-button")!!).color(buttonTextColor)) {
             this.showActionMenu(player, villager)
         }
 
@@ -195,7 +173,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
             }
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.close-button")!!).color(buttonTextColor)) { menu ->
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.close-button")!!).color(buttonTextColor)) { menu ->
             menu.destroy()
         }
 
@@ -217,19 +195,19 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
     private fun showActionMenu(player: Player, villager: Villager) {
 
         val builder = Builder(villager, player)
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.order-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.order-button")!!).color(buttonTextColor)) {
             player.sendMessage("It's not implemented yet. §4:(") // TODO заказы вещей в зависимости от профессии
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.talk-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.talk-button")!!).color(buttonTextColor)) {
             player.sendMessage("It's not implemented yet. §4:(") // TODO генерация фраз при генерации квеста
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.gift-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.gift-button")!!).color(buttonTextColor)) {
             player.sendMessage("It's not implemented yet. §4:(") // TODO подарки (надо ли?..)
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.return-button")!!).color(buttonTextColor)) {
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.return-button")!!).color(buttonTextColor)) {
             this.showDefaultMenu(player, villager)
         }
 
@@ -240,19 +218,15 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
         val builder = Builder(villager, player)
         villager.quests.forEach { quest ->
-            builder.button(Component.text(quest.questInfo.twoWordsDescription).color(buttonTextColor)) {
+            builder.button(Component.text(quest.questInfo.questName).color(buttonTextColor)) {
 
                 // Fame defines how villagers will talk with a player about quest details
-                villager.talk(player, when(player.fameLevel) {
-                    ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.questDescriptionForInfamousPlayer
-                    ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.questDescriptionForNeutralPlayer
-                    ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.questDescriptionForFamousPlayer
-                })
+                villager.talk(player, quest.questInfo.questDescription)
 
             }
         }
 
-        builder.button(Component.text(plugin.language!!.getString("interaction-menu.return-button")!!).color(buttonTextColor)) { menu ->
+        builder.button(Component.text(plugin.configManager.language.getString("interaction-menu.return-button")!!).color(buttonTextColor)) { menu ->
             menu.destroy()
             this.showDefaultMenu(player, villager)
         }

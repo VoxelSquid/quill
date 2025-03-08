@@ -9,25 +9,21 @@ import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
-import java.io.File
 import kotlin.random.Random
 
 @Suppress("DEPRECATION")
 class HumanoidRaceManager {
 
     fun load() {
-        plugin.saveResource("races.yml", true)
-        plugin.saveResource("skins.yml", true)
-        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "races.yml"))
-        val skins  = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "skins.yml"))
-        config.getKeys(false).forEach { name ->
+        val races = plugin.configManager.races
+        val skins = plugin.configManager.skins
+        races.getKeys(false).forEach { name ->
 
-            val section            = config.getConfigurationSection(name)?: return
+            val section            = races.getConfigurationSection(name)?: return
             val targetEntityType   = section.getString("target-entity-type") ?: return
             val targetVillagerType = section.getString("target-villager-type")?.let { Registry.VILLAGER_TYPE.get(NamespacedKey.minecraft(it.lowercase())) } ?: Registry.VILLAGER_TYPE.get(NamespacedKey.minecraft("plains"))
 
@@ -102,8 +98,8 @@ class HumanoidRaceManager {
             val specialCurrency = Material.valueOf(section.getString("special-currency")!!)
 
             val description = section.getString("race-description") ?: ""
-            plugin.logger.info("Loading $name race with ${maleSkins.size} male skin variations.")
-            plugin.logger.info("Loading $name race with ${femaleSkins.size} female skin variations.")
+            plugin.debug("Loading $name race with ${maleSkins.size} male skin variations.")
+            plugin.debug("Loading $name race with ${femaleSkins.size} female skin variations.")
             racesRegistry[name] = Race(
                 name,
                 EntityType.valueOf(targetEntityType),

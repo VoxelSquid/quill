@@ -57,7 +57,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
                     if (settlement != null && player.currentSettlement == null && settlement.data.settlementName != "Default Settlement Name") {
                         player.showTitle(Title.title(Component.text(settlement.data.settlementName).color(TextColor.fromHexString("#FFAA00")),
-                            Component.text(plugin.language?.getString("settlement-entering.entering") ?: ""),
+                            Component.text(plugin.configManager.language.getString("settlement-entering.entering") ?: ""),
                             Times.times(Duration.ofSeconds(2), Duration.ofSeconds(2), Duration.ofSeconds(2))))
                         player.currentSettlement = settlement.data.settlementName
                     }
@@ -65,7 +65,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
                     if (settlement == null && player.currentSettlement != null) {
                         settlement = settlements[world]?.find { it.data.settlementName == player.currentSettlement }
                         player.showTitle(Title.title(Component.text("${settlement?.data?.settlementName}").color(TextColor.fromHexString("#FFAA00")),
-                            Component.text(plugin.language?.getString("settlement-entering.leaving") ?: ""),
+                            Component.text(plugin.configManager.language.getString("settlement-entering.leaving") ?: ""),
                             Times.times(Duration.ofSeconds(2), Duration.ofSeconds(2), Duration.ofSeconds(2))))
                         player.currentSettlement = null
                     }
@@ -139,7 +139,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     private fun createSettlement(world: World, center: Location, villagers: List<Villager>){
         val data = Settlement.SettlementData(world.uid, defaultSettlementName, center, null, System.currentTimeMillis())
         Settlement(data, villagers.toMutableSet()).also { settlement ->
-            plugin.questGenerator.generateSettlementName(settlement)
+            plugin.geminiProvider.generateSettlementName(settlement)
             settlements[world]?.add(settlement)
         }
     }

@@ -22,31 +22,20 @@ class ItemStackCalculator {
         fun ItemStack.calculatePrice(): Int {
 
             if (this.isSimilar(getOminousBanner()))
-                return plugin.configurationClip.promptsConfig.getInt("ominous-banner-quest.reward-points")
+                return plugin.configManager.prompts.getInt("ominous-banner-quest.reward-points")
 
             return (this.type.getMaterialPrice() * this.amount + this.getUniqueItemRarity().extraPrice)
         }
 
         fun Material.getMaterialPrice(defaultPrice: Int = 50): Int {
 
-            val pricingConfig = plugin.configurationClip.pricesConfig
+            val pricingConfig = plugin.configManager.prices
 
             return if (pricingConfig.contains(this.name))
                 pricingConfig.getInt(this.name)
             else defaultPrice.also {
-                plugin.logger.info("Price for material $this not found. Updating configuration... Default price is $defaultPrice.")
-                plugin.logger.info("Configuration reloaded automatically.")
-                pricingConfig.set(this.name, "$it # Default price! Make sure to check it.")
-                plugin.reloadConfigurations()
+                plugin.logger.info("Price for material $this not found.")
             }
-        }
-
-        fun ItemStack.setMeta(itemName: String, lore: List<String>): ItemStack {
-            itemMeta = itemMeta?.apply {
-                setDisplayName(itemName)
-                this.lore = lore
-            }
-            return this
         }
 
     }

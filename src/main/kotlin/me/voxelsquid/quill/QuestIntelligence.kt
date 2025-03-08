@@ -1,11 +1,11 @@
 package me.voxelsquid.quill
 
-import me.voxelsquid.quill.util.ConfigContainer
 import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.command.DebugCommand
+import me.voxelsquid.quill.config.ConfigurationManager
 import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.settlement.SettlementManager
@@ -18,8 +18,10 @@ import me.voxelsquid.quill.villager.interaction.InteractionMenu
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.entity.raid.Raid
-import org.bukkit.*
-import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.Bukkit
+import org.bukkit.Location
+import org.bukkit.NamespacedKey
+import org.bukkit.World
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
@@ -27,28 +29,23 @@ import org.bukkit.event.Listener
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
-import java.io.File
 import java.util.*
 
 class QuestIntelligence : JavaPlugin(), Listener {
 
-    lateinit var configurationClip: ConfigurationClip
+    lateinit var configManager:     ConfigurationManager
     lateinit var commandManager:    PaperCommandManager
     lateinit var settlementManager: SettlementManager
-    lateinit var questGenerator:    GeminiProvider
+    lateinit var geminiProvider:    GeminiProvider
     lateinit var humanoidManager:   HumanoidManager
 
-    var language: YamlConfiguration? = null
     var baseColor             = "§f"
     var importantWordColor    = "§c"
     var interestingStuffColor = "§c"
 
-    val example = ConfigContainer(dataFolder, path = "sperma", defaultValue = Material.EMERALD, comments = listOf("ebalo", "sosalo")).get()
-
     override fun onEnable() {
         pluginInstance = this
-
-        ConfigContainer(dataFolder, path = "ASSSSSSS", defaultValue = Material.GOLD_ORE, comments = listOf("ebalo", "sosalo")).get()
+        configManager  = ConfigurationManager(this)
 
         if (server.pluginManager.isPluginEnabled("RealisticVillagers")) {
             logger.severe("QuestIntelligence is incompatible with RealisticVillagers and will be disabled.")
@@ -61,11 +58,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
             server.pluginManager.disablePlugin(this)
             return
         }
-
-        languageFile = File(pluginInstance.dataFolder, "language.yml")
-        super.saveResource("config.yml", false)
-        super.saveResource("language.yml", false)
-        this.reloadConfigurations()
 
         if (config.getString("core-settings.api-key") == "GEMINI_API_KEY") {
             logger.severe("The plugin must be configured before it can be used. You need to replace the value of ‘core-settings.api-key’ with a real Gemini API key (it is free of charge). See config.yml for details on how to get this key.")
@@ -81,7 +73,7 @@ class QuestIntelligence : JavaPlugin(), Listener {
         }
 
         this.setupCommands()
-        questGenerator    = GeminiProvider(this)
+        geminiProvider    = GeminiProvider(this)
         settlementManager = SettlementManager(this)
         humanoidManager   = HumanoidManager()
         this.server.pluginManager.registerEvents(this, this)
@@ -106,16 +98,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
         this.commandManager.registerCommand(DebugCommand())
     }
 
-    fun reloadConfigurations() {
-        super.reloadConfig()
-        this.configurationClip = ConfigurationClip(this)
-        this.language = YamlConfiguration.loadConfiguration(languageFile)
-        this.baseColor = config.getString("core-settings.text-formatting.base-color") ?: "§7"
-        this.importantWordColor = config.getString("core-settings.text-formatting.important-color") ?: "§6"
-        this.interestingStuffColor = config.getString("core-settings.text-formatting.emotional-color") ?: "§2"
-        messagePrefix = pluginInstance.config.getString("core-settings.message-prefix") ?: ""
-    }
-
     val gson: Gson = GsonBuilder()
         .setPrettyPrinting()
         .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestAdapter())
@@ -127,7 +109,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
         var messagePrefix = ""
 
         lateinit var pluginInstance: QuestIntelligence
-        lateinit var languageFile: File
 
         val verboseKey            by lazy { NamespacedKey(pluginInstance, "verbose") }
         val immersiveDialoguesKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
@@ -181,22 +162,6 @@ class QuestIntelligence : JavaPlugin(), Listener {
             if (player!!.persistentDataContainer.get(verboseKey, PersistentDataType.BOOLEAN) == true) {
                 this.sendMessage(messagePrefix + message)
             }
-        }
-
-    }
-
-    class ConfigurationClip(plugin: JavaPlugin) {
-
-        private val replace: Boolean = false
-
-        val pricesConfig: YamlConfiguration by lazy {
-            plugin.saveResource("prices.yml", replace)
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "prices.yml"))
-        }
-
-        val promptsConfig: YamlConfiguration by lazy {
-            plugin.saveResource("prompts.yml", replace)
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "prompts.yml"))
         }
 
     }

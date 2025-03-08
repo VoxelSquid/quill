@@ -7,7 +7,6 @@ import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.addI
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.takeItemFromQuillInventory
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.updateQuests
-import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
@@ -50,7 +49,7 @@ class ProfessionManager: Listener {
             uniqueItemProduceQueue.keys.randomOrNull()?.let { villager ->
                 uniqueItemProduceQueue[villager]?.let { uniqueItem ->
                     plugin.debug("Villager of profession ${villager.profession} tries to produce an unique item of type ${uniqueItem.type}!")
-                    plugin.questGenerator.generateUniqueItemDescription(villager, uniqueItem)
+                    plugin.geminiProvider.generateUniqueItemDescription(villager, uniqueItem)
                     uniqueItemProduceQueue.remove(villager)
                 }
             }
@@ -62,10 +61,10 @@ class ProfessionManager: Listener {
 
                 val profession = villager.profession
 
-                if (!plugin.config.contains("villager-item-producing.profession.$profession"))
+                if (!plugin.configManager.professions.contains("villager-item-producing.profession.$profession"))
                     continue
 
-                val itemsToProduce = plugin.config.getStringList("villager-item-producing.profession.$profession.item-produce")
+                val itemsToProduce = plugin.configManager.professions.getStringList("villager-item-producing.profession.$profession.item-produce")
                 if (itemsToProduce.isEmpty()) {
                     continue
                 }
@@ -82,7 +81,7 @@ class ProfessionManager: Listener {
                     val recipes = Bukkit.getRecipesFor(ItemStack(Material.valueOf(itemToProduce)))
 
                     if (recipes.isEmpty()) {
-                        plugin.debug("Uncraftable item in [\"config.yml\", villager-item-producing.profession.$profession.item-produce]: $itemToProduce!")
+                        plugin.debug("Uncraftable item in [\"professions.yml\", villager-item-producing.profession.$profession.item-produce]: $itemToProduce!")
                         continue
                     }
 
@@ -150,14 +149,14 @@ class ProfessionManager: Listener {
     @EventHandler
     private fun onVillagerProduceItem(event: VillagerProduceItemEvent) {
         if (event.producedItem.type == Material.BOOK && event.villager.profession == Villager.Profession.LIBRARIAN
-            || plugin.config.getStringList("villager-item-producing.mastery-affected-items").contains(event.producedItem.type.toString())) {
+            || plugin.configManager.professions.getStringList("villager-item-producing.mastery-affected-items").contains(event.producedItem.type.toString())) {
 
             val villager        = event.villager
             val professionLevel = villager.villagerLevel
             val item            = event.producedItem
 
             // Unique item generation
-            if (Random.nextInt(100) in 0..professionLevel * plugin.config.getInt("villager-item-producing.unique-item-chance")) {
+            if (Random.nextInt(100) in 0..professionLevel * plugin.configManager.professions.getInt("villager-item-producing.unique-item-chance")) {
                 val uniqueItem = this.createUniqueItem(villager, item)
                 uniqueItemProduceQueue[villager] = uniqueItem
                 return
@@ -212,14 +211,14 @@ class ProfessionManager: Listener {
 
         // Определяем возможные атрибуты для предмета
         val attributeNames: List<String> = when (itemStack.type) {
-            Material.IRON_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD -> plugin.config.getStringList("villager-item-producing.allowed-attributes.swords")
-            Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE -> plugin.config.getStringList("villager-item-producing.allowed-attributes.pickaxes")
-            Material.IRON_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE -> plugin.config.getStringList("villager-item-producing.allowed-attributes.axes")
-            Material.LEATHER_HELMET, Material.IRON_HELMET, Material.DIAMOND_HELMET, Material.NETHERITE_HELMET -> plugin.config.getStringList("villager-item-producing.allowed-attributes.helmets")
-            Material.LEATHER_CHESTPLATE, Material.IRON_CHESTPLATE, Material.DIAMOND_CHESTPLATE, Material.NETHERITE_CHESTPLATE -> plugin.config.getStringList("villager-item-producing.allowed-attributes.chestplates")
-            Material.LEATHER_LEGGINGS, Material.IRON_LEGGINGS, Material.DIAMOND_LEGGINGS, Material.NETHERITE_LEGGINGS -> plugin.config.getStringList("villager-item-producing.allowed-attributes.leggings")
-            Material.LEATHER_BOOTS, Material.IRON_BOOTS, Material.DIAMOND_BOOTS, Material.NETHERITE_BOOTS -> plugin.config.getStringList("villager-item-producing.allowed-attributes.boots")
-            else -> plugin.config.getStringList("villager-item-producing.allowed-attributes.fishing-rod")
+            Material.IRON_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.swords")
+            Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.pickaxes")
+            Material.IRON_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.axes")
+            Material.LEATHER_HELMET, Material.IRON_HELMET, Material.DIAMOND_HELMET, Material.NETHERITE_HELMET -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.helmets")
+            Material.LEATHER_CHESTPLATE, Material.IRON_CHESTPLATE, Material.DIAMOND_CHESTPLATE, Material.NETHERITE_CHESTPLATE -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.chestplates")
+            Material.LEATHER_LEGGINGS, Material.IRON_LEGGINGS, Material.DIAMOND_LEGGINGS, Material.NETHERITE_LEGGINGS -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.leggings")
+            Material.LEATHER_BOOTS, Material.IRON_BOOTS, Material.DIAMOND_BOOTS, Material.NETHERITE_BOOTS -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.boots")
+            else -> plugin.configManager.professions.getStringList("villager-item-producing.allowed-attributes.fishing-rod")
         }
 
         // Определяем слот
@@ -396,7 +395,7 @@ class ProfessionManager: Listener {
         }
 
     private fun randomTrimPattern(villager: Villager) : TrimPattern? {
-        return if (plugin.config.getBoolean("villager-item-producing.forced-armor-trims")) {
+        return if (plugin.configManager.professions.getBoolean("villager-item-producing.forced-armor-trims")) {
             trims.values.random()
         } else
             villager.quillInventory.filterNotNull().filter { it.type.toString().contains("TRIM_SMITHING_TEMPLATE") }.randomOrNull()?.let { trim ->
@@ -429,13 +428,13 @@ class ProfessionManager: Listener {
 
     enum class UniqueItemRarity(val color: TextColor, val extraPrice: Int) {
         NONE(TextColor.color(255, 255, 255), 0),
-        COMMON(TextColor.color(169, 169, 169), plugin.config.getInt("villager-item-producing.extra-rarity-price.COMMON")),
-        UNCOMMON(TextColor.color(0, 255, 0), plugin.config.getInt("villager-item-producing.extra-rarity-price.UNCOMMON")),
-        RARE(TextColor.color(250, 225, 0), plugin.config.getInt("villager-item-producing.extra-rarity-price.RARE")),
-        EPIC(TextColor.color(0, 255, 255), plugin.config.getInt("villager-item-producing.extra-rarity-price.EPIC")),
-        LEGENDARY(TextColor.color(250, 129, 0), plugin.config.getInt("villager-item-producing.extra-rarity-price.LEGENDARY")),
-        MYTHICAL(TextColor.color(255, 0, 0), plugin.config.getInt("villager-item-producing.extra-rarity-price.MYTHICAL")),
-        DIVINE(TextColor.color(255, 80, 180), plugin.config.getInt("villager-item-producing.extra-rarity-price.DIVINE"))
+        COMMON(TextColor.color(169, 169, 169), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.COMMON")),
+        UNCOMMON(TextColor.color(0, 255, 0), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.UNCOMMON")),
+        RARE(TextColor.color(250, 225, 0), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.RARE")),
+        EPIC(TextColor.color(0, 255, 255), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.EPIC")),
+        LEGENDARY(TextColor.color(250, 129, 0), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.LEGENDARY")),
+        MYTHICAL(TextColor.color(255, 0, 0), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.MYTHICAL")),
+        DIVINE(TextColor.color(255, 80, 180), plugin.configManager.professions.getInt("villager-item-producing.extra-rarity-price.DIVINE"))
     }
 
 }

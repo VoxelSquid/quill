@@ -21,9 +21,6 @@ import me.voxelsquid.quill.quest.data.QuestType
 import me.voxelsquid.quill.quest.data.VillagerQuest
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.getMaterialPrice
-import me.voxelsquid.quill.villager.ReputationManager
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fameLevel
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -59,7 +56,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
             val items = mutableMapOf<Material, Pair<Int, Int>>()
 
             // Извлекаем и обрабатываем список предметов
-            plugin.config.getStringList("villager-item-producing.profession.$profession.item-priority").forEach { line ->
+            plugin.configManager.professions.getStringList("villager-item-producing.profession.$profession.item-priority").forEach { line ->
 
                 val (materialName, amountRange) = line.split("~")
                 val (min, max) = amountRange.split("-").map(String::toInt).let { range ->
@@ -120,7 +117,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         if (villager.persistentDataContainer.get(personalDataKey, PersistentDataType.STRING) == null) {
             plugin.logger.info("Villager at ${villager.location}.")
             plugin.debug("Found villager has no personal data. Generating it!")
-            plugin.questGenerator.generatePersonalHumanoidData(villager)
+            plugin.geminiProvider.generatePersonalHumanoidData(villager)
             return
         }
 
@@ -157,9 +154,9 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
         plugin.debug("Generating a quest reward...")
         var rewardPrice = when (questType) {
-            QuestType.OMINOUS_BANNER -> plugin.configurationClip.promptsConfig.getInt("ominous-banner-quest.reward-points")
-            QuestType.BOOZE -> plugin.configurationClip.promptsConfig.getInt("booze-quest.reward-points")
-            QuestType.ENCHANTED_BOOK -> plugin.configurationClip.promptsConfig.getInt("enchanted-book-quest.reward-points")
+            QuestType.OMINOUS_BANNER -> plugin.configManager.prompts.getInt("ominous-banner-quest.reward-points")
+            QuestType.BOOZE -> plugin.configManager.prompts.getInt("booze-quest.reward-points")
+            QuestType.ENCHANTED_BOOK -> plugin.configManager.prompts.getInt("enchanted-book-quest.reward-points")
             else -> questItem.calculatePrice()
         }
 
@@ -242,7 +239,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         villager.addItemToQuillInventory(questItem)
 
         // TODO: Добавляем игроку в стату +1 выполненный квест
-        player.fame += 0.5
+        // TODO: Улучшение репутации после выполнения квеста.
 
         // Выдаём экспу игроку и жителю
         player.giveExp(quest.rewardPrice / 20, true)
@@ -251,22 +248,14 @@ class QuestManager(private val plugin: QuestIntelligence) {
         // Закрываем инвентарь через один тик, чтобы избежать багов
         plugin.server.scheduler.runTaskLater(plugin, { _ ->
             player.closeInventory()
-            if (quest.type != QuestType.BOOZE) villager.talk(player, when (player.fameLevel) {
-                ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.rewardTextForInfamousPlayer
-                ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.rewardTextForNeutralPlayer
-                ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.rewardTextForFamousPlayer
-            })
+            if (quest.type != QuestType.BOOZE) villager.talk(player, quest.questInfo.rewardText)
             villager.removeQuest(quest)
             villager.updateQuests()
         }, 1L)
 
         when (quest.type) {
             QuestType.BOOZE -> this.finishBrewQuest(villager, questItem) {
-                villager.talk(player, when (player.fameLevel) {
-                    ReputationManager.Companion.Fame.INFAMOUS -> quest.questInfo.rewardTextForInfamousPlayer
-                    ReputationManager.Companion.Fame.NEUTRAL  -> quest.questInfo.rewardTextForNeutralPlayer
-                    ReputationManager.Companion.Fame.FAMOUS   -> quest.questInfo.rewardTextForFamousPlayer
-                })
+                villager.talk(player, quest.questInfo.rewardText)
             }
 
             QuestType.FOOD -> villager.eat()
@@ -298,7 +287,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
     private val treasureItems: MutableList<Triple<Material, Pair<Int, Int>, String>> =
         mutableListOf<Triple<Material, Pair<Int, Int>, String>>().apply {
-            val data = plugin.configurationClip.promptsConfig.getStringList("treasure-hunt-quest.allowed-items")
+            val data = plugin.configManager.prompts.getStringList("treasure-hunt-quest.allowed-items")
             for (line in data) {
                 val (materialName, amount, description) = line.split("~")
                 val (min, max) = amount.split("-")
@@ -307,7 +296,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         }
 
     private fun randomPotion(): ItemStack {
-        val allowedPotionTypes = plugin.configurationClip.promptsConfig.getStringList("booze-quest.allowed-potion-types")
+        val allowedPotionTypes = plugin.configManager.prompts.getStringList("booze-quest.allowed-potion-types")
         return ItemStack(Material.POTION).apply {
             itemMeta = (this.itemMeta as PotionMeta).apply {
                 this.basePotionType = PotionType.valueOf(allowedPotionTypes.random())
@@ -318,7 +307,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
     private val enchantmentRegistry = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
     private fun randomEnchantedBook(villager: Villager): ItemStack {
 
-        val allowedEnchantments = plugin.configurationClip.promptsConfig.getStringList("enchanted-book-quest.allowed-enchantments")
+        val allowedEnchantments = plugin.configManager.prompts.getStringList("enchanted-book-quest.allowed-enchantments")
         allowedEnchantments.removeIf { enchantName ->
             villager.quillInventory.contents.filterNotNull().any { item ->
                 item.itemMeta is EnchantmentStorageMeta && (item.itemMeta as EnchantmentStorageMeta).hasStoredEnchant(enchantName)
@@ -344,7 +333,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         ItemStack(Material.entries.filter { it.toString().contains("SMITHING_TEMPLATE") && !villager.quillInventory.contains(it) }.random())
 
     private fun randomFood(): ItemStack =
-        ItemStack(Material.valueOf(plugin.configurationClip.promptsConfig.getStringList("food-quest.allowed-types").random()), 10 + Random.nextInt(6))
+        ItemStack(Material.valueOf(plugin.configManager.prompts.getStringList("food-quest.allowed-types").random()), 10 + Random.nextInt(6))
 
     private fun getRandomVillager(): Villager? {
         val villagers = plugin.enabledWorlds.random().entities.filterIsInstance<Villager>()
@@ -353,7 +342,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
     private fun requestQuestData(villager: Villager, quest: VillagerQuest.Builder) {
         plugin.server.scheduler.runTaskAsynchronously(plugin) { _ ->
-            plugin.questGenerator.generateQuestData(this, villager, quest)
+            plugin.geminiProvider.generateQuestData(this, villager, quest)
         }
     }
 
@@ -383,9 +372,9 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
         // Награда за некоторые квесты определяется отдельно от prices.yml
         val questItemPrice = when (questType) {
-            QuestType.OMINOUS_BANNER -> plugin.configurationClip.promptsConfig.getInt("ominous-banner-quest.reward-points")
-            QuestType.BOOZE -> plugin.configurationClip.promptsConfig.getInt("booze-quest.reward-points")
-            QuestType.ENCHANTED_BOOK -> plugin.configurationClip.promptsConfig.getInt("enchanted-book-quest.reward-points")
+            QuestType.OMINOUS_BANNER -> plugin.configManager.prompts.getInt("ominous-banner-quest.reward-points")
+            QuestType.BOOZE -> plugin.configManager.prompts.getInt("booze-quest.reward-points")
+            QuestType.ENCHANTED_BOOK -> plugin.configManager.prompts.getInt("enchanted-book-quest.reward-points")
             else -> questItem.type.getMaterialPrice()
         }
 

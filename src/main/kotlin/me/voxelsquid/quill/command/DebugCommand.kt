@@ -11,10 +11,8 @@ import me.voxelsquid.quill.ai.GeminiProvider
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
@@ -45,12 +43,7 @@ class DebugCommand : BaseCommand() {
         sender.sendMessage("IMMA FIRIN' MAH LAZOR")
     }
 
-    @Subcommand("reload")
-    @CommandPermission("quill.reload")
-    fun onReload(sender: CommandSender) {
-        plugin.reloadConfigurations()
-        plugin.questGenerator = GeminiProvider(plugin)
-    }
+    // TODO: Reload command.
 
     @Subcommand("dialogue format")
     @CommandPermission("quill.dialogue.format")
@@ -58,7 +51,7 @@ class DebugCommand : BaseCommand() {
     fun onDialogueFormat(player: Player, format: DialogueManager.DialogueFormat) {
         if (DialogueManager.DialogueFormat.entries.find { type -> type == format } != null) {
             player.persistentDataContainer.set(immersiveDialoguesKey, PersistentDataType.STRING, format.toString())
-            QuestIntelligence.pluginInstance.language?.let { language ->
+            plugin.configManager.language.let { language ->
                 language.getString("command-message.dialogue-format-changed")?.let { message ->
                     player.sendFormattedMessage(message.replace("{dialogueFormat}", format.toString()))
                 }
@@ -110,19 +103,6 @@ class DebugCommand : BaseCommand() {
         player.teleport(settlement.data.center)
     }
 
-    @Subcommand("fame set")
-    @CommandPermission("quill.fame.set")
-    fun onFameSet(sender: CommandSender, name: String, amount: Int) {
-        Bukkit.getPlayer(name)?.let { player: Player ->
-            player.fame = amount.toDouble()
-            val successMessage = plugin.language?.getString("command-message.player-fame-changed")?.replace("{playerName}", name)?.replace("{newFame}", amount.toString()) ?: return
-            if (sender is Player) sender.sendFormattedMessage(successMessage) else plugin.logger.info(successMessage)
-        } ?: run {
-            val errorMessage = plugin.language?.getString("error-message.player-not-found")?.replace("{playerName}", name) ?: return
-            if (sender is Player) sender.sendFormattedMessage(errorMessage) else plugin.logger.info(errorMessage)
-        }
-    }
-
     @Subcommand("debug banner")
     @CommandPermission("quill.banner")
     fun onDebugBanner(player: Player) {
@@ -139,8 +119,8 @@ class DebugCommand : BaseCommand() {
         } else data.set(verboseKey, PersistentDataType.BOOLEAN, !data.get(verboseKey, PersistentDataType.BOOLEAN)!!)
 
         if (data.get(verboseKey, PersistentDataType.BOOLEAN) == true) {
-            player.sendFormattedMessage(plugin.language!!.getString("command-message.verbose.activated")!!)
-        } else player.sendFormattedMessage(plugin.language!!.getString("command-message.verbose.deactivated")!!)
+            player.sendFormattedMessage(plugin.configManager.language.getString("command-message.verbose.activated")!!)
+        } else player.sendFormattedMessage(plugin.configManager.language.getString("command-message.verbose.deactivated")!!)
     }
 
     companion object {

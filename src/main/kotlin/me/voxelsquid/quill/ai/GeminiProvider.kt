@@ -3,7 +3,6 @@ package me.voxelsquid.quill.ai
 import com.google.gson.JsonSyntaxException
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.isChristmas
-import me.voxelsquid.quill.QuestIntelligence.Companion.languageFile
 import me.voxelsquid.quill.event.*
 import me.voxelsquid.quill.humanoid.HumanoidManager
 import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidCharacterType
@@ -32,12 +31,12 @@ import org.bukkit.entity.Villager
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.PotionMeta
+import java.io.File
 import java.io.IOException
 import java.io.StringReader
 import java.net.InetSocketAddress
 import java.net.Proxy
 import kotlin.random.Random
-
 
 class GeminiProvider(private val plugin: QuestIntelligence) {
 
@@ -70,20 +69,16 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     private val key = plugin.config.getString("core-settings.api-key")
     private val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$key"
 
-    private fun generateTranslation() = GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${languageFile.readText()}\n```")
+    private fun generateTranslation() = GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to ${plugin.config.getString("core-settings.language")} language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${File(plugin.dataFolder, "language.yml").readText()}\n```")
 
     init {
-        if (!languageFile.exists())
-            plugin.saveResource("language.yml", false)
         if (plugin.config.getBoolean("core-settings.automatic-configuration-translation")) {
             this.generateTranslation()
         } else {
             plugin.logger.info("Automatic configuration translation is disabled. :(")
-            plugin.language = YamlConfiguration.loadConfiguration(languageFile)
             GenerationRequest(this, client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
         }
     }
-
 
     data class SettlementInformation(val townName: String)
     fun generateSettlementName(settlement: Settlement) {
@@ -99,7 +94,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "namingStyle"           to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
         )
 
-        val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("settlement-name")!!) { acc, entry ->
+        val prompt = placeholders.entries.fold(plugin.configManager.prompts.getString("settlement-name")!!) { acc, entry ->
             acc.replace("{${entry.key}}", entry.value)
         }
 
@@ -134,7 +129,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "raceDescription"     to raceDescription
         )
 
-        val prompt = placeholders.entries.fold(plugin.configurationClip.promptsConfig.getString("personal-villager-data")!!) { acc, entry ->
+        val prompt = placeholders.entries.fold(plugin.configManager.prompts.getString("personal-villager-data")!!) { acc, entry ->
             acc.replace("{${entry.key}}", entry.value)
         }
 
@@ -182,7 +177,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             "namingStyle"             to (plugin.config.getString("core-settings.naming-style") ?: "Fantasy")
         )
 
-        val promptTemplate = plugin.configurationClip.promptsConfig.getString("unique-item-description")
+        val promptTemplate = plugin.configManager.prompts.getString("unique-item-description")
             ?: throw IllegalArgumentException("Unique item description is not defined! Check prompts.yml!")
 
         val prompt = promptTemplate.replaceMap(placeholders)
@@ -209,7 +204,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             extraArguments += "'It's Christmas!'"
         }
 
-        val questRequirements = plugin.configurationClip.promptsConfig.getString(
+        val questRequirements = plugin.configManager.prompts.getString(
             "${quest.questType.promptConfigPath}.quest-requirements"
         ) ?: kotlin.run {
             plugin.logger.warning("Quest requirements for quest type ${quest.questType} is not defined!")
@@ -255,7 +250,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             placeholders["enchantmentType"] = it.storedEnchants.keys.first().key.value().replace("_", " ")
         }
 
-        val promptTemplate = plugin.configurationClip.promptsConfig.getString("basic-task-description")
+        val promptTemplate = plugin.configManager.prompts.getString("basic-task-description")
             ?: throw IllegalArgumentException("Basic task description is not defined! Check prompts.yml!")
 
         val prompt = promptTemplate.replaceMap(mapOf("questRequirements" to questRequirements)).replaceMap(placeholders)
@@ -263,7 +258,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedQuestJson ->
             try {
                 val questInfo = plugin.gson.fromJson(cleanedQuestJson, VillagerQuest.QuestInfo::class.java)
-                questInfo.twoWordsDescription = questInfo.twoWordsDescription.replace("*", "")
+                questInfo.questName = questInfo.questName.replace("*", "")
                 quest.setQuestInfo(questInfo)
                 plugin.server.scheduler.runTask(plugin) { _ ->
                     plugin.server.pluginManager.callEvent(QuestGenerateEvent(villager, quest.build()))
@@ -326,7 +321,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                                     plugin.logger.info("Connection with the AI has been established successfully!")
                                     plugin.logger.info("QuestIntelligence uses automatic configuration translation.")
                                     // plugin.logger.warning(responseText)
-                                    plugin.language = YamlConfiguration.loadConfiguration(StringReader(it))
+                                    plugin.configManager.language = YamlConfiguration.loadConfiguration(StringReader(it))
                                 }
 
                                 responseBody.close()

@@ -76,8 +76,8 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         }
 
         val formattedMessage: String = when (entity) {
-            is Villager -> plugin.language?.getString("villager-message-chat-format")!!.replace("{villagerName}", entity.customName ?: "").replace("{message}", message)
-            is Illager  -> plugin.language?.getString("illager-message-chat-format")!!.replace("{illagerName}", entity.customName ?: "").replace("{message}", message)
+            is Villager -> plugin.configManager.language.getString("villager-message-chat-format")!!.replace("{villagerName}", entity.customName ?: "").replace("{message}", message)
+            is Illager  -> plugin.configManager.language.getString("illager-message-chat-format")!!.replace("{illagerName}", entity.customName ?: "").replace("{message}", message)
             else        -> throw IllegalStateException("Stop it. Get some help.")
         }
         player.sendMessage(formattedMessage)

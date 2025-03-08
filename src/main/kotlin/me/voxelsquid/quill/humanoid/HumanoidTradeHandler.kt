@@ -7,8 +7,6 @@ import me.voxelsquid.quill.humanoid.HumanoidManager.HumanoidEntityExtension.upda
 import me.voxelsquid.quill.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.util.ItemStackCalculator.Companion.getMaterialPrice
-import me.voxelsquid.quill.villager.ReputationManager.Companion.fame
-import me.voxelsquid.quill.villager.ReputationManager.Companion.getRespect
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
@@ -36,7 +34,7 @@ class HumanoidTradeHandler {
 
         private val Villager.producedItems: List<ItemStack>
             get() {
-                val itemsToProduce = QuestIntelligence.pluginInstance.config.getStringList("villager-item-producing.profession.${this.profession}.item-produce")
+                val itemsToProduce = QuestIntelligence.pluginInstance.configManager.professions.getStringList("villager-item-producing.profession.${this.profession}.item-produce")
                 return quillInventory.filterNotNull().filter { itemStack -> itemsToProduce.contains(itemStack.type.toString()) }.toList()
             }
 
@@ -61,7 +59,7 @@ class HumanoidTradeHandler {
                 }
             }
 
-            val tradeProfessionItemsOnly = QuestIntelligence.pluginInstance.config.getBoolean("villager-item-producing.trade-profession-items-only")
+            val tradeProfessionItemsOnly = QuestIntelligence.pluginInstance.configManager.professions.getBoolean("villager-item-producing.trade-profession-items-only")
             val itemsToTrade = if (tradeProfessionItemsOnly) producedItems else quillInventory.filterNotNull()
 
             // Going through every produced item.
@@ -76,11 +74,7 @@ class HumanoidTradeHandler {
                 }
 
                 val trade = TradingSlot(Material.AIR, 0) to TradingSlot(Material.AIR, 0)
-
-                var price = item.calculatePrice()
-
-                val multiplier = (1.0 - 0.005 * player.fame - 0.1 * this.getRespect(player)).coerceIn(0.5, 3.0)
-                price = (price.toDouble() * multiplier).toInt()
+                val price = item.calculatePrice()
 
                 // Use the special currency if needed.
                 val useSpecialCurrency = price / currency.getMaterialPrice() > currency.maxStackSize * 2

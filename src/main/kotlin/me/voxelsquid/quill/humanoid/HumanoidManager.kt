@@ -18,7 +18,6 @@ import me.voxelsquid.quill.settlement.Settlement
 import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.util.InventorySerializer
 import me.voxelsquid.quill.villager.ProfessionManager
-import me.voxelsquid.quill.villager.ReputationManager
 import me.voxelsquid.quill.villager.interaction.DialogueManager
 import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
 import net.kyori.adventure.text.Component
@@ -51,7 +50,6 @@ class HumanoidManager : Listener {
     private val protocolManager    = HumanoidProtocolManager(humanoidRegistry)
     private val interactionManager = InteractionMenuManager(plugin)
     private val professionManager  = ProfessionManager()
-    private val reputationManager  = ReputationManager()
     private val tradeHandler       = HumanoidTradeHandler()
     private val questManager       = QuestManager(plugin)
     private val dialogueManager    = DialogueManager(plugin)
@@ -139,10 +137,7 @@ class HumanoidManager : Listener {
         val sleepInterruptionMessages: MutableList<String>,
         val damageMessages: MutableList<String>,
         val joblessMessages: MutableList<String>,
-        val noQuestMessages: MutableList<String>,
-        val badReputationInteractionDenial: MutableList<String>,
-        val kidInteractionFamousPlayer: MutableList<String>,
-        val kidInteractionNeutralPlayer: MutableList<String>
+        val noQuestMessages: MutableList<String>
     ) {
         override fun toString(): String = plugin.gson.toJson(this)
     }
@@ -277,7 +272,7 @@ class HumanoidManager : Listener {
         }
 
         fun Villager.removeQuest(quest: VillagerQuest) {
-            persistentDataContainer.set(HumanoidNamespace.questDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { removeIf { it.questInfo.twoWordsDescription == quest.questInfo.twoWordsDescription } }))
+            persistentDataContainer.set(HumanoidNamespace.questDataKey, PersistentDataType.STRING, pluginInstance.gson.toJson(quests.apply { removeIf { it.questInfo.questName == quest.questInfo.questName } }))
         }
     }
 
@@ -289,7 +284,7 @@ class HumanoidManager : Listener {
         ADVENTUROUS, MYSTERIOUS, DREAMY, IMPULSIVE, OBSESSIVE, RECKLESS, HUMBLE, FORGIVING,
         RATIONAL, ARTISTIC, ANXIOUS, PLAYFUL, RELAXED, GRUMPY, INTELLECTUAL, NAIVE, IGNORANT,
         ANGRY, MAD_SCIENTIST, DRUNKARD, SANE, ROMANTIC, REBELLIOUS, DRAMATIC, LUCKY, UNLUCKY,
-        THIEF, POTHEAD, RANDOM, EVIL, SHAMAN
+        THIEF, POTHEAD, RANDOM, EVIL, SHAMAN, PHILOSOPHICAL
     }
 
     object HumanoidNamespace {
