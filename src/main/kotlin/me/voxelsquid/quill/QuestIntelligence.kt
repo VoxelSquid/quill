@@ -1,118 +1,82 @@
 package me.voxelsquid.quill
 
-import co.aikar.commands.PaperCommandManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import me.voxelsquid.quill.ai.GeminiProvider
-import me.voxelsquid.quill.command.DebugCommand
-import me.voxelsquid.quill.config.ConfigurationManager
-import me.voxelsquid.quill.humanoid.HumanoidManager
-import me.voxelsquid.quill.quest.data.VillagerQuest
-import me.voxelsquid.quill.settlement.SettlementManager
-import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlements
-import me.voxelsquid.quill.settlement.SettlementManager.Companion.settlementsWorldKey
-import me.voxelsquid.quill.util.LocationAdapter
-import me.voxelsquid.quill.villager.interaction.DialogueManager
-import me.voxelsquid.quill.villager.interaction.DialogueManager.DialogueFormat
-import me.voxelsquid.quill.villager.interaction.InteractionMenu
-import me.voxelsquid.quill.villager.interaction.InteractionMenuManager
+import me.voxelsquid.quill.gameplay.ai.GeminiProvider
+import me.voxelsquid.quill.base.config.ConfigurationManager
+import me.voxelsquid.quill.base.PluginRuntimeController
+import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager
+import me.voxelsquid.quill.gameplay.quest.data.VillagerQuest
+import me.voxelsquid.quill.gameplay.settlement.SettlementManager
+import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
+import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlementsWorldKey
+import me.voxelsquid.quill.gameplay.util.LocationAdapter
+import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager
+import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.DialogueFormat
+import me.voxelsquid.quill.gameplay.villager.interaction.InteractionMenu
+import me.voxelsquid.quill.gameplay.villager.interaction.InteractionMenuManager
 import net.minecraft.core.registries.Registries
 import net.minecraft.world.entity.raid.Raid
-import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
 import org.bukkit.World
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
-import org.bukkit.event.Listener
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
-class QuestIntelligence : JavaPlugin(), Listener {
+class QuestIntelligence : JavaPlugin() {
 
-    lateinit var configManager:     ConfigurationManager
-    lateinit var commandManager:    PaperCommandManager
-    lateinit var settlementManager: SettlementManager
-    lateinit var geminiProvider:    GeminiProvider
-    lateinit var humanoidManager:   HumanoidManager
+    lateinit var controller:      PluginRuntimeController
+    lateinit var geminiProvider:  GeminiProvider
+    lateinit var humanoidManager: HumanoidManager
+    lateinit var configManager:   ConfigurationManager
 
-    var baseColor             = "§f"
-    var importantWordColor    = "§c"
-    var interestingStuffColor = "§c"
+    var allowedWorlds: List<World> = mutableListOf()
 
     override fun onEnable() {
-        pluginInstance = this
-        configManager  = ConfigurationManager(this)
 
-        if (server.pluginManager.isPluginEnabled("RealisticVillagers")) {
-            logger.severe("QuestIntelligence is incompatible with RealisticVillagers and will be disabled.")
-            server.pluginManager.disablePlugin(this)
+        // PluginRuntimeController checks some stuff, saves resources, generates configs, setups commands.
+        controller = PluginRuntimeController()
+        if (!controller.isOk())
             return
-        }
 
-        if (!server.pluginManager.isPluginEnabled("packetevents")) {
-            logger.severe("QuestIntelligence requires PacketEvents to work. Please install it.")
-            server.pluginManager.disablePlugin(this)
-            return
-        }
+        configManager = controller.configurationManager
+        allowedWorlds = controller.allowedWorlds.map { server.getWorld(it) ?: throw NullPointerException("Non-existent world specified in the config.yml: $it.") }
+        controller.setupCommands()
 
-        if (config.getString("core-settings.api-key") == "GEMINI_API_KEY") {
-            logger.severe("The plugin must be configured before it can be used. You need to replace the value of ‘core-settings.api-key’ with a real Gemini API key (it is free of charge). See config.yml for details on how to get this key.")
-            logger.severe("QuestIntelligence will be disabled.")
-            Bukkit.getServer().pluginManager.disablePlugin(this)
-            return
-        }
-
-        enabledWorlds = mutableListOf<World>().apply {
-            config.getStringList("core-settings.enabled-worlds").forEach {
-                world -> add(Bukkit.getWorld(world)!!)
-            }
-        }
-
-        this.setupCommands()
-        geminiProvider    = GeminiProvider(this)
-        settlementManager = SettlementManager(this)
-        humanoidManager   = HumanoidManager()
-        this.server.pluginManager.registerEvents(this, this)
+        geminiProvider  = GeminiProvider(this)
+        humanoidManager = HumanoidManager()
     }
 
     override fun onDisable() {
         DialogueManager.dialogues.values.forEach(DialogueManager.DialogueWindow::destroy)
         InteractionMenuManager.openedMenuList.forEach(InteractionMenu::destroy)
-        this.saveSettlements()
-    }
-
-    var enabledWorlds: List<World> = mutableListOf()
-
-    private fun saveSettlements() {
-        enabledWorlds.forEach { world ->
+        allowedWorlds.forEach { world ->
             world.persistentDataContainer.set(settlementsWorldKey, PersistentDataType.STRING, gson.toJson(settlements[world]?.map { it.data }))
         }
     }
 
-    private fun setupCommands() {
-        this.commandManager = PaperCommandManager(this)
-        this.commandManager.registerCommand(DebugCommand())
+    init {
+        pluginInstance = this
     }
 
-    val gson: Gson = GsonBuilder()
-        .setPrettyPrinting()
-        .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestAdapter())
-        .registerTypeAdapter(Location::class.java, LocationAdapter())
-        .create()
-
     companion object {
-
-        var messagePrefix = ""
 
         lateinit var pluginInstance: QuestIntelligence
 
         val verboseKey            by lazy { NamespacedKey(pluginInstance, "verbose") }
         val immersiveDialoguesKey by lazy { NamespacedKey(pluginInstance, "immersiveDialogues") }
         val currentSettlementKey  by lazy { NamespacedKey(pluginInstance, "currentSettlement") }
+
+        val gson: Gson = GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(VillagerQuest::class.java, VillagerQuest.VillagerQuestAdapter())
+            .registerTypeAdapter(Location::class.java, LocationAdapter())
+            .create()
 
         fun getOminousBanner() : ItemStack {
             return CraftItemStack.asBukkitCopy(
@@ -155,18 +119,18 @@ class QuestIntelligence : JavaPlugin(), Listener {
         }
 
         fun Player.sendFormattedMessage(message: String) {
-            this.sendMessage(messagePrefix + message)
+            this.sendMessage(pluginInstance.controller.messagePrefix + message)
         }
 
         fun Player.sendVerbose(message: String) {
             if (player!!.persistentDataContainer.get(verboseKey, PersistentDataType.BOOLEAN) == true) {
-                this.sendMessage(messagePrefix + message)
+                this.sendMessage(pluginInstance.controller.messagePrefix + message)
             }
         }
 
     }
 
-    val debug = false
+    val debug = true
     fun debug(message: String) {
         if (debug) logger.info("[DEBUG] $message")
     }
