@@ -7,6 +7,7 @@ import com.google.common.reflect.TypeToken
 import io.papermc.paper.event.player.PlayerTradeEvent
 import me.voxelsquid.quill.QuestIntelligence.Companion.gson
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
+import me.voxelsquid.quill.base.config.ConfigurableValue
 import me.voxelsquid.quill.gameplay.event.HumanoidPersonalDataGeneratedEvent
 import me.voxelsquid.quill.gameplay.event.QuestGenerateEvent
 import me.voxelsquid.quill.gameplay.humanoid.race.HumanoidRaceManager
@@ -58,9 +59,9 @@ class HumanoidManager : Listener {
 
     val dialogueManager = DialogueManager(plugin)
 
-    private val questIntervalTicks = plugin.config.getLong("core-settings.tick-period.quest")
-    private val foodIntervalTicks  = plugin.config.getLong("core-settings.tick-period.food")
-    private val workIntervalTicks  = plugin.config.getLong("core-settings.tick-period.work")
+    private val questIntervalTicks = ConfigurableValue(path = "gameplay.core.quest-tick-interval", defaultValue = 200L, comments = mutableListOf("Each iteration only ONE villager in the entire world will be selected to generate a new quest.")).get()
+    private val foodIntervalTicks  = ConfigurableValue(path = "gameplay.core.food-tick-interval", defaultValue = 4800L, comments = mutableListOf("Each iteration ALL villagers in the entire world will eat.")).get()
+    private val workIntervalTicks  = ConfigurableValue(path = "gameplay.core.work-tick-interval", defaultValue = 2400L, comments = mutableListOf("Each iteration ALL villagers in the entire world will produce items to trade.")).get()
 
     init {
         PacketEvents.getAPI().eventManager.registerListener(protocolManager)

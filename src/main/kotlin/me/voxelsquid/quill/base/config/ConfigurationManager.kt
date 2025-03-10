@@ -6,7 +6,7 @@ import java.io.File
 
 class ConfigurationManager(private val dataFolder: File = plugin.dataFolder) {
 
-    private val replaceResources = ConfigurableValue(path = "replace-resources", defaultValue = true, comments = mutableListOf("By default, the configs responsible for game values are overwritten each time the server starts with the defaults.", "This is to make it easier for me to adjust the balance. But it can be switched off.")).get()
+    private val replaceResources = ConfigurableValue(path = "core.replace-resources", defaultValue = true, comments = mutableListOf("By default, the configs responsible for game values are overwritten each time the server starts with the defaults.", "This is to make it easier for me to adjust the balance. But it can be switched off.")).get()
 
     lateinit var language:    YamlConfiguration
     lateinit var professions: YamlConfiguration
@@ -35,7 +35,7 @@ class ConfigurationManager(private val dataFolder: File = plugin.dataFolder) {
 
     private companion object {
         val plugin    = pluginInstance
-        val resources = listOf("config.yml", "language.yml", "professions.yml", "prices.yml", "prompts.yml", "races.yml", "skins.yml")
+        val resources = listOf("language.yml", "professions.yml", "prices.yml", "prompts.yml", "races.yml", "skins.yml")
     }
 
 }

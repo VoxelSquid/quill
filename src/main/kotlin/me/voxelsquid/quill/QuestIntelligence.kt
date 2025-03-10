@@ -2,6 +2,7 @@ package me.voxelsquid.quill
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.gameplay.ai.GeminiProvider
 import me.voxelsquid.quill.base.config.ConfigurationManager
 import me.voxelsquid.quill.base.PluginRuntimeController
@@ -88,9 +89,8 @@ class QuestIntelligence : JavaPlugin() {
                 this.persistentDataContainer.get(immersiveDialoguesKey, PersistentDataType.STRING)?.let { type ->
                     return DialogueFormat.valueOf(type)
                 }
-                (pluginInstance.config.getString("core-settings.default-dialogue-format") ?: "IMMERSIVE").also { type ->
-                    this.persistentDataContainer.set(immersiveDialoguesKey, PersistentDataType.STRING, type)
-                    return DialogueFormat.valueOf(type)
+                return pluginInstance.controller.format.also { type ->
+                    this.persistentDataContainer.set(immersiveDialoguesKey, PersistentDataType.STRING, type.toString())
                 }
             }
 

@@ -4,6 +4,7 @@ import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
+import me.voxelsquid.quill.base.config.ConfigurableValue
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.addItemToQuillInventory
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.consume
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.eat
@@ -41,6 +42,8 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
     private val professionItems = mutableMapOf<Profession, Map<Material, Pair<Int, Int>>>()
     private val allowedQuests   = arrayOf(QuestType.PROFESSION_ITEM_GATHERING, QuestType.MUSIC_DISC, QuestType.OMINOUS_BANNER, QuestType.BOOZE)
+
+    private val questTimeLimit = ConfigurableValue(path = "gameplay.core.quest-tick-live", defaultValue = 48000, comments = mutableListOf("Maximum duration of quest existence in ticks.", "When a quest is generated, after the specified number of ticks, it will be deleted and make room for a new one.")).get()
 
     init {
         this.initializeProfessionItems()
@@ -103,7 +106,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
 
         // Old quest cleaning
         villager.quests.forEach { quest ->
-            if ((System.currentTimeMillis() - quest.timeCreated) / 1000 * 20 > plugin.config.getLong("core-settings.quest-time-limit")) {
+            if ((System.currentTimeMillis() - quest.timeCreated) / 1000 * 20 > questTimeLimit) {
                 villager.removeQuest(quest)
             }
         }

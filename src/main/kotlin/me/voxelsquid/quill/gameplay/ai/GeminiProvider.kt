@@ -48,6 +48,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     private val language    = plugin.controller.language
     private val translation = plugin.controller.translation
     private val namingStyle = plugin.controller.namingStyle
+    private val swearing    = plugin.controller.swearing
 
     private fun generateTranslation() {
         GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to $language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${File(plugin.dataFolder, "language.yml").readText()}\n```")
@@ -178,7 +179,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
     fun generateQuestData(questManager: QuestManager, villager: Villager, quest: VillagerQuest.Builder) {
 
-        var extraArguments = if (plugin.config.getBoolean("core-settings.swearing")) when (villager.getCharacterType()) {
+        var extraArguments = if (swearing) when (villager.getCharacterType()) {
             HumanoidCharacterType.ANGRY, HumanoidCharacterType.DRUNKARD -> "'20% of words are swearing'"
             else -> ""
         } else ""

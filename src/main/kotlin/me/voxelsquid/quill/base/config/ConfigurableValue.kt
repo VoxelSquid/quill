@@ -10,7 +10,7 @@ class ConfigurableValue<T>(
     private val path: String,
     private val defaultValue: T,
     private val comments: MutableList<String> = mutableListOf(),
-    private val fileName: String = "test.yml"
+    private val fileName: String = "config.yml"
 ) {
     private val configFile: File = File(pluginInstance.dataFolder, fileName)
     private val config: YamlConfiguration
