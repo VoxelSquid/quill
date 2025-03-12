@@ -2,7 +2,6 @@ package me.voxelsquid.quill.gameplay.settlement
 
 import me.voxelsquid.quill.QuestIntelligence
 import org.bukkit.Location
-import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.util.BoundingBox
@@ -25,10 +24,6 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
             villagers.size > 50 -> SettlementSize.METROPOLIS
             else -> SettlementSize.UNDERDEVELOPED
         }
-    }
-
-    fun changeReputation(player: Player, value: Int) {
-        data.reputation[player.uniqueId] = (data.reputation[player.uniqueId] ?: 0) + value
     }
 
     fun getPlayerReputation(player: Player): Int = data.reputation[player.uniqueId] ?: 0

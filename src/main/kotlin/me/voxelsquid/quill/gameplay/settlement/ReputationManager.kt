@@ -4,10 +4,13 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.currentSettlement
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.base.config.ConfigurableValue
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
+import org.bukkit.Sound
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.raid.RaidFinishEvent
+import org.bukkit.event.raid.RaidTriggerEvent
 
 class ReputationManager : Listener {
 
@@ -16,7 +19,6 @@ class ReputationManager : Listener {
          1. Добавляем начисление репутации за выполнение квестов, а ещё за завершение рейда.
          2. Имплементируем влияние репутации на торговые цены. Множитель цен теперь зависит не от количества положительной репутации, а от статуса.
             Например, Friendly даст 5% скидку, а Exalted — 25%. Exiled запрещает торговлю.
-         3. Надо бы обдумать взаимодействие репутации и диалогов. Тут всё упирается в промпт и парсинг JSON.
      */
 
     @EventHandler
@@ -51,23 +53,37 @@ class ReputationManager : Listener {
                 else -> { return }
             }
 
-            val previousStatus = player.getPlayerReputationStatus(settlement)
             settlement.changeReputation(player, value)
-            val newStatus = player.getPlayerReputationStatus(settlement)
-
-            // Chat notification.
-            val reputationChangeMessage = (if (value > 0) increaseMessage else decreaseMessage).replace("{currentSettlement}", settlement.data.settlementName).replace("{amount}", value.toString().replace("-", ""))
-            if (chatNotification) {
-                player.sendMessage(reputationChangeMessage)
-
-                // Reputation status update notification.
-                if (previousStatus != newStatus) {
-                    val statusChangeMessage = statusMessage.replace("{currentSettlement}", settlement.data.settlementName).replace("{status}", newStatus.localizedName)
-                    player.sendMessage(statusChangeMessage)
-                }
-            }
         }
 
+    }
+
+    @EventHandler
+    private fun handleRaidTrigger(event: RaidTriggerEvent) {
+        event.player.let { player ->
+
+            // Smart world check.
+            if (!plugin.allowedWorlds.contains(player.world))
+                return
+
+            // Get the nearby settlement or return.
+            val settlement = settlements[player.world]?.find { it.data.settlementName == player.currentSettlement } ?: return
+            settlement.changeReputation(player, raidStartReputation)
+        }
+    }
+
+    @EventHandler
+    private fun handleRaidFinish(event: RaidFinishEvent) {
+        event.winners.forEach { player ->
+
+            // Smart world check.
+            if (!plugin.allowedWorlds.contains(player.world))
+                return
+
+            // Get the nearby settlement or return.
+            val settlement = settlements[player.world]?.find { it.data.settlementName == player.currentSettlement } ?: return
+            settlement.changeReputation(player, raidFinishReputation)
+        }
     }
 
     init {
@@ -89,14 +105,20 @@ class ReputationManager : Listener {
         private val ravagerReputation  = ConfigurableValue(path = "reputation.kill.ravager", defaultValue = 250).get()
         private val phantomReputation  = ConfigurableValue(path = "reputation.kill.phantom", defaultValue = 30).get()
 
-        // Negative reputation.
+        // Negative reputation for killing a villager or an iron golem.
         private val villagerReputation  = ConfigurableValue(path = "reputation.kill.villager", defaultValue = -250).get()
         private val ironGolemReputation = ConfigurableValue(path = "reputation.kill.iron-golem", defaultValue = -250).get()
+
+        private val raidStartReputation  = ConfigurableValue(path = "reputation.raid.start", defaultValue = -250).get()
+        private val raidFinishReputation = ConfigurableValue(path = "reputation.raid.finish", defaultValue = 500).get()
 
         // Reputation change notification messages.
         private val increaseMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.increase", defaultValue = "§9Reputation with {currentSettlement} increased by {amount}.").get()
         private val decreaseMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.decrease", defaultValue = "§9Reputation with {currentSettlement} decreased by {amount}.").get()
-        private val statusMessage   = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.status-update", defaultValue = "§eYour standing with {currentSettlement} has shifted to {status}.").get()
+
+        // Reputation status update stuff.
+        private val statusUpdateMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.status-update.message", defaultValue = "§eYour standing with {currentSettlement} has shifted to {status}.").get()
+        private val statusUpdateSound   = ConfigurableValue(path = "reputation.status-update.sound", defaultValue = "ui.hud.bubble_pop", comments = mutableListOf("https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html")).get()
 
         // Reputation status required values.
         private val exiledReputationRequired = ConfigurableValue(path = "reputation.status.exiled", defaultValue = -1000).get()
@@ -116,6 +138,26 @@ class ReputationManager : Listener {
         private val honored = ConfigurableValue(fileName = "language.yml", path = "reputation.status.honored", defaultValue = "Honored").get()
         private val revered = ConfigurableValue(fileName = "language.yml", path = "reputation.status.revered", defaultValue = "Revered").get()
         private val exalted = ConfigurableValue(fileName = "language.yml", path = "reputation.status.exalted", defaultValue = "Exalted").get()
+
+        fun Settlement.changeReputation(player: Player, value: Int) {
+
+            val previousStatus = player.getPlayerReputationStatus(this)
+            data.reputation[player.uniqueId] = (data.reputation[player.uniqueId] ?: 0) + value
+            val newStatus = player.getPlayerReputationStatus(this)
+
+            val reputationChangeMessage = (if (value > 0) increaseMessage else decreaseMessage).replace("{currentSettlement}", this.data.settlementName).replace("{amount}", value.toString().replace("-", ""))
+            if (chatNotification) {
+                player.sendMessage(reputationChangeMessage)
+
+                // Reputation status update notification.
+                if (previousStatus != newStatus) {
+                    val statusChangeMessage = statusUpdateMessage.replace("{currentSettlement}", this.data.settlementName).replace("{status}", newStatus.localizedName)
+                    player.sendMessage(statusChangeMessage)
+                    player.playSound(player.eyeLocation, statusUpdateSound, 1F, 1F)
+                }
+            }
+
+        }
 
         enum class Reputation(val localizedName: String) {
             EXALTED(exalted),
