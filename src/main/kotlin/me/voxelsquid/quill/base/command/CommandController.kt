@@ -12,6 +12,7 @@ import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidCharacterTy
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player

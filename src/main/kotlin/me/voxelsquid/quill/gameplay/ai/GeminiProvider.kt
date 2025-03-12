@@ -241,6 +241,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
 
         GenerationRequest(this, client, url, plugin).generate(prompt) { cleanedQuestJson ->
             try {
+                plugin.debug(cleanedQuestJson)
                 val questInfo = gson.fromJson(cleanedQuestJson, VillagerQuest.QuestInfo::class.java)
                 questInfo.questName = questInfo.questName.replace("*", "")
                 quest.setQuestInfo(questInfo)
@@ -322,6 +323,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
         }
 
         fun generate(prompt: String, ping: Boolean = false, onSuccess: (String) -> Unit = {}) {
+
+            plugin.logger.info("Sending a new request.")
+            plugin.logger.info(prompt)
+
             val requestBody = createJsonRequest(prompt).toRequestBody("application/json".toMediaTypeOrNull())
             val request = createRequest(requestBody)
 

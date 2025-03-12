@@ -4,9 +4,27 @@
 # If the player has turned off immersive dialogs with the "/q dialogue format CHAT" command, they will see messages from villagers in the chat.
 villager-message-chat-format: "§8(villager) §6{villagerName}§7: §r{message}"
 
+# Messages about entering and exiting the settlement.
 settlement-entering:
   entering: "You entering a settlement."
   leaving: "You leaving a settlement."
+
+# Reputation change messages.
+settlement-reputation:
+  increase: "§9Reputation with {currentSettlement} increased by {amount}."
+  decrease: "§9Reputation with {currentSettlement} decreased by {amount}."
+  status-update: "§eYour standing with {currentSettlement} has shifted to {status}."
+
+reputation:
+  status:
+    exiled: "Exiled"
+    hostile: "Hostile"
+    unfriendly: "Unfriendly"
+    neutral: "Neutral"
+    friendly: "Friendly"
+    honored: "Honored"
+    revered: "Revered"
+    exalted: "Exalted"
 
 # Messages that are visible after using commands.
 command-message:
@@ -29,55 +47,6 @@ interaction-menu:
   gift-button: "Gift"
   return-button: "Return"
   close-button: "Close"
-
-# Settlement menu buttons and other stuff.
-settlement-menu:
-
-  villagers-menu-title: "§0Villagers"
-  villagers-button: "§6Villagers"
-  villagers-button-lore:
-    - "§fVillagers: §a{villagerAmount}"
-    - "§7Open villager list."
-  villager-info:
-    - "§fPersonality: §d{personality}"
-    - "§fProfession: §3{profession} (§3{professionLevel}§3)"
-    - "§fHealth: §c{health}"
-    - "§fHunger: §e{hunger}"
-    - "§fWealth: §a{networth}$"
-    - "§fQuests: §d{quests}"
-
-  visibility-button: "§6Visibility"
-  visibility-button-lore:
-    - "§fVisibility: {visibilityState}"
-    - "§7Toggle settlement visibility (currently inactive)."
-  visibility-state:
-    visible: "§aVisible"
-    hidden: "§cHidden"
-
-  policies-button: "§6Policies"
-  policies-button-lore:
-    - "§7Manage settlement policies (currently inactive)."
-
-  actions-button: "§6Actions"
-  actions-button-lore:
-    - "§7Settlement actions menu (currently inactive)."
-
-  food-button: "§6Food"
-  food-button-lore:
-    - "§fFood: §e{totalFoodAmount}"
-    - "§fStarving villagers: §a{starvingVillagersAmount}"
-
-  craft-button: "§6Craft"
-  craft-button-lore:
-    - "§7Crafter information (currently inactive)."
-
-  beds-button: "§6Beds"
-  beds-button-lore:
-    - "§fBeds: §e{bedAmount}"
-    - "§fNewcomer arrival: {arrivalPossibility}"
-  arrival-possibility:
-    possible: "§aPossible"
-    impossible: "§cImpossible"
 
 # Error messages. THAT WAS AN ERROR.
 error-message:

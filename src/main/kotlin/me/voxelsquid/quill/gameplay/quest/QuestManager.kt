@@ -13,12 +13,16 @@ import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExten
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quests
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.removeQuest
+import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.settlement
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.takeItemFromQuillInventory
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.updateQuests
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidNamespace.personalDataKey
 import me.voxelsquid.quill.gameplay.humanoid.race.HumanoidRaceManager.Companion.race
 import me.voxelsquid.quill.gameplay.quest.data.QuestType
 import me.voxelsquid.quill.gameplay.quest.data.VillagerQuest
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.Reputation
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.getPlayerReputationStatus
+import me.voxelsquid.quill.gameplay.settlement.Settlement
 import me.voxelsquid.quill.gameplay.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.gameplay.util.ItemStackCalculator.Companion.getMaterialPrice
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.Companion.talk
@@ -248,17 +252,31 @@ class QuestManager(private val plugin: QuestIntelligence) {
         player.giveExp(quest.rewardPrice / 20, true)
         villager.villagerExperience += quest.rewardPrice / 250
 
+        // Определяем текст после завершения квеста на основании репутации игрока
+        val rewardText = (villager.settlement?.let { settlement: Settlement ->
+            return@let when (player.getPlayerReputationStatus(settlement)) {
+                Reputation.EXALTED -> quest.questInfo.reputationBasedQuestFinishingDialogues[7]
+                Reputation.REVERED -> quest.questInfo.reputationBasedQuestFinishingDialogues[6]
+                Reputation.HONORED -> quest.questInfo.reputationBasedQuestFinishingDialogues[5]
+                Reputation.FRIENDLY -> quest.questInfo.reputationBasedQuestFinishingDialogues[4]
+                Reputation.NEUTRAL -> quest.questInfo.reputationBasedQuestFinishingDialogues[3]
+                Reputation.UNFRIENDLY -> quest.questInfo.reputationBasedQuestFinishingDialogues[2]
+                Reputation.HOSTILE -> quest.questInfo.reputationBasedQuestFinishingDialogues[1]
+                Reputation.EXILED -> quest.questInfo.reputationBasedQuestFinishingDialogues[0]
+            }
+        } ?: quest.questInfo.reputationBasedQuestFinishingDialogues[3]).replace("%playerName%", player.name)
+
         // Закрываем инвентарь через один тик, чтобы избежать багов
         plugin.server.scheduler.runTaskLater(plugin, { _ ->
             player.closeInventory()
-            if (quest.type != QuestType.BOOZE) villager.talk(player, quest.questInfo.rewardText)
+            if (quest.type != QuestType.BOOZE) villager.talk(player, rewardText)
             villager.removeQuest(quest)
             villager.updateQuests()
         }, 1L)
 
         when (quest.type) {
             QuestType.BOOZE -> this.finishBrewQuest(villager, questItem) {
-                villager.talk(player, quest.questInfo.rewardText)
+                villager.talk(player, rewardText)
             }
 
             QuestType.FOOD -> villager.eat()

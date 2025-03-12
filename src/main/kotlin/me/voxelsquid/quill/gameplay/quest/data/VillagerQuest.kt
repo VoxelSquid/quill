@@ -5,12 +5,12 @@ import me.voxelsquid.quill.gameplay.util.InventorySerializer
 import org.bukkit.inventory.ItemStack
 import java.lang.reflect.Type
 
-data class VillagerQuest (val type: QuestType, val questItem: ItemStack, var rewardItem: ItemStack, val questInfo: QuestInfo, var timeCreated: Long, val rewardPrice: Int) {
+data class VillagerQuest(val type: QuestType, val questItem: ItemStack, var rewardItem: ItemStack, val questInfo: QuestInfo, var timeCreated: Long, val rewardPrice: Int) {
 
     data class QuestInfo(
         var questName: String,
-        val questDescription: String,
-        val rewardText: String
+        val reputationBasedQuestDescriptions: List<String>,
+        val reputationBasedQuestFinishingDialogues: List<String>
     )
 
     class Builder {

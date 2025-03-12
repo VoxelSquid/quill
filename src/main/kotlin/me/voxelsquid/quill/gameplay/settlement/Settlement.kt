@@ -3,17 +3,17 @@ package me.voxelsquid.quill.gameplay.settlement
 import me.voxelsquid.quill.QuestIntelligence
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.util.BoundingBox
 import java.util.*
 
 class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> = mutableSetOf()) {
 
-    data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, val creationTime: Long)
+    data class SettlementData(val worldUUID: UUID, var settlementName: String, val center: Location, val creationTime: Long, val reputation: MutableMap<UUID, Int> = mutableMapOf())
 
     val creationDate = Date(data.creationTime)
     val world        = QuestIntelligence.pluginInstance.server.getWorld(data.worldUUID)!!
-
     var territory    = BoundingBox.of(data.center, 64.0, 64.0, 64.0)
 
     fun size(): SettlementSize {
@@ -26,6 +26,12 @@ class Settlement(val data: SettlementData, val villagers: MutableSet<Villager> =
             else -> SettlementSize.UNDERDEVELOPED
         }
     }
+
+    fun changeReputation(player: Player, value: Int) {
+        data.reputation[player.uniqueId] = (data.reputation[player.uniqueId] ?: 0) + value
+    }
+
+    fun getPlayerReputation(player: Player): Int = data.reputation[player.uniqueId] ?: 0
 
     enum class SettlementSize {
         UNDERDEVELOPED,

@@ -43,7 +43,6 @@ dwarf:
   # Entities have an inventory and we can specify the starting items they will have on spawn.
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
   spawn-items:
-    - NETHERITE_INGOT-1-2
     - DIAMOND-32-64
     - EMERALD-16-32
     - LEATHER-16-32
@@ -75,7 +74,7 @@ orc:
   special-currency: GOLD_BLOCK
 
   # A race description to be used by the AI when generating personal villager data and quests.
-  race-description: "Possessing fangs and brute strength, but lacking in cunning, they are formidable warriors, resilient and towering. Their language is simple, bold and honest. Sometimes they use phrases from the Orc language that only they understand. Though often perceived as savage barbarians, orcs hold tradition in high regard and revere martial honor and spiritual shamanism, bound by a profound sense of community. Adapted to the rigors of the desert, they are invariably found beneath the relentless sun. Orcs are, to some, dangerous and powerful enemies, while to others, they are steadfast companions in arms."
+  race-description: "Possessing fangs and brute strength, but lacking in cunning, they are formidable warriors, resilient and towering. Their language is simple, bold and honest. Sometimes they use phrases from the Orcish language that only they understand (from the World of Warcraft). Though often perceived as savage barbarians, orcs hold tradition in high regard and revere martial honor and spiritual shamanism, bound by a profound sense of community. Adapted to the rigors of the desert, they are invariably found beneath the relentless sun. Orcs are, to some, dangerous and powerful enemies, while to others, they are steadfast companions in arms."
 
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
@@ -131,7 +130,7 @@ elf:
   special-currency: EMERALD_BLOCK
 
   # A race description to be used by the AI when generating personal villager data and quests.
-  race-description: "Graceful, wise, mysterious long-living beings deeply connected to nature, elves are known for their archery skills, love of forests, and serene demeanor. They are often found in taiga biomes, living in harmony with the woods and its creatures. Elves are skilled in crafts and possess a keen eye for beauty and detail."
+  race-description: "Graceful, wise, mysterious long-living beings deeply connected to nature, elves are known for their archery skills, love of forests, and serene demeanor. Sometimes they use phrases from the Elvish language that only they understand (from the World of Warcraft). They are often found in taiga biomes, living in harmony with the woods and its creatures. Elves are skilled in crafts and possess a keen eye for beauty and detail."
 
   # Format: SOUND-MIN_PITCH-MAX_PITCH (pitch must be between 0.0 and 2.0)
   # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html

@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
 import com.google.common.reflect.TypeToken
+import com.google.gson.JsonSyntaxException
 import io.papermc.paper.event.player.PlayerTradeEvent
 import me.voxelsquid.quill.QuestIntelligence.Companion.gson
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
@@ -55,9 +56,9 @@ class HumanoidManager : Listener {
     private val professionManager  = ProfessionManager()
     private val tradeHandler       = HumanoidTradeHandler()
     private val questManager       = QuestManager(plugin)
-    private val settlementManager  = SettlementManager(plugin)
 
-    val dialogueManager = DialogueManager(plugin)
+    val settlementManager = SettlementManager(plugin)
+    val dialogueManager   = DialogueManager(plugin)
 
     private val questIntervalTicks = ConfigurableValue(path = "gameplay.core.quest-tick-interval", defaultValue = 200L, comments = mutableListOf("Each iteration only ONE villager in the entire world will be selected to generate a new quest.")).get()
     private val foodIntervalTicks  = ConfigurableValue(path = "gameplay.core.food-tick-interval", defaultValue = 4800L, comments = mutableListOf("Each iteration ALL villagers in the entire world will eat.")).get()
@@ -265,7 +266,13 @@ class HumanoidManager : Listener {
 
         val Villager.quests: MutableList<VillagerQuest>
             get() = persistentDataContainer.get(HumanoidNamespace.questDataKey, PersistentDataType.STRING)?.let {
-                gson.fromJson(it, object : TypeToken<MutableList<VillagerQuest>>() {}.type)
+                try {
+                    gson.fromJson(it, object : TypeToken<MutableList<VillagerQuest>>() {}.type)
+                } catch (exception: JsonSyntaxException) {
+                    plugin.debug("Exception during quest loading! Removing every quest from ${this.getPersonalHumanoidData()!!.villagerName}.")
+                    persistentDataContainer.remove(HumanoidNamespace.questDataKey)
+                    mutableListOf()
+                }
             } ?: mutableListOf()
 
         fun Villager.addQuest(quest: VillagerQuest) {

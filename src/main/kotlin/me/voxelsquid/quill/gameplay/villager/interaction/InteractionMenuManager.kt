@@ -9,8 +9,12 @@ import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExten
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.humanoidRegistry
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quests
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
+import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.settlement
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidTradeHandler.Companion.openTradeMenu
 import me.voxelsquid.quill.gameplay.humanoid.race.HumanoidRaceManager.Companion.race
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.Reputation
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.getPlayerReputationStatus
+import me.voxelsquid.quill.gameplay.settlement.Settlement
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.Companion.dialogues
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.Companion.talk
 import me.voxelsquid.quill.gameplay.villager.interaction.InteractionMenuManager.Companion.openedMenuList
@@ -220,8 +224,21 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
         villager.quests.forEach { quest ->
             builder.button(Component.text(quest.questInfo.questName).color(buttonTextColor)) {
 
+                val description = villager.settlement?.let { settlement: Settlement ->
+                    return@let when (player.getPlayerReputationStatus(settlement)) {
+                        Reputation.EXALTED -> quest.questInfo.reputationBasedQuestDescriptions[7]
+                        Reputation.REVERED -> quest.questInfo.reputationBasedQuestDescriptions[6]
+                        Reputation.HONORED -> quest.questInfo.reputationBasedQuestDescriptions[5]
+                        Reputation.FRIENDLY -> quest.questInfo.reputationBasedQuestDescriptions[4]
+                        Reputation.NEUTRAL -> quest.questInfo.reputationBasedQuestDescriptions[3]
+                        Reputation.UNFRIENDLY -> quest.questInfo.reputationBasedQuestDescriptions[2]
+                        Reputation.HOSTILE -> quest.questInfo.reputationBasedQuestDescriptions[1]
+                        Reputation.EXILED -> quest.questInfo.reputationBasedQuestDescriptions[0]
+                    }
+                } ?: quest.questInfo.reputationBasedQuestDescriptions[3] // 3 is neutral description
+
                 // Fame defines how villagers will talk with a player about quest details
-                villager.talk(player, quest.questInfo.questDescription)
+                villager.talk(player, description.replace("%playerName%", player.name))
 
             }
         }

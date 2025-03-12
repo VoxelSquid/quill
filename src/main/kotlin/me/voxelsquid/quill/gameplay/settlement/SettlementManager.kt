@@ -29,6 +29,8 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     private val minimumOfVillagersToSettlementCreation = 5
     private val defaultSettlementName = "Default Settlement Name"
 
+    val reputationManager = ReputationManager()
+
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
         this.startSettlementDetectionTask()
@@ -128,6 +130,8 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         plugin.geminiProvider.generateSettlementName(Settlement(Settlement.SettlementData(world.uid, defaultSettlementName, center, System.currentTimeMillis()), villagers.toMutableSet()))
     }
 
+
+
     @EventHandler
     private fun onSettlementNameGenerate(event: SettlementNameGenerateEvent) {
         with(event.settlement) {
@@ -161,7 +165,7 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
 
     companion object {
         val settlements: MutableMap<World, MutableList<Settlement>> = mutableMapOf()
-        val settlementsWorldKey: NamespacedKey = NamespacedKey(QuestIntelligence.pluginInstance, "settlements")
+        val settlementsWorldKey: NamespacedKey = NamespacedKey(QuestIntelligence.pluginInstance, "SettlementList")
     }
 
 }
