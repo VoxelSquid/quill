@@ -1,7 +1,7 @@
 package me.voxelsquid.quill.gameplay.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.base.config.ConfigurableValue
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.gender
@@ -48,7 +48,7 @@ import kotlin.random.Random
 @Suppress("UnstableApiUsage")
 class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
-    private val buttonTextColor = TextColor.fromHexString(ConfigurableValue(path = "text-formatting.menu.button.color", defaultValue = "#FFFFFF", comments = mutableListOf("Color of interactive menu buttons, HEX values.")).get()) ?: throw IllegalArgumentException("Can't parse a color at 'text-formatting.menu.button.color' in config.yml. Is it HEX?")
+    private val buttonTextColor = TextColor.fromHexString(ConfigurationAccessor(path = "text-formatting.menu.button.color", defaultValue = "#FFFFFF", comments = mutableListOf("Color of interactive menu buttons, HEX values.")).get()) ?: throw IllegalArgumentException("Can't parse a color at 'text-formatting.menu.button.color' in config.yml. Is it HEX?")
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)

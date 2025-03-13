@@ -5,7 +5,7 @@ package me.voxelsquid.quill.gameplay.villager.interaction
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
-import me.voxelsquid.quill.base.config.ConfigurableValue
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.getVoicePitch
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.getVoiceSound
 import org.bukkit.Color
@@ -90,14 +90,14 @@ class DialogueManager(private val plugin: QuestIntelligence) {
 
     companion object {
 
-        private val dialogueBoxSize = ConfigurableValue("text-formatting.dialogue-box.size", 0.28F).get()
-        private val dialogueBoxTextBaseColor = ConfigurableValue("text-formatting.dialogue-box.text.base-color", "&f", mutableListOf("Standard color of common words in dialogue boxes.")).get()
-        private val dialogueBoxTextImportantColor = ConfigurableValue("text-formatting.dialogue-box.text.important-color", "&5", mutableListOf("Color of important words in dialogue boxes that the AI will try to pay attention to.")).get()
-        private val dialogueBoxTextInterestingColor = ConfigurableValue("text-formatting.dialogue-box.text.interesting-color", "&6", mutableListOf("Color of interesting words in dialogue boxes that may be interesting to the player.")).get()
-        private val dialogueBackgroundAlpha = ConfigurableValue("text-formatting.dialogue-box.background.alpha", 185, mutableListOf("0-255")).get()
-        private val dialogueBackgroundRed = ConfigurableValue("text-formatting.dialogue-box.background.red", 0, mutableListOf("0-255")).get()
-        private val dialogueBackgroundGreen = ConfigurableValue("text-formatting.dialogue-box.background.green", 0, mutableListOf("0-255")).get()
-        private val dialogueBackgroundBlue = ConfigurableValue("text-formatting.dialogue-box.background.blue", 0, mutableListOf("0-255")).get()
+        private val dialogueBoxSize = ConfigurationAccessor("text-formatting.dialogue-box.size", 0.28F).get()
+        private val dialogueBoxTextBaseColor = ConfigurationAccessor("text-formatting.dialogue-box.text.base-color", "&f", mutableListOf("Standard color of common words in dialogue boxes.")).get()
+        private val dialogueBoxTextImportantColor = ConfigurationAccessor("text-formatting.dialogue-box.text.important-color", "&5", mutableListOf("Color of important words in dialogue boxes that the AI will try to pay attention to.")).get()
+        private val dialogueBoxTextInterestingColor = ConfigurationAccessor("text-formatting.dialogue-box.text.interesting-color", "&6", mutableListOf("Color of interesting words in dialogue boxes that may be interesting to the player.")).get()
+        private val dialogueBackgroundAlpha = ConfigurationAccessor("text-formatting.dialogue-box.background.alpha", 185, mutableListOf("0-255")).get()
+        private val dialogueBackgroundRed = ConfigurationAccessor("text-formatting.dialogue-box.background.red", 0, mutableListOf("0-255")).get()
+        private val dialogueBackgroundGreen = ConfigurationAccessor("text-formatting.dialogue-box.background.green", 0, mutableListOf("0-255")).get()
+        private val dialogueBackgroundBlue = ConfigurationAccessor("text-formatting.dialogue-box.background.blue", 0, mutableListOf("0-255")).get()
 
         val dialogues: MutableMap<Pair<Player, LivingEntity>, DialogueWindow> = mutableMapOf()
 

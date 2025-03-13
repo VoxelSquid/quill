@@ -47,9 +47,11 @@ class QuestIntelligence : JavaPlugin() {
 
         configManager = controller.configurationManager
         allowedWorlds = controller.allowedWorlds.map { server.getWorld(it) ?: throw NullPointerException("Non-existent world specified in the config.yml: $it.") }
-        controller.setupCommands()
 
-        geminiProvider  = GeminiProvider(this)
+        geminiProvider = GeminiProvider(this)
+        geminiProvider.generateTranslation()
+
+        controller.setupCommands()
         humanoidManager = HumanoidManager()
     }
 

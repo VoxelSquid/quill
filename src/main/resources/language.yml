@@ -49,6 +49,11 @@ interaction-menu:
   close-button: "Close"
 
 # Error messages. THAT WAS AN ERROR.
-error-message:
+command-error-message:
+  player-not-found: "§cError! Player not found: §e{playerName} §c(online only)."
+  status-not-found: "§cError! Non-existent reputation status: §с{status}."
+  settlement-not-found: "§cError! Non-existent settlement: §с{settlementName}."
 
-  player-not-found: "§cPlayer not found: §b{playerName}§c (online only)."
+# Success messages.
+command-success-message:
+  reputation-changed: "§7Reputation of §e{playerName} §7has been changed to §6{status}§7."

@@ -4,29 +4,28 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import org.bukkit.ChatColor
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
-class ConfigurableValue<T>(
+class ConfigurationAccessor<T>(
     private val path: String,
     private val defaultValue: T,
     private val comments: MutableList<String> = mutableListOf(),
-    private val fileName: String = "config.yml"
+    fileName: String = "config.yml"
 ) {
-    private val configFile: File = File(pluginInstance.dataFolder, fileName)
-    private val config: YamlConfiguration
-        get() = YamlConfiguration.loadConfiguration(configFile).apply {
-            options().parseComments(true)
-        }
+
+    private val configFile = File(pluginInstance.dataFolder, fileName)
+    private var config     = if (fileName != "language.yml") YamlConfiguration.loadConfiguration(configFile) else pluginInstance.configManager.language
 
     init {
-        register(this)
         ensureConfigInitialized()
     }
 
     @Suppress("UNCHECKED_CAST", "DEPRECATION")
     fun get(): T {
+
         val config = config
-        if (!config.isSet(path)) return defaultValue
+        if (!config.isSet(path)) {
+            return defaultValue
+        }
 
         val rawValue = config.get(path)
         return when {
@@ -81,26 +80,4 @@ class ConfigurableValue<T>(
         }
     }
 
-    companion object {
-        private val instances = ConcurrentHashMap<String, ConfigurableValue<*>>()
-
-        fun register(container: ConfigurableValue<*>) {
-            val key = "${container.fileName}:${container.path}"
-            instances[key] = container
-        }
-
-        @Synchronized
-        fun reloadAll() {
-            instances.values.forEach { it.reload() }
-        }
-
-        fun getByFile(fileName: String): List<ConfigurableValue<*>> {
-            return instances.values.filter { it.fileName == fileName }
-        }
-
-        fun clearAll() {
-            instances.clear()
-        }
-
-    }
 }

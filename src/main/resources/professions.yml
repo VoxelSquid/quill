@@ -13,8 +13,8 @@ villager-item-producing:
     MYTHIC: 20000
     DIVINE: 32000
 
-  # Basic chance of creating a unique item during production. Multiplied by villager level. (level 5 villager profession = 40% chance)
-  unique-item-chance: 8
+  # Basic chance of creating a unique item during production. Multiplied by villager level. (level 5 villager profession = 25% chance)
+  unique-item-chance: 5
 
   # If true, random smithing template will be applied to each unique item that is armor.
   # If false, the armorer will only use the smithing templates they has in their inventory. (armorers have a quest for collecting them)

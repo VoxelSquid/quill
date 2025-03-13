@@ -4,7 +4,7 @@ import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
-import me.voxelsquid.quill.base.config.ConfigurableValue
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.addItemToQuillInventory
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.consume
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.eat
@@ -21,7 +21,7 @@ import me.voxelsquid.quill.gameplay.humanoid.race.HumanoidRaceManager.Companion.
 import me.voxelsquid.quill.gameplay.quest.data.QuestType
 import me.voxelsquid.quill.gameplay.quest.data.VillagerQuest
 import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.Reputation
-import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.changeReputation
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.addReputation
 import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.getPlayerReputationStatus
 import me.voxelsquid.quill.gameplay.settlement.Settlement
 import me.voxelsquid.quill.gameplay.util.ItemStackCalculator.Companion.calculatePrice
@@ -48,8 +48,8 @@ class QuestManager(private val plugin: QuestIntelligence) {
     private val professionItems = mutableMapOf<Profession, Map<Material, Pair<Int, Int>>>()
     private val allowedQuests   = arrayOf(QuestType.PROFESSION_ITEM_GATHERING, QuestType.MUSIC_DISC, QuestType.OMINOUS_BANNER, QuestType.BOOZE)
 
-    private val priceMultiplier = ConfigurableValue(path = "reputation.quest.price-multiplier", defaultValue = 0.05, comments = mutableListOf("Reputation multiplier for the price of the item. For example, if an item costs 4000 and the multiplier is 0.05, the player will receive 200 reputation for completing the quest.")).get()
-    private val questTimeLimit  = ConfigurableValue(path = "gameplay.core.quest-tick-live", defaultValue = 48000, comments = mutableListOf("Maximum duration of quest existence in ticks.", "When a quest is generated, after the specified number of ticks, it will be deleted and make room for a new one.")).get()
+    private val priceMultiplier = ConfigurationAccessor(path = "reputation.quest.price-multiplier", defaultValue = 0.05, comments = mutableListOf("Reputation multiplier for the price of the item. For example, if an item costs 4000 and the multiplier is 0.05, the player will receive 200 reputation for completing the quest.")).get()
+    private val questTimeLimit  = ConfigurationAccessor(path = "gameplay.core.quest-tick-live", defaultValue = 48000, comments = mutableListOf("Maximum duration of quest existence in ticks.", "When a quest is generated, after the specified number of ticks, it will be deleted and make room for a new one.")).get()
 
     init {
         this.initializeProfessionItems()
@@ -254,7 +254,7 @@ class QuestManager(private val plugin: QuestIntelligence) {
         // TODO: Добавляем игроку в стату +1 выполненный квест
         // Начисляем репутацию за выполнение квеста.
         villager.settlement?.let { settlement: Settlement ->
-            settlement.changeReputation(player, (rewardPrice * priceMultiplier).toInt())
+            settlement.addReputation(player, (rewardPrice * priceMultiplier).toInt())
         }
 
         // Выдаём экспу игроку и жителю

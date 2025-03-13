@@ -2,9 +2,8 @@ package me.voxelsquid.quill.gameplay.settlement
 
 import me.voxelsquid.quill.QuestIntelligence.Companion.currentSettlement
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
-import me.voxelsquid.quill.base.config.ConfigurableValue
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
-import org.bukkit.Sound
 import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -53,7 +52,7 @@ class ReputationManager : Listener {
                 else -> { return }
             }
 
-            settlement.changeReputation(player, value)
+            settlement.addReputation(player, value)
         }
 
     }
@@ -68,7 +67,7 @@ class ReputationManager : Listener {
 
             // Get the nearby settlement or return.
             val settlement = settlements[player.world]?.find { it.data.settlementName == player.currentSettlement } ?: return
-            settlement.changeReputation(player, raidStartReputation)
+            settlement.addReputation(player, raidStartReputation)
         }
     }
 
@@ -82,7 +81,7 @@ class ReputationManager : Listener {
 
             // Get the nearby settlement or return.
             val settlement = settlements[player.world]?.find { it.data.settlementName == player.currentSettlement } ?: return
-            settlement.changeReputation(player, raidFinishReputation)
+            settlement.addReputation(player, raidFinishReputation)
         }
     }
 
@@ -93,53 +92,42 @@ class ReputationManager : Listener {
     companion object {
         private val plugin = pluginInstance
 
-        private val ignoreFromSpawners = ConfigurableValue(path = "reputation.ignore-spawner-entities", defaultValue = true, comments = mutableListOf("Check if entity is from spawner, preventing cheesy grinding.")).get()
-        private val chatNotification   = ConfigurableValue(path = "reputation.chat-notification", defaultValue = true, comments = mutableListOf("Notify players in chat when their reputation changes.")).get()
-        private val zombieReputation   = ConfigurableValue(path = "reputation.kill.zombie", defaultValue = 20).get()
-        private val bZombieReputation  = ConfigurableValue(path = "reputation.kill.baby-zombie", defaultValue = 30).get()
-        private val skeletonReputation = ConfigurableValue(path = "reputation.kill.skeleton", defaultValue = 25).get()
-        private val creeperReputation  = ConfigurableValue(path = "reputation.kill.creeper", defaultValue = 25).get()
-        private val spiderReputation   = ConfigurableValue(path = "reputation.kill.spider", defaultValue = 20).get()
-        private val endermanReputation = ConfigurableValue(path = "reputation.kill.enderman", defaultValue = 100).get()
-        private val raiderReputation   = ConfigurableValue(path = "reputation.kill.raider", defaultValue = 50).get()
-        private val ravagerReputation  = ConfigurableValue(path = "reputation.kill.ravager", defaultValue = 250).get()
-        private val phantomReputation  = ConfigurableValue(path = "reputation.kill.phantom", defaultValue = 30).get()
+        private val ignoreFromSpawners = ConfigurationAccessor(path = "reputation.ignore-spawner-entities", defaultValue = true, comments = mutableListOf("Check if entity is from spawner, preventing cheesy grinding.")).get()
+        private val chatNotification   = ConfigurationAccessor(path = "reputation.chat-notification", defaultValue = true, comments = mutableListOf("Notify players in chat when their reputation changes.")).get()
+        private val zombieReputation   = ConfigurationAccessor(path = "reputation.kill.zombie", defaultValue = 20).get()
+        private val bZombieReputation  = ConfigurationAccessor(path = "reputation.kill.baby-zombie", defaultValue = 30).get()
+        private val skeletonReputation = ConfigurationAccessor(path = "reputation.kill.skeleton", defaultValue = 25).get()
+        private val creeperReputation  = ConfigurationAccessor(path = "reputation.kill.creeper", defaultValue = 25).get()
+        private val spiderReputation   = ConfigurationAccessor(path = "reputation.kill.spider", defaultValue = 20).get()
+        private val endermanReputation = ConfigurationAccessor(path = "reputation.kill.enderman", defaultValue = 100).get()
+        private val raiderReputation   = ConfigurationAccessor(path = "reputation.kill.raider", defaultValue = 50).get()
+        private val ravagerReputation  = ConfigurationAccessor(path = "reputation.kill.ravager", defaultValue = 250).get()
+        private val phantomReputation  = ConfigurationAccessor(path = "reputation.kill.phantom", defaultValue = 30).get()
 
         // Negative reputation for killing a villager or an iron golem.
-        private val villagerReputation  = ConfigurableValue(path = "reputation.kill.villager", defaultValue = -250).get()
-        private val ironGolemReputation = ConfigurableValue(path = "reputation.kill.iron-golem", defaultValue = -250).get()
+        private val villagerReputation  = ConfigurationAccessor(path = "reputation.kill.villager", defaultValue = -250).get()
+        private val ironGolemReputation = ConfigurationAccessor(path = "reputation.kill.iron-golem", defaultValue = -250).get()
 
-        private val raidStartReputation  = ConfigurableValue(path = "reputation.raid.start", defaultValue = -250).get()
-        private val raidFinishReputation = ConfigurableValue(path = "reputation.raid.finish", defaultValue = 500).get()
-
-        // Reputation change notification messages.
-        private val increaseMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.increase", defaultValue = "§9Reputation with {currentSettlement} increased by {amount}.").get()
-        private val decreaseMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.decrease", defaultValue = "§9Reputation with {currentSettlement} decreased by {amount}.").get()
-
-        // Reputation status update stuff.
-        private val statusUpdateMessage = ConfigurableValue(fileName = "language.yml", path = "settlement-reputation.status-update.message", defaultValue = "§eYour standing with {currentSettlement} has shifted to {status}.").get()
-        private val statusUpdateSound   = ConfigurableValue(path = "reputation.status-update.sound", defaultValue = "ui.hud.bubble_pop", comments = mutableListOf("https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html")).get()
+        private val raidStartReputation  = ConfigurationAccessor(path = "reputation.raid.start", defaultValue = -250).get()
+        private val raidFinishReputation = ConfigurationAccessor(path = "reputation.raid.finish", defaultValue = 500).get()
+        private val statusUpdateSound    = ConfigurationAccessor(path = "reputation.status-update.sound", defaultValue = "ui.hud.bubble_pop", comments = mutableListOf("https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html")).get()
 
         // Reputation status required values.
-        private val exiledReputationRequired = ConfigurableValue(path = "reputation.status.exiled", defaultValue = -1000).get()
-        private val hostileReputationRequired = ConfigurableValue(path = "reputation.status.hostile", defaultValue = -500).get()
-        private val unfriendlyReputationRequired = ConfigurableValue(path = "reputation.status.unfriendly", defaultValue = -250).get()
-        private val neutralReputationRequired = ConfigurableValue(path = "reputation.status.neutral", defaultValue = 0).get()
-        private val friendlyReputationRequired = ConfigurableValue(path = "reputation.status.friendly", defaultValue = 250).get()
-        private val honoredReputationRequired = ConfigurableValue(path = "reputation.status.honored", defaultValue = 500).get()
-        private val reveredReputationRequired = ConfigurableValue(path = "reputation.status.revered", defaultValue = 1000).get()
-        private val exaltedReputationRequired = ConfigurableValue(path = "reputation.status.exalted", defaultValue = 2000).get()
+        private val exiledReputationRequired = ConfigurationAccessor(path = "reputation.status.exiled", defaultValue = -1000).get()
+        private val hostileReputationRequired = ConfigurationAccessor(path = "reputation.status.hostile", defaultValue = -500).get()
+        private val unfriendlyReputationRequired = ConfigurationAccessor(path = "reputation.status.unfriendly", defaultValue = -250).get()
+        private val neutralReputationRequired = ConfigurationAccessor(path = "reputation.status.neutral", defaultValue = 0).get()
+        private val friendlyReputationRequired = ConfigurationAccessor(path = "reputation.status.friendly", defaultValue = 250).get()
+        private val honoredReputationRequired = ConfigurationAccessor(path = "reputation.status.honored", defaultValue = 500).get()
+        private val reveredReputationRequired = ConfigurationAccessor(path = "reputation.status.revered", defaultValue = 1000).get()
+        private val exaltedReputationRequired = ConfigurationAccessor(path = "reputation.status.exalted", defaultValue = 2000).get()
 
-        private val exiled = ConfigurableValue(fileName = "language.yml", path = "reputation.status.exiled", defaultValue = "Exiled").get()
-        private val hostile = ConfigurableValue(fileName = "language.yml", path = "reputation.status.hostile", defaultValue = "Hostile").get()
-        private val unfriendly = ConfigurableValue(fileName = "language.yml", path = "reputation.status.unfriendly", defaultValue = "Unfriendly").get()
-        private val neutral = ConfigurableValue(fileName = "language.yml", path = "reputation.status.neutral", defaultValue = "Neutral").get()
-        private val friendly = ConfigurableValue(fileName = "language.yml", path = "reputation.status.friendly", defaultValue = "Friendly").get()
-        private val honored = ConfigurableValue(fileName = "language.yml", path = "reputation.status.honored", defaultValue = "Honored").get()
-        private val revered = ConfigurableValue(fileName = "language.yml", path = "reputation.status.revered", defaultValue = "Revered").get()
-        private val exalted = ConfigurableValue(fileName = "language.yml", path = "reputation.status.exalted", defaultValue = "Exalted").get()
+        // Adding the value to existent one, used by inner gameplay logic.
+        fun Settlement.addReputation(player: Player, value: Int) {
 
-        fun Settlement.changeReputation(player: Player, value: Int) {
+            val increaseMessage = ConfigurationAccessor(fileName = "language.yml", path = "settlement-reputation.increase", defaultValue = "§9Reputation with {currentSettlement} increased by {amount}.").get()
+            val decreaseMessage = ConfigurationAccessor(fileName = "language.yml", path = "settlement-reputation.decrease", defaultValue = "§9Reputation with {currentSettlement} decreased by {amount}.").get()
+            val statusUpdateMessage = ConfigurationAccessor(fileName = "language.yml", path = "settlement-reputation.status-update", defaultValue = "§eYour standing with {currentSettlement} has shifted to {status}.").get()
 
             val previousStatus = player.getPlayerReputationStatus(this)
             data.reputation[player.uniqueId] = (data.reputation[player.uniqueId] ?: 0) + value
@@ -151,7 +139,7 @@ class ReputationManager : Listener {
 
                 // Reputation status update notification.
                 if (previousStatus != newStatus) {
-                    val statusChangeMessage = statusUpdateMessage.replace("{currentSettlement}", this.data.settlementName).replace("{status}", newStatus.localizedName)
+                    val statusChangeMessage = statusUpdateMessage.replace("{currentSettlement}", this.data.settlementName).replace("{status}", newStatus.localizedName.get())
                     player.sendMessage(statusChangeMessage)
                     player.playSound(player.eyeLocation, statusUpdateSound, 1F, 1F)
                 }
@@ -159,15 +147,35 @@ class ReputationManager : Listener {
 
         }
 
-        enum class Reputation(val localizedName: String) {
-            EXALTED(exalted),
-            REVERED(revered),
-            HONORED(honored),
-            FRIENDLY(friendly),
-            NEUTRAL(neutral),
-            UNFRIENDLY(unfriendly),
-            HOSTILE(hostile),
-            EXILED(exiled)
+        // Setting the value, used by set reputation command.
+        fun Settlement.setReputation(player: Player, value: Int) {
+
+            val statusUpdateMessage = ConfigurationAccessor(fileName = "language.yml", path = "settlement-reputation.status-update", defaultValue = "§eYour standing with {currentSettlement} has shifted to {status}.").get()
+
+            val previousStatus = player.getPlayerReputationStatus(this)
+            data.reputation[player.uniqueId] = value
+            val newStatus = player.getPlayerReputationStatus(this)
+
+            if (chatNotification) {
+                // Reputation status update notification.
+                if (previousStatus != newStatus) {
+                    val statusChangeMessage = statusUpdateMessage.replace("{currentSettlement}", this.data.settlementName).replace("{status}", newStatus.localizedName.get())
+                    player.sendMessage(statusChangeMessage)
+                    player.playSound(player.eyeLocation, statusUpdateSound, 1F, 1F)
+                }
+            }
+
+        }
+
+        enum class Reputation(val localizedName: ConfigurationAccessor<String>, val requiredReputationAmount: Int) {
+            EXALTED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exalted", defaultValue = "Exalted"), exaltedReputationRequired),
+            REVERED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.revered", defaultValue = "Revered"), reveredReputationRequired),
+            HONORED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.honored", defaultValue = "Honored"), honoredReputationRequired),
+            FRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.friendly", defaultValue = "Friendly"), friendlyReputationRequired),
+            NEUTRAL(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.neutral", defaultValue = "Neutral"), neutralReputationRequired),
+            UNFRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.unfriendly", defaultValue = "Unfriendly"), unfriendlyReputationRequired),
+            HOSTILE(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.hostile", defaultValue = "Hostile"), hostileReputationRequired),
+            EXILED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exiled", defaultValue = "Exiled"), exiledReputationRequired);
         }
 
         fun Player.getPlayerReputationStatus(settlement: Settlement): Reputation {

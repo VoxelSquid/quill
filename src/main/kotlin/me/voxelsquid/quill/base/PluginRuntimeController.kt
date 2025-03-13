@@ -2,7 +2,7 @@ package me.voxelsquid.quill.base
 
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.base.command.CommandController
-import me.voxelsquid.quill.base.config.ConfigurableValue
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.base.config.ConfigurationManager
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.DialogueFormat
 import org.bukkit.Bukkit
@@ -11,15 +11,15 @@ class PluginRuntimeController {
 
     val configurationManager = ConfigurationManager()
 
-    val apiKey        = ConfigurableValue(path = "core.api-key", defaultValue = "AIzaSyCNEY3sTaCvuRn1mApl1NtfT0q9t2mwOeg", comments = mutableListOf("Get your API key FOR FREE: https://aistudio.google.com/app/apikey")).get()
-    val language      = ConfigurableValue(path = "core.language", defaultValue = "ENGLISH", comments = mutableListOf("Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)")).get()
-    val translation   = ConfigurableValue(path = "core.generative-translation", defaultValue = true, comments = mutableListOf("The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.")).get()
-    val allowedWorlds = ConfigurableValue(path = "core.allowed-worlds", defaultValue = listOf("world"), comments = mutableListOf("Specify the names of the worlds where you want QuestIntelligence to work.")).get()
-    val humanoids     = ConfigurableValue(path = "core.humanoid-villagers", defaultValue = true, comments = mutableListOf("By default, all villagers are replaced by player models that have skins and races with their own unique attributes.", "You can disable this feature or customize it in races.yml and skins.yml.")).get()
-    val namingStyle   = ConfigurableValue(path = "core.naming-style", defaultValue = "Dark Fantasy", comments = mutableListOf("The naming style affects the style in which the AI will generate stuff.", "Dark Fantasy is set by default, but you can specify really anything here, from space dwarfs to the Warhammer, or even Japanese anime names. すげえ！")).get()
-    val swearing      = ConfigurableValue(path = "core.swearing", defaultValue = true, comments = mutableListOf("Some personality types will swear in their phrases. You may not like this, so I've added the option to disable it.")).get()
-    val format        = ConfigurableValue(path = "core.default-dialogue-format", defaultValue = DialogueFormat.IMMERSIVE, comments = mutableListOf("The standard format of villagers' dialogs for every player on the server.", "IMMERSIVE: the message from the villager will be received in a cOoL dIaLoGuE wInDoW.", "CHAT: the message from the villager will be received via chat, classic.", "BOTH: well... there's no need to explain, I hope?..")).get()
-    val messagePrefix = ConfigurableValue(path = "text-formatting.chat.message-prefix", defaultValue = "&7&l.q&8&l/ &4>&c> &7", comments = mutableListOf("The prefix of messages sent by the plugin.")).get()
+    val apiKey        = ConfigurationAccessor(path = "core.api-key", defaultValue = "AIzaSyCNEY3sTaCvuRn1mApl1NtfT0q9t2mwOeg", comments = mutableListOf("Get your API key FOR FREE: https://aistudio.google.com/app/apikey")).get()
+    val language      = ConfigurationAccessor(path = "core.language", defaultValue = "LITERARY ENGLISH", comments = mutableListOf("Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)")).get()
+    val translation   = ConfigurationAccessor(path = "core.generative-translation", defaultValue = true, comments = mutableListOf("The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.")).get()
+    val allowedWorlds = ConfigurationAccessor(path = "core.allowed-worlds", defaultValue = listOf("world"), comments = mutableListOf("Specify the names of the worlds where you want QuestIntelligence to work.")).get()
+    val humanoids     = ConfigurationAccessor(path = "core.humanoid-villagers", defaultValue = true, comments = mutableListOf("By default, all villagers are replaced by player models that have skins and races with their own unique attributes.", "You can disable this feature or customize it in races.yml and skins.yml.")).get()
+    val namingStyle   = ConfigurationAccessor(path = "core.naming-style", defaultValue = "Dark Fantasy", comments = mutableListOf("The naming style affects the style in which the AI will generate stuff.", "Dark Fantasy is set by default, but you can specify really anything here, from space dwarfs to the Warhammer, or even Japanese anime names. すげえ！")).get()
+    val swearing      = ConfigurationAccessor(path = "core.swearing", defaultValue = true, comments = mutableListOf("Some personality types will swear in their phrases. You may not like this, so I've added the option to disable it.")).get()
+    val format        = ConfigurationAccessor(path = "core.default-dialogue-format", defaultValue = DialogueFormat.IMMERSIVE, comments = mutableListOf("The standard format of villagers' dialogs for every player on the server.", "IMMERSIVE: the message from the villager will be received in a cOoL dIaLoGuE wInDoW.", "CHAT: the message from the villager will be received via chat, classic.", "BOTH: well... there's no need to explain, I hope?..")).get()
+    val messagePrefix = ConfigurationAccessor(path = "text-formatting.chat.message-prefix", defaultValue = "&7&l.q&8&l/ &4>&c> &7", comments = mutableListOf("The prefix of messages sent by the plugin.")).get()
 
     init {
         this.checkBeforeStartup()

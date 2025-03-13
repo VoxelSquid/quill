@@ -130,8 +130,6 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
         plugin.geminiProvider.generateSettlementName(Settlement(Settlement.SettlementData(world.uid, defaultSettlementName, center, System.currentTimeMillis()), villagers.toMutableSet()))
     }
 
-
-
     @EventHandler
     private fun onSettlementNameGenerate(event: SettlementNameGenerateEvent) {
         with(event.settlement) {
@@ -166,6 +164,16 @@ class SettlementManager(val plugin: QuestIntelligence): Listener {
     companion object {
         val settlements: MutableMap<World, MutableList<Settlement>> = mutableMapOf()
         val settlementsWorldKey: NamespacedKey = NamespacedKey(QuestIntelligence.pluginInstance, "SettlementList")
+        fun getByName(name: String): Settlement? {
+            settlements.values.forEach { settlementList ->
+                settlementList.forEach { settlement ->
+                    if (settlement.data.settlementName == name) {
+                        return settlement
+                    }
+                }
+            }
+            return null
+        }
     }
 
 }

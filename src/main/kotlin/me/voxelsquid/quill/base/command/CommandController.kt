@@ -8,8 +8,13 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.getOminousBanner
 import me.voxelsquid.quill.QuestIntelligence.Companion.immersiveDialoguesKey
 import me.voxelsquid.quill.QuestIntelligence.Companion.sendFormattedMessage
 import me.voxelsquid.quill.QuestIntelligence.Companion.verboseKey
+import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidCharacterType
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.setCharacterType
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.setReputation
+import me.voxelsquid.quill.gameplay.settlement.Settlement
+import me.voxelsquid.quill.gameplay.settlement.SettlementManager
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager
 import org.bukkit.Bukkit
@@ -18,6 +23,7 @@ import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
 import org.bukkit.persistence.PersistentDataType
+import java.lang.IllegalArgumentException
 
 @CommandAlias("quill|q")
 class CommandController : BaseCommand() {
@@ -28,6 +34,9 @@ class CommandController : BaseCommand() {
         commandManager.commandCompletions.registerCompletion("villagerTypes") {
             listOf("SNOW", "JUNGLE", "DESERT", "SAVANNA", "TAIGA", "SWAMP", "PLAINS")
         }
+        commandManager.commandCompletions.registerCompletion("reputationStates") {
+            ReputationManager.Companion.Reputation.entries.map { it.name }
+        }
         commandManager.commandCompletions.registerCompletion("villagerPersonalities") {
             HumanoidCharacterType.entries.map { it.name }
         }
@@ -36,11 +45,7 @@ class CommandController : BaseCommand() {
         }
     }
 
-    @HelpCommand
-    fun onHelp(sender: CommandSender) {
-        sender.sendMessage("IMMA FIRIN' MAH LAZOR")
-    }
-
+    // TODO: Help command.
     // TODO: Reload command.
 
     @Subcommand("dialogue format")
@@ -99,6 +104,38 @@ class CommandController : BaseCommand() {
             return
         }
         player.teleport(settlement.data.center)
+    }
+
+    @Subcommand("settlement reputation")
+    @CommandPermission("quill.settlement.reputation")
+    @CommandCompletion("@players @reputationStates @settlements")
+    fun onSettlementReputation(sender: CommandSender, target: String, status: String, settlementName: String) {
+
+        val playerNotFoundMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.player-not-found", defaultValue = "§cPlayer not found: §b{playerName} §c(online players only).").get()
+        val statusNotFoundMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.status-not-found", defaultValue = "§cError! Non-existent reputation status: §с{status}.").get()
+        val nonExistingSettlement = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.settlement-not-found", defaultValue = "§cError! Non-existent settlement status: §с{settlementName}.").get()
+        val commandSuccessMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-success-message.reputation-changed", defaultValue = "§7Reputation of §e{playerName} §7has been changed to §6{status}§7.").get()
+
+        val settlement = SettlementManager.getByName(settlementName)
+        if (settlement == null) {
+            sender.sendMessage(nonExistingSettlement.replace("{settlementName}", settlementName))
+            return
+        }
+
+        val reputation = try {
+            ReputationManager.Companion.Reputation.valueOf(status)
+        } catch (exception: IllegalArgumentException) {
+            sender.sendMessage(statusNotFoundMessage.replace("{status}", status))
+            return
+        }
+
+        Bukkit.getPlayer(target)?.let { targetPlayer ->
+            SettlementManager.getByName(settlementName)?.let { settlement: Settlement ->
+                settlement.setReputation(targetPlayer, reputation.requiredReputationAmount)
+                sender.sendMessage(commandSuccessMessage.replace("{playerName}", target).replace("{status}", reputation.localizedName.get()))
+            }
+        } ?: sender.sendMessage(playerNotFoundMessage.replace("{playerName}", target))
+
     }
 
     @Subcommand("debug banner")

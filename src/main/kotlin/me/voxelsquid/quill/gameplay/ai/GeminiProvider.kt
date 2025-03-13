@@ -50,13 +50,9 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
     private val namingStyle = plugin.controller.namingStyle
     private val swearing    = plugin.controller.swearing
 
-    private fun generateTranslation() {
-        GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to $language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${File(plugin.dataFolder, "language.yml").readText()}\n```")
-    }
-
-    init {
+    fun generateTranslation() {
         if (translation) {
-            this.generateTranslation()
+            GenerationRequest(this, client, url, plugin).translation("Translate YAML file below to $language, keep the keys and special symbols (like §) and DO NOT translate placeholders. Wrap result as ```yaml```. \n```yaml\n${File(plugin.dataFolder, "language.yml").readText()}\n```")
         } else {
             plugin.logger.info("Generative translation is disabled. :(")
             GenerationRequest(this, client, url, plugin).generate("Gentlemen, you can't fight in here! This is the war room!", ping = true)
@@ -303,7 +299,6 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                                 cleanedData?.let {
                                     plugin.logger.info("Connection with the AI has been established successfully!")
                                     plugin.logger.info("QuestIntelligence uses automatic configuration translation.")
-                                    // plugin.logger.warning(responseText)
                                     plugin.configManager.language = YamlConfiguration.loadConfiguration(StringReader(it))
                                 }
 
@@ -348,6 +343,7 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
             })
         }
 
+        // TODO: Надо редактировать температуру.
         private fun createJsonRequest(prompt: String): String {
             return """{
                 "contents": [{
@@ -358,7 +354,10 @@ class GeminiProvider(private val plugin: QuestIntelligence) {
                 "safetySettings": [{
                     "category": "7",
                     "threshold": "4"
-                }]
+                }],
+                "generationConfig": {
+                    "temperature": 2.0,
+                }
             }""".trimIndent()
         }
 
