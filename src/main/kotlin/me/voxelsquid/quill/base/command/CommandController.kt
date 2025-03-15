@@ -46,7 +46,6 @@ class CommandController : BaseCommand() {
     }
 
     // TODO: Help command.
-    // TODO: Reload command.
 
     @Subcommand("dialogue format")
     @CommandPermission("quill.dialogue.format")

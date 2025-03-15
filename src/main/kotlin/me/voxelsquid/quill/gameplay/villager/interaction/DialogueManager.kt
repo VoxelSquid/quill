@@ -181,7 +181,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
                         val pauseDuration = when {
                             player.isSneaking && sentence -> fastPauseDurationBetweenSentences
                             player.isSneaking -> fastPauseDurationBetweenWords
-                            sentence -> pauseDurationBetweenSentences
+                            sentence || lastWord -> pauseDurationBetweenSentences
                             else -> pauseDurationBetweenWords
                         }
 
