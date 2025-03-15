@@ -120,8 +120,7 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
                 return
             }
 
-            // TODO: Дети.
-
+            // TODO: Обработка взаимодействия с детьми.
             if (!player.isGeyserPlayer()) {
                 player.inventory.heldItemSlot = 4
                 this.showDefaultMenu(player, villager)

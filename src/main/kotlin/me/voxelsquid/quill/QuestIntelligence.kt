@@ -105,7 +105,11 @@ class QuestIntelligence : JavaPlugin() {
                 } else this.persistentDataContainer.remove(currentSettlementKey)
             }
 
-        fun Player.isGeyserPlayer() : Boolean = server.pluginManager.isPluginEnabled("Geyser-Spigot") && GeyserApi.api().connectionByUuid(this.uniqueId) != null
+        fun Player.isGeyserPlayer() : Boolean = try {
+            GeyserApi.api().connectionByUuid(this.uniqueId) != null
+        } catch (exception: Exception) {
+            false
+        }
 
         fun isChristmas(): Boolean {
             val calendar = Calendar.getInstance()

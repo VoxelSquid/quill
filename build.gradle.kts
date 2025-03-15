@@ -37,7 +37,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp:4.1.0")
   implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
   implementation("com.google.code.gson:gson:2.11.0")
-  compileOnly("org.geysermc.geyser:api:2.6.1-SNAPSHOT")
+  implementation("org.geysermc.geyser:api:2.6.1-SNAPSHOT")
   compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 }
 
