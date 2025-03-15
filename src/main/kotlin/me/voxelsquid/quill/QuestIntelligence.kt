@@ -27,6 +27,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
+import org.geysermc.geyser.api.GeyserApi
 import java.util.*
 
 class QuestIntelligence : JavaPlugin() {
@@ -104,6 +105,7 @@ class QuestIntelligence : JavaPlugin() {
                 } else this.persistentDataContainer.remove(currentSettlementKey)
             }
 
+        fun Player.isGeyserPlayer() : Boolean = server.pluginManager.isPluginEnabled("Geyser-Spigot") && GeyserApi.api().connectionByUuid(this.uniqueId) != null
 
         fun isChristmas(): Boolean {
             val calendar = Calendar.getInstance()

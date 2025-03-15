@@ -11,7 +11,7 @@ class PluginRuntimeController {
 
     val configurationManager = ConfigurationManager()
 
-    val apiKey        = ConfigurationAccessor(path = "core.api-key", defaultValue = "AIzaSyCNEY3sTaCvuRn1mApl1NtfT0q9t2mwOeg", comments = mutableListOf("Get your API key FOR FREE: https://aistudio.google.com/app/apikey")).get()
+    val apiKey        = ConfigurationAccessor(path = "core.api-key", defaultValue = "GEMINI_API_KEY", comments = mutableListOf("Get your API key FOR FREE: https://aistudio.google.com/app/apikey")).get()
     val language      = ConfigurationAccessor(path = "core.language", defaultValue = "LITERARY ENGLISH", comments = mutableListOf("Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)")).get()
     val translation   = ConfigurationAccessor(path = "core.generative-translation", defaultValue = true, comments = mutableListOf("The plugin messages will be automatically translated into the language specified above when plugin enables. But you can disable this and configure everything yourself.")).get()
     val allowedWorlds = ConfigurationAccessor(path = "core.allowed-worlds", defaultValue = listOf("world"), comments = mutableListOf("Specify the names of the worlds where you want QuestIntelligence to work.")).get()

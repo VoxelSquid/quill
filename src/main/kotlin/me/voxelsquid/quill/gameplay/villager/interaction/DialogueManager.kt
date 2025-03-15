@@ -4,6 +4,7 @@ package me.voxelsquid.quill.gameplay.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
+import me.voxelsquid.quill.QuestIntelligence.Companion.isGeyserPlayer
 import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.getVoicePitch
@@ -27,7 +28,7 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         }, 0L, 1L)
     }
 
-    fun startDialogue(pair: Pair<Player, LivingEntity>, text: String, follow: Boolean = true, size: Float = 0.35F, interrupt: Boolean = false) {
+    fun  startDialogue(pair: Pair<Player, LivingEntity>, text: String, follow: Boolean = true, size: Float = 0.35F, interrupt: Boolean = false) {
 
         val (player, villager) = pair
         val formattedText = dialogueBoxTextBaseColor + text.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
@@ -35,6 +36,11 @@ class DialogueManager(private val plugin: QuestIntelligence) {
         }.replace(Regex("\\*(.*?)\\*")) { matchResult ->
             "${dialogueBoxTextInterestingColor}${matchResult.groupValues[1]}${dialogueBoxTextBaseColor}"
         }.replace("\\\"", "\"")
+
+        if (player.isGeyserPlayer()) {
+            this.sendDialogueInChat(player, villager, formattedText)
+            return
+        }
 
         when (player.dialogueFormat) {
 

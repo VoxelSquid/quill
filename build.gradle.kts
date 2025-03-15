@@ -25,8 +25,9 @@ repositories {
   maven("https://repo.aikar.co/content/groups/aikar/")
   maven("https://hub.spigotmc.org/nexus/content/groups/public/")
   maven("https://papermc.io/repo/repository/maven-public/")
-  maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-  maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
+  maven("https://repo.opencollab.dev/main/")
+  maven("https://repo.codemc.io/repository/maven-releases/")
+  maven("https://repo.codemc.io/repository/maven-snapshots/")
 }
 
 dependencies {
@@ -36,6 +37,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp:4.1.0")
   implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
   implementation("com.google.code.gson:gson:2.11.0")
+  compileOnly("org.geysermc.geyser:api:2.6.1-SNAPSHOT")
   compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 }
 
