@@ -3,8 +3,10 @@ package me.voxelsquid.quill.gameplay.humanoid
 import me.voxelsquid.quill.QuestIntelligence
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quests
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.quillInventory
+import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.settlement
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.updateQuests
 import me.voxelsquid.quill.gameplay.humanoid.race.HumanoidRaceManager.Companion.race
+import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.getPlayerReputationStatus
 import me.voxelsquid.quill.gameplay.util.ItemStackCalculator.Companion.calculatePrice
 import me.voxelsquid.quill.gameplay.util.ItemStackCalculator.Companion.getMaterialPrice
 import org.bukkit.Material
@@ -62,6 +64,9 @@ class HumanoidTradeHandler {
             val tradeProfessionItemsOnly = QuestIntelligence.pluginInstance.configManager.professions.getBoolean("villager-item-producing.trade-profession-items-only")
             val itemsToTrade = if (tradeProfessionItemsOnly) producedItems else quillInventory.filterNotNull()
 
+            val settlement = settlement
+            val multiplier = if (settlement != null ) player.getPlayerReputationStatus(settlement).priceMultiplier.get().toFloat() else 1.0F
+
             // Going through every produced item.
             itemsToTrade.forEach { item ->
 
@@ -74,7 +79,7 @@ class HumanoidTradeHandler {
                 }
 
                 val trade = TradingSlot(Material.AIR, 0) to TradingSlot(Material.AIR, 0)
-                val price = item.calculatePrice()
+                val price = (item.calculatePrice() * multiplier).toInt()
 
                 // Use the special currency if needed.
                 val useSpecialCurrency = price / currency.getMaterialPrice() > currency.maxStackSize * 2

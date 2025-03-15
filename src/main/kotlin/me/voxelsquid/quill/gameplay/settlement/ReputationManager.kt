@@ -167,15 +167,15 @@ class ReputationManager : Listener {
 
         }
 
-        enum class Reputation(val localizedName: ConfigurationAccessor<String>, val requiredReputationAmount: Int) {
-            EXALTED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exalted", defaultValue = "Exalted"), exaltedReputationRequired),
-            REVERED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.revered", defaultValue = "Revered"), reveredReputationRequired),
-            HONORED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.honored", defaultValue = "Honored"), honoredReputationRequired),
-            FRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.friendly", defaultValue = "Friendly"), friendlyReputationRequired),
-            NEUTRAL(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.neutral", defaultValue = "Neutral"), neutralReputationRequired),
-            UNFRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.unfriendly", defaultValue = "Unfriendly"), unfriendlyReputationRequired),
-            HOSTILE(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.hostile", defaultValue = "Hostile"), hostileReputationRequired),
-            EXILED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exiled", defaultValue = "Exiled"), exiledReputationRequired);
+        enum class Reputation(val localizedName: ConfigurationAccessor<String>, val requiredReputationAmount: Int, val priceMultiplier: ConfigurationAccessor<Double>) {
+            EXALTED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exalted", defaultValue = "Exalted"), exaltedReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.exalted", defaultValue = 0.6)),
+            REVERED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.revered", defaultValue = "Revered"), reveredReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.revered", defaultValue = 0.7)),
+            HONORED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.honored", defaultValue = "Honored"), honoredReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.honored", defaultValue = 0.9)),
+            FRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.friendly", defaultValue = "Friendly"), friendlyReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.friendly", defaultValue = 0.9)),
+            NEUTRAL(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.neutral", defaultValue = "Neutral"), neutralReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.neutral", defaultValue = 1.0)),
+            UNFRIENDLY(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.unfriendly", defaultValue = "Unfriendly"), unfriendlyReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.unfriendly", defaultValue = 1.25)),
+            HOSTILE(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.hostile", defaultValue = "Hostile"), hostileReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.hostile", defaultValue = 1.5)),
+            EXILED(ConfigurationAccessor(fileName = "language.yml", path = "reputation.status.exiled", defaultValue = "Exiled"), exiledReputationRequired, ConfigurationAccessor(path = "reputation.price-multiplier.exiled", defaultValue = 2.0));
         }
 
         fun Player.getPlayerReputationStatus(settlement: Settlement): Reputation {
@@ -190,7 +190,7 @@ class ReputationManager : Listener {
                 reputation >= unfriendlyReputationRequired -> Reputation.UNFRIENDLY
                 reputation >= hostileReputationRequired -> Reputation.HOSTILE
                 reputation >= exiledReputationRequired -> Reputation.EXILED
-                else -> Reputation.EXILED // Fallback for anything below exiled threshold
+                else -> Reputation.EXILED
             }
         }
     }

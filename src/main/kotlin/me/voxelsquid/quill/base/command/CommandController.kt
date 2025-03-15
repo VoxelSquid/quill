@@ -88,7 +88,7 @@ class CommandController : BaseCommand() {
     @Subcommand("settlement list")
     @CommandPermission("quill.settlement.list")
     fun onSettlementList(player: Player) {
-        player.sendMessage("§6[8] §7Settlements:")
+        player.sendMessage("§6[-] §7Settlements:")
         settlements[player.world]?.forEach { settlement ->
             player.sendMessage(" §7- §6${settlement.data.settlementName}")
         }
@@ -100,7 +100,7 @@ class CommandController : BaseCommand() {
     fun onSettlementTeleport(player: Player, settlementName: String) {
         val settlement = settlements[player.world]?.find { it.data.settlementName == settlementName }
         if (settlement == null) {
-            player.sendMessage("§4Settlement $settlementName doesn't exist.")
+            player.sendMessage("§4Settlement $settlementName not found.")
             return
         }
         player.teleport(settlement.data.center)
@@ -111,30 +111,31 @@ class CommandController : BaseCommand() {
     @CommandCompletion("@players @reputationStates @settlements")
     fun onSettlementReputation(sender: CommandSender, target: String, status: String, settlementName: String) {
 
-        val playerNotFoundMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.player-not-found", defaultValue = "§cPlayer not found: §b{playerName} §c(online players only).").get()
+        val prefix = plugin.controller.messagePrefix
+        val playerNotFoundMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.player-not-found", defaultValue = "§cError! Player not found: §b{playerName} §c(online players only).").get()
         val statusNotFoundMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.status-not-found", defaultValue = "§cError! Non-existent reputation status: §с{status}.").get()
         val nonExistingSettlement = ConfigurationAccessor(fileName = "language.yml", path = "command-error-message.settlement-not-found", defaultValue = "§cError! Non-existent settlement status: §с{settlementName}.").get()
         val commandSuccessMessage = ConfigurationAccessor(fileName = "language.yml", path = "command-success-message.reputation-changed", defaultValue = "§7Reputation of §e{playerName} §7has been changed to §6{status}§7.").get()
 
         val settlement = SettlementManager.getByName(settlementName)
         if (settlement == null) {
-            sender.sendMessage(nonExistingSettlement.replace("{settlementName}", settlementName))
+            sender.sendMessage(prefix + nonExistingSettlement.replace("{settlementName}", settlementName))
             return
         }
 
         val reputation = try {
             ReputationManager.Companion.Reputation.valueOf(status)
         } catch (exception: IllegalArgumentException) {
-            sender.sendMessage(statusNotFoundMessage.replace("{status}", status))
+            sender.sendMessage(prefix + statusNotFoundMessage.replace("{status}", status))
             return
         }
 
         Bukkit.getPlayer(target)?.let { targetPlayer ->
             SettlementManager.getByName(settlementName)?.let { settlement: Settlement ->
                 settlement.setReputation(targetPlayer, reputation.requiredReputationAmount)
-                sender.sendMessage(commandSuccessMessage.replace("{playerName}", target).replace("{status}", reputation.localizedName.get()))
+                sender.sendMessage(prefix + commandSuccessMessage.replace("{playerName}", target).replace("{status}", reputation.localizedName.get()))
             }
-        } ?: sender.sendMessage(playerNotFoundMessage.replace("{playerName}", target))
+        } ?: sender.sendMessage(prefix + playerNotFoundMessage.replace("{playerName}", target))
 
     }
 
