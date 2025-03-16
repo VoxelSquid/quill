@@ -35,15 +35,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
-import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerItemHeldEvent
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.*
 import org.bukkit.util.Transformation
-import org.geysermc.cumulus.form.ModalForm
-import org.geysermc.cumulus.form.SimpleForm
-import org.geysermc.geyser.api.GeyserApi
 import org.joml.AxisAngle4f
 import org.joml.Vector3f
 import kotlin.random.Random

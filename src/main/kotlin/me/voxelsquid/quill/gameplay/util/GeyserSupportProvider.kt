@@ -10,8 +10,10 @@ import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.Reput
 import me.voxelsquid.quill.gameplay.settlement.ReputationManager.Companion.getPlayerReputationStatus
 import org.bukkit.entity.Player
 import org.bukkit.entity.Villager
+import org.geysermc.cumulus.form.Form
 import org.geysermc.cumulus.form.ModalForm
 import org.geysermc.cumulus.form.SimpleForm
+import org.geysermc.floodgate.api.FloodgateApi
 import org.geysermc.geyser.api.GeyserApi
 
 class GeyserSupportProvider {
@@ -31,6 +33,14 @@ class GeyserSupportProvider {
         GeyserApi.api().connectionByUuid(player.uniqueId) != null
     } catch (exception: Exception) {
         false
+    }
+
+    private fun openForm(player: Player, form: Form) {
+        if (plugin.server.pluginManager.isPluginEnabled("floodgate")) {
+            FloodgateApi.getInstance().sendForm(player.uniqueId, form)
+        } else {
+            GeyserApi.api().sendForm(player.uniqueId, form)
+        }
     }
 
     // QI automatically detects if the player is playing through Geyser, and if true, selects a menu from Form. Suddenly, Bedrock Edition has one cool feature — the ability to create your own GUI.
@@ -86,7 +96,7 @@ class GeyserSupportProvider {
                     }
                 }
 
-            GeyserApi.api().sendForm(player.uniqueId, questDescriptionMenu.build())
+            this.openForm(player, questDescriptionMenu.build())
         }
 
         val interactionMenu = SimpleForm.builder()
@@ -97,7 +107,7 @@ class GeyserSupportProvider {
             .button(plugin.configManager.language.getString("interaction-menu.close-button")!!)
             .validResultHandler { responseData ->
                 if (responseData.clickedButton().text() == plugin.configManager.language.getString("interaction-menu.quests-button")!!) {
-                    GeyserApi.api().sendForm(player.uniqueId, questList.build())
+                    this.openForm(player, questList.build())
                 }
                 if (responseData.clickedButton().text() == plugin.configManager.language.getString("interaction-menu.trade-button")!!) {
                     plugin.server.scheduler.runTask(plugin) { _ ->
@@ -106,7 +116,7 @@ class GeyserSupportProvider {
                 }
             }
 
-        GeyserApi.api().sendForm(player.uniqueId, interactionMenu.build())
+        this.openForm(player, interactionMenu.build())
 
     }
 

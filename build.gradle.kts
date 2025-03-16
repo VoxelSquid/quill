@@ -1,7 +1,7 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 group = "me.voxelsquid.quill"
-version = "0.2.3.1-BETA"
+version = "0.2.3.2-BETA"
 description = "AI-driven overhaul of villagers and a modern take on questing."
 
 bukkitPluginYaml {
@@ -37,6 +37,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp:4.1.0")
   implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
   implementation("com.google.code.gson:gson:2.11.0")
+  compileOnly("org.geysermc.floodgate:api:2.2.4-SNAPSHOT")
   compileOnly("org.geysermc.geyser:api:2.6.1-SNAPSHOT")
   compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 }
