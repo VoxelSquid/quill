@@ -1,7 +1,6 @@
 package me.voxelsquid.quill.gameplay.villager.interaction
 
 import me.voxelsquid.quill.QuestIntelligence
-import me.voxelsquid.quill.QuestIntelligence.Companion.isGeyserPlayer
 import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager.HumanoidEntityExtension.HUMANOID_VILLAGERS_ENABLED
@@ -52,9 +51,6 @@ import kotlin.random.Random
 @Suppress("UnstableApiUsage")
 class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
 
-    private val dialogueBoxTextBaseColor = ConfigurationAccessor("text-formatting.dialogue-box.text.base-color", "&f", mutableListOf("Standard color of common words in dialogue boxes.")).get()
-    private val dialogueBoxTextImportantColor = ConfigurationAccessor("text-formatting.dialogue-box.text.important-color", "&5", mutableListOf("Color of important words in dialogue boxes that the AI will try to pay attention to.")).get()
-    private val dialogueBoxTextInterestingColor = ConfigurationAccessor("text-formatting.dialogue-box.text.interesting-color", "&6", mutableListOf("Color of interesting words in dialogue boxes that may be interesting to the player.")).get()
     private val buttonTextColor = TextColor.fromHexString(ConfigurationAccessor(path = "text-formatting.menu.button.color", defaultValue = "#FFFFFF", comments = mutableListOf("Color of interactive menu buttons, HEX values.")).get()) ?: throw IllegalArgumentException("Can't parse a color at 'text-formatting.menu.button.color' in config.yml. Is it HEX?")
 
     init {
@@ -120,92 +116,19 @@ class InteractionMenuManager(private val plugin: QuestIntelligence): Listener {
                 return
             }
 
+            // Geyser support
+            if (plugin.controller.geyserProvider?.checkGeyserPlayer(player) == true) {
+                plugin.controller.geyserProvider?.openInteractionMenu(player, villager)
+                return
+            }
+
             // TODO: Обработка взаимодействия с детьми.
-            if (!player.isGeyserPlayer()) {
-                player.inventory.heldItemSlot = 4
-                this.showDefaultMenu(player, villager)
-            } else {
-                this.showGeyserMenu(player, villager)
-            }
+            player.inventory.heldItemSlot = 4
+            this.showDefaultMenu(player, villager)
         }
     }
 
-    // QI automatically detects if the player is playing through Geyser, and if true, selects a menu from Form. Suddenly, Bedrock Edition has one cool feature — the ability to create your own GUI.
-    private fun showGeyserMenu(player: Player, villager: Villager) {
 
-        val questList = SimpleForm.builder()
-            .title(plugin.configManager.language.getString("interaction-menu.quests-button")!!)
-
-        villager.quests.forEach { quest ->
-            questList.button(quest.questInfo.questName)
-        }
-
-        questList.button(plugin.configManager.language.getString("interaction-menu.close-button")!!)
-        questList.validResultHandler { response ->
-
-            val buttonName = response.clickedButton().text()
-            if (buttonName == plugin.configManager.language.getString("interaction-menu.close-button")!!) return@validResultHandler
-
-            // Looking for a quest description.
-            val questDescription = villager.quests.find { it.questInfo.questName == response.clickedButton().text() }?.let { quest ->
-                (villager.settlement?.let { settlement ->
-                    when (player.getPlayerReputationStatus(settlement)) {
-                        Reputation.EXALTED -> quest.questInfo.reputationBasedQuestDescriptions[7]
-                        Reputation.REVERED -> quest.questInfo.reputationBasedQuestDescriptions[6]
-                        Reputation.HONORED -> quest.questInfo.reputationBasedQuestDescriptions[5]
-                        Reputation.FRIENDLY -> quest.questInfo.reputationBasedQuestDescriptions[4]
-                        Reputation.NEUTRAL -> quest.questInfo.reputationBasedQuestDescriptions[3]
-                        Reputation.UNFRIENDLY -> quest.questInfo.reputationBasedQuestDescriptions[2]
-                        Reputation.HOSTILE -> quest.questInfo.reputationBasedQuestDescriptions[1]
-                        Reputation.EXILED -> quest.questInfo.reputationBasedQuestDescriptions[0]
-                    }
-                } ?: quest.questInfo.reputationBasedQuestDescriptions[3]).replace("%playerName%", player.name)
-            } ?: "ERROR! NO QUEST DESCRIPTION."
-
-            // Markdown parsing.
-            val formattedQuestDescription = dialogueBoxTextBaseColor + questDescription.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
-                "${dialogueBoxTextImportantColor}${matchResult.groupValues[1]}${dialogueBoxTextBaseColor}"
-            }.replace(Regex("\\*(.*?)\\*")) { matchResult ->
-                "${dialogueBoxTextInterestingColor}${matchResult.groupValues[1]}${dialogueBoxTextBaseColor}"
-            }.replace("\\\"", "\"")
-
-            // Menu with quest description.
-            val questDescriptionMenu = ModalForm.builder()
-                .title(response.clickedButton().text())
-                .content(formattedQuestDescription)
-                .button1(plugin.configManager.language.getString("interaction-menu.trade-button")!!)
-                .button2(plugin.configManager.language.getString("interaction-menu.close-button")!!)
-                .validResultHandler { responseData ->
-                    if (responseData.clickedButtonText() == plugin.configManager.language.getString("interaction-menu.trade-button")!!) {
-                        plugin.server.scheduler.runTask(plugin) { _ ->
-                            villager.openTradeMenu(player)
-                        }
-                    }
-                }
-
-            GeyserApi.api().sendForm(player.uniqueId, questDescriptionMenu.build())
-        }
-
-        val interactionMenu = SimpleForm.builder()
-            .title(villager.getPersonalHumanoidData()?.villagerName ?: "Villager")
-            .button(plugin.configManager.language.getString("interaction-menu.quests-button")!!)
-            .button(plugin.configManager.language.getString("interaction-menu.trade-button")!!)
-            .button(plugin.configManager.language.getString("interaction-menu.actions-button")!!)
-            .button(plugin.configManager.language.getString("interaction-menu.close-button")!!)
-            .validResultHandler { responseData ->
-                if (responseData.clickedButton().text() == plugin.configManager.language.getString("interaction-menu.quests-button")!!) {
-                    GeyserApi.api().sendForm(player.uniqueId, questList.build())
-                }
-                if (responseData.clickedButton().text() == plugin.configManager.language.getString("interaction-menu.trade-button")!!) {
-                    plugin.server.scheduler.runTask(plugin) { _ ->
-                        villager.openTradeMenu(player)
-                    }
-                }
-            }
-
-        GeyserApi.api().sendForm(player.uniqueId, interactionMenu.build())
-
-    }
 
     @EventHandler
     private fun handlePlayerQuit(event: PlayerQuitEvent) {

@@ -4,12 +4,14 @@ import me.voxelsquid.quill.QuestIntelligence.Companion.pluginInstance
 import me.voxelsquid.quill.base.command.CommandController
 import me.voxelsquid.quill.base.config.ConfigurationAccessor
 import me.voxelsquid.quill.base.config.ConfigurationManager
+import me.voxelsquid.quill.gameplay.util.GeyserSupportProvider
 import me.voxelsquid.quill.gameplay.villager.interaction.DialogueManager.DialogueFormat
 import org.bukkit.Bukkit
 
 class PluginRuntimeController {
 
     val configurationManager = ConfigurationManager()
+    var geyserProvider       = if (pluginInstance.server.pluginManager.isPluginEnabled("Geyser-Spigot")) GeyserSupportProvider() else null
 
     val apiKey        = ConfigurationAccessor(path = "core.api-key", defaultValue = "GEMINI_API_KEY", comments = mutableListOf("Get your API key FOR FREE: https://aistudio.google.com/app/apikey")).get()
     val language      = ConfigurationAccessor(path = "core.language", defaultValue = "LITERARY ENGLISH", comments = mutableListOf("Language of plugin messages, quests, villager names and phrases. (supported languages depends on AI)")).get()

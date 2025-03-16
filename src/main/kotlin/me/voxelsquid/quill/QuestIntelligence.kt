@@ -2,13 +2,11 @@ package me.voxelsquid.quill
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import me.voxelsquid.quill.QuestIntelligence.Companion.dialogueFormat
-import me.voxelsquid.quill.gameplay.ai.GeminiProvider
-import me.voxelsquid.quill.base.config.ConfigurationManager
 import me.voxelsquid.quill.base.PluginRuntimeController
+import me.voxelsquid.quill.base.config.ConfigurationManager
+import me.voxelsquid.quill.gameplay.ai.GeminiProvider
 import me.voxelsquid.quill.gameplay.humanoid.HumanoidManager
 import me.voxelsquid.quill.gameplay.quest.data.VillagerQuest
-import me.voxelsquid.quill.gameplay.settlement.SettlementManager
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlements
 import me.voxelsquid.quill.gameplay.settlement.SettlementManager.Companion.settlementsWorldKey
 import me.voxelsquid.quill.gameplay.util.LocationAdapter
@@ -27,7 +25,6 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
-import org.geysermc.geyser.api.GeyserApi
 import java.util.*
 
 class QuestIntelligence : JavaPlugin() {
@@ -104,12 +101,6 @@ class QuestIntelligence : JavaPlugin() {
                     this.persistentDataContainer.set(currentSettlementKey, PersistentDataType.STRING, value)
                 } else this.persistentDataContainer.remove(currentSettlementKey)
             }
-
-        fun Player.isGeyserPlayer() : Boolean = try {
-            GeyserApi.api().connectionByUuid(this.uniqueId) != null
-        } catch (exception: Exception) {
-            false
-        }
 
         fun isChristmas(): Boolean {
             val calendar = Calendar.getInstance()
